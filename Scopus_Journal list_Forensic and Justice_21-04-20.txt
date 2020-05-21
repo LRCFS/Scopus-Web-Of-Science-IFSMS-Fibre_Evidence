@@ -1,0 +1,238 @@
+Source title	CiteScore	Highest percentile	2018 Citations	2015-17 Documents	% Cited	SNIP	SJR	Publisher
+Journal of Criminal Justice	4.8	"99.0%
+6/601
+Law"	811	169	87	1.991	2.853	Elsevier
+Forensic Science International: Genetics	3.99	"93.0%
+13/184
+Pathology and Forensic Medicine"	2268	568	83	1.758	1.472	Elsevier
+Justice Quarterly	3.76	"97.0%
+15/601
+Law"	538	143	85	1.831	2.804	Taylor & Francis
+Crime and Justice	3.13	"92.0%
+85/1108
+Sociology and Political Science"	141	45	73	2.745	1.84	University of Chicago Press
+Youth Violence and Juvenile Justice	3.11	"96.0%
+23/601
+Law"	233	75	84	1.362	1.675	SAGE
+Forensic Toxicology	2.92	"85.0%
+28/184
+Pathology and Forensic Medicine"	374	128	78	0.975	1.071	Springer Nature
+Criminal Justice and Behavior	2.76	"95.0%
+27/601
+Law"	659	239	75	1.587	1.679	SAGE
+Contemporary Readings in Law and Social Justice	2.66	"94.0%
+31/601
+Law"	125	47	77	0.869	0.53	Addleton Academic Publishers
+Criminology and Criminal Justice	2.35	"93.0%
+39/601
+Law"	240	102	83	1.436	0.851	SAGE
+Forensic Science International	2.2	"74.0%
+48/184
+Pathology and Forensic Medicine"	2750	1248	74	1.131	0.879	Elsevier
+Journal of Contemporary Criminal Justice	2.17	"92.0%
+45/601
+Law"	156	72	67	0.975	1.298	SAGE
+Science and Justice - Journal of the Forensic Science Society	1.98	"68.0%
+57/184
+Pathology and Forensic Medicine"	412	208	68	0.967	0.816	Forensic Science Society
+International Criminal Justice Review	1.9	"91.0%
+51/601
+Law"	97	51	71	1.478	0.738	SAGE
+Forensic Chemistry	1.88	"91.0%
+53/601
+Law"	128	68	69	0.586	0.501	Elsevier
+Health and Justice	1.7	"88.0%
+71/601
+Law"	46	27	59	0.609	0.488	Springer Nature
+Criminal Justice Policy Review	1.67	"87.0%
+73/601
+Law"	192	115	71	0.98	1.121	SAGE
+Social Justice Research	1.57	"87.0%
+43/350
+Anthropology"	96	61	70	0.626	0.554	Springer Nature
+Journal of Forensic Sciences	1.55	"53.0%
+86/184
+Pathology and Forensic Medicine"	1398	900	61	0.913	0.764	Wiley-Blackwell
+International Journal of Forensic Mental Health	1.48	"74.0%
+10/37
+Psychiatric Mental Health"	127	86	56	0.78	0.63	Taylor & Francis
+Journal of Forensic and Legal Medicine	1.41	"84.0%
+95/601
+Law"	651	463	61	1.037	0.615	Elsevier
+Forensic Science Review	1.4	"84.0%
+96/601
+Law"	42	30	43	1.255	0.579	Central Police University Press
+American Journal of Criminal Justice	1.38	"83.0%
+98/601
+Law"	201	146	60	0.742	0.653	Springer Nature
+Criminal Justice Review	1.37	"83.0%
+100/601
+Law"	107	78	59	0.783	0.742	SAGE
+Journal of Crime and Justice	1.34	"82.0%
+106/601
+Law"	131	98	66	0.78	0.691	Taylor & Francis
+"International Journal for Crime, Justice and Social Democracy"	1.32	"81.0%
+111/601
+Law"	149	113	65	0.571	0.355	Queensland University of Technology
+The International Journal of Transitional Justice	1.32	"81.0%
+111/601
+Law"	119	90	58	1.23	0.558	Oxford University Press
+Journal of Poverty and Social Justice	1.25	"71.0%
+314/1108
+Sociology and Political Science"	76	61	44	0.757	0.357	The Policy Press
+Australian Journal of Forensic Sciences	1.24	"45.0%
+101/184
+Pathology and Forensic Medicine"	220	178	52	0.685	0.64	Taylor & Francis
+Journal of Forensic Psychiatry and Psychology	1.19	"56.0%
+114/262
+Clinical Psychology"	188	158	58	0.834	0.494	Taylor & Francis
+Race and Justice	1.17	"80.0%
+68/350
+Anthropology"	62	53	53	0.651	0.897	SAGE
+"Education, Citizenship and Social Justice"	1.16	"60.0%
+405/1038
+Education"	66	57	58	0.838	0.231	SAGE
+International Journal of Comparative and Applied Criminal Justice	1.14	"76.0%
+138/601
+Law"	73	64	45	0.737	0.387	Taylor & Francis
+"Forensic Science, Medicine, and Pathology"	1.13	"43.0%
+105/184
+Pathology and Forensic Medicine"	361	319	52	0.698	0.545	Springer Nature
+Youth Justice	1.12	"76.0%
+141/601
+Law"	57	51	51	0.662	0.464	SAGE
+Women and Criminal Justice	1.06	"75.0%
+150/601
+Law"	70	66	53	0.583	0.42	Taylor & Francis
+Egyptian Journal of Forensic Sciences	1.02	"74.0%
+152/601
+Law"	153	150	49	1.152	0.32	Springer Nature
+"International Journal of Law, Crime and Justice"	1.02	"74.0%
+152/601
+Law"	106	104	51	0.937	0.261	Elsevier
+Howard Journal of Crime and Justice	1	"73.0%
+158/601
+Law"	54	54	63	0.941	0.264	Wiley-Blackwell
+Canadian Journal of Criminology and Criminal Justice	0.97	"72.0%
+166/601
+Law"	63	65	46	0.589	0.46	University of Toronto Press
+Environmental Justice	0.96	"54.0%
+285/628
+Geography, Planning and Development"	86	90	43	0.45	0.387	Mary Ann Liebert
+Journal of Criminal Justice Education	0.92	"70.0%
+178/601
+Law"	86	93	47	0.775	0.585	Taylor & Francis
+Journal of Ethnicity in Criminal Justice	0.91	"73.0%
+95/350
+Anthropology"	49	54	46	0.436	0.334	Taylor & Francis
+Contemporary Justice Review	0.81	"67.0%
+198/601
+Law"	79	97	46	0.659	0.527	Taylor & Francis
+Trends and Issues in Crime and Criminal Justice	0.76	"65.0%
+209/601
+Law"	42	55	45	0.48	0.31	Australian Institute of Criminology
+Criminal Justice Studies	0.75	"64.0%
+213/601
+Law"	59	79	44	0.451	0.458	Taylor & Francis
+Journal of Forensic Radiology and Imaging	0.72	"31.0%
+126/184
+Pathology and Forensic Medicine"	105	145	39	0.553	0.384	Elsevier
+American Journal of Forensic Medicine and Pathology	0.71	"31.0%
+127/184
+Pathology and Forensic Medicine"	163	229	41	0.633	0.342	Wolters Kluwer Health
+Journal of International Criminal Justice	0.71	"61.0%
+229/601
+Law"	122	172	41	1.259	0.564	Oxford University Press
+Journal of the Canadian Society of Forensic Science	0.64	"28.0%
+131/184
+Pathology and Forensic Medicine"	32	50	36	0.512	0.369	Taylor & Francis
+Journal of Forensic Nursing	0.6	"54.0%
+273/601
+Law"	68	114	30	0.552	0.275	Wolters Kluwer Health
+Journal of Forensic Practice	0.54	"51.0%
+288/601
+Law"	47	87	34	0.407	0.171	Emerald
+Studies in Social Justice	0.51	"49.0%
+300/601
+Law"	36	70	39	0.304	0.147	University of Windsor
+Justice System Journal	0.48	"47.0%
+313/601
+Law"	43	90	26	0.837	0.34	Taylor & Francis
+Journal of Forensic Odonto-Stomatology	0.46	"22.0%
+143/184
+Pathology and Forensic Medicine"	23	50	32	0.259	0.245	"IOFOS, National Board of Forensic Medicine"
+"European Journal of Crime, Criminal Law and Criminal Justice"	0.41	"42.0%
+340/601
+Law"	23	56	29	0.773	0.286	Brill
+Forensic Science International: Genetics Supplement Series	0.4	"20.0%
+147/184
+Pathology and Forensic Medicine"	201	503	27	0.21	0.263	Elsevier
+Journal of Forensic Identification	0.35	"18.0%
+151/184
+Pathology and Forensic Medicine"	50	143	23	0.397	0.415	International Association for Identification
+Criminal Justice Ethics	0.24	"30.0%
+416/601
+Law"	12	51	18	0.216	0.152	Taylor & Francis
+Proceedings of the Institution of Civil Engineers: Forensic Engineering	0.24	"17.0%
+127/154
+Safety, Risk, Reliability and Quality"	19	78	19	0.537	0.144	
+American Journal of Forensic Psychology	0.21	"11.0%
+164/184
+Pathology and Forensic Medicine"	7	33	18	0.333	0.242	American College of Forensic Psychiatry
+Journal of Indian Academy of Forensic Medicine	0.15	"8.0%
+168/184
+Pathology and Forensic Medicine"	51	345	14	0.514	0.229	Indian Academy of Forensic Medicine
+International Journal of Criminal Justice Sciences	0.1	"12.0%
+517/601
+Law"	2	20	10	0.004	0.109	South Asian Society of Criminology and Victimology (SASCV)
+Advances in Sustainability and Environmental Justice	0.09	"8.0%
+229/253
+Social Sciences (miscellaneous)"	6	69	6	0.187	0.108	Emerald
+Fa yi xue za zhi	0.09	"6.0%
+172/184
+Pathology and Forensic Medicine"	22	252	7	0.033	0.111	"Ministry of Justice, Institute of Forensic Sciences"
+Indian Journal of Forensic Medicine and Toxicology	0.08	"10.0%
+534/601
+Law"	30	392	6	0.189	0.155	All India Institute of Medical Sciences
+Anil Aggrawal's Internet Journal of Forensic Medicine and Toxicology	0.05	"6.0%
+557/601
+Law"	1	22	5	0.323	0.114	Anil Aggrawal
+Journal of Punjab Academy of Forensic Medicine and Toxicology	0.05	"4.0%
+175/184
+Pathology and Forensic Medicine"	5	92	4	0.153	0.1	Punjab Academy of Forensic Medicine and Toxicology
+Indian Journal of Forensic Medicine and Pathology	0.01	"1.0%
+181/184
+Pathology and Forensic Medicine"	1	87	1	0	0.11	Red Flower Publication Pvt. Ltd
+American Journal of Forensic Psychiatry	N/A	N/A	N/A	N/A	N/A	N/A	N/A	American College of Forensic Psychiatry
+British Journal of Community Justice	N/A	N/A	N/A	N/A	N/A	0.376	0.185	Sheffield Hallam University
+British Journal of Forensic Practice	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Pavilion
+Chinese Journal of Forensic Medicine	0	"0.0%
+182/184
+Pathology and Forensic Medicine"	0	90	0	0	0.1	Forensic Medicine Association of China
+Criminal Justice	N/A	N/A	N/A	N/A	N/A	N/A	N/A	SAGE
+Criminal Justice Matters	N/A	N/A	N/A	N/A	N/A	0.306	0.122	Taylor & Francis
+"Forensic Engineering, Proceedings of the Congress"	N/A	N/A	N/A	N/A	N/A	N/A	N/A	
+Forensic Science	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Elsevier
+Forensic Science International Supplement Series	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Elsevier
+Forensic Science International: Synergy	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Elsevier
+Forensic Sciences Research	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Taylor & Francis
+Howard Journal of Criminal Justice	N/A	N/A	N/A	N/A	N/A	0.453	0.149	Wiley-Blackwell
+International Journal of Medical Toxicology and Forensic Medicine	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Shahid Beheshti University of Medical Sciences
+Japanese Journal of Forensic Toxicology	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Japanese Association of Forensic Toxicology
+Journal of Clinical Forensic Medicine	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Elsevier
+Journal of Criminal Justice and Popular Culture	N/A	N/A	N/A	N/A	N/A	0	0.103	"School of Criminal Justice, State University Of New York at Albany"
+Journal of Digital Forensic Practice	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Taylor & Francis
+Journal of forensic medicine	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Meditor (Proprietary) Ltd.
+Journal of Forensic Medicine and Toxicology	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Indian Academy of Forensic Medicine
+Journal of Forensic Neuropsychology	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Taylor & Francis
+Journal of Forensic Psychiatry	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Taylor & Francis
+Journal of Forensic Psychology Practice	N/A	N/A	N/A	N/A	N/A	0.521	0.343	Taylor & Francis
+Journal of Forensic Psychology Research and Practice	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Taylor & Francis
+Journal of the Forensic Science Society	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Forensic Science Society
+Journal of the National Academy of Forensic Engineers	0	"2.0%
+148/154
+Safety, Risk, Reliability and Quality"	0	28	0	0	N/A	National Academy of Forensic Engineers
+Online Journal of Justice Studies	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Lunds Universitet
+Southern Journal of Criminal Justice	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Springer Nature
+The Journal of Human Justice	N/A	N/A	N/A	N/A	N/A	N/A	N/A	Human Justice Collective
+Science and Justice								

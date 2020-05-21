@@ -1,0 +1,177 @@
+Id	name	Name corrected
+35453353200	Agapitos E.	Agapitos E.B.
+14628417400	Alberink I.	Alberink I.B.
+7004960911	Almirall J.	Almirall J.R.
+23491213400	Baes C.	Baes C.A.V.
+55428698600	Bai R.	Bai R.-F.
+6701802022	Banfield S.	Banfield S.J.
+16214484500	Batchelder D.	Batchelder D.N.
+7202987788	Beck K.	Beck K.R.
+7003956742	Bide M.	Bide M.J.
+36747624800	Biermann T.	Biermann T.W.
+36747624800	Biermann T.	Biermann T.W.
+36747624800	Biermann T.	Biermann T.W.
+36747624800	Biermann T.	Biermann T.W.
+54919470200	Blake S.	Blake S.L.
+54919470200	Blake S.	Blake S.L.
+16534147000	Böhm E.	Bohm E.
+16534147000	Böhm E.	Bohm E.
+16534147000	Böhm E.	Bohm E.
+55621825700	Bowen A.	Bowen A.M.
+6601972998	Brüschweiler W.	Bruschweiler W.
+8049037200	Carr D.	Carr D.J.
+8049037200	Carr D.	Carr D.J.
+8049037200	Carr D.	Carr D.J.
+8049037200	Carr D.	Carr D.J.
+36911194000	Church Sara E.	Church S.E.
+7005938457	Coulson S.	Coulson S.A.
+7005682095	Coyle T.	Coyle T.J.
+7005682095	Coyle T.	Coyle T.J.
+7005682095	Coyle T.	Coyle T.J.
+7005682095	Coyle T.	Coyle T.J.
+7005682095	Coyle T.	Coyle T.J.
+7005682095	Coyle T.	Coyle T.J.
+7005682095	Coyle T.	Coyle T.J.
+7005682095	Coyle T.	Coyle T.J.
+7102968886	Dawson L.	Dawson L.A.
+36614132800	de la Ossa M.A.F.	De La Ossa M.A.F.
+36614132800	De La Ossa M.Á.F.	De La Ossa M.A.F.
+23491995600	de Wael K.	De Wael K.
+16052038000	Delémont O.	Delemont O.
+57193509917	dos Santos M.F.	Dos Santos M.F.
+36508513600	Duan Y.	Duan Y.-J.
+55277408600	Fergusson S.	Fergusson S.M.
+7006863012	Flory J.	Flory J.F.
+26432679900	Furst S.	Furst S.J.
+35271820400	Garciá-Ruiz C.	Garcia-Ruiz C.
+35271820400	García-Ruiz C.	Garcia-Ruiz C.
+35271820400	García-Ruiz C.	Garcia-Ruiz C.
+35271820400	García-Ruiz C.	Garcia-Ruiz C.
+35271820400	García-Ruiz C.	Garcia-Ruiz C.
+35271820400	García-Ruiz C.	Garcia-Ruiz C.
+35271820400	García-Ruiz C.	Garcia-Ruiz C.
+35271820400	García-Ruiz C.	Garcia-Ruiz C.
+35271820400	García-Ruiz C.	Garcia-Ruiz C.
+14038614100	Gason F.G.C.S.J.	Gason F.
+7005963282	Giroud Ch.	Giroud C.
+7003921245	Grieve M.	Grieve M.C.
+7003921245	Grieve M.	Grieve M.C.
+7003921245	Grieve M.	Grieve M.C.
+7003921245	Grieve M.	Grieve M.C.
+7003921245	Grieve M.	Grieve M.C.
+7003921245	Grieve M.	Grieve M.C.
+56264046400	Grigorescu C.-E.-A.	Grigorescu C.E.A.
+8085495500	Guan D.	Guan D.-W.
+8085495500	Guan D.	Guan D.-W.
+8085495500	Guan D.	Guan D.-W.
+56524367400	Gunning S.	Gunning S.P.
+18735055600	He G.	He G.-L.
+36883245100	Junker H.	Junker H.P.
+35563406800	Kieser J.	Kieser J.A.
+35563406800	Kieser J.	Kieser J.A.
+35563406800	Kieser J.	Kieser J.A.
+35563406800	Kieser J.	Kieser J.A.
+35563406800	Kieser J.	Kieser J.A.
+7201985064	Konig H.-G.	Konig H.G.
+7201985064	König H.G.	Konig H.G.
+7201985064	König H.G.	Konig H.G.
+52663729300	Kubo S.	Kubo S.-I.
+6507449309	Leijenhorst H.	Leijenhorst H.A.L.
+6507449309	Leijenhorst H.	Leijenhorst H.A.L.
+36066142900	Li D.	Li D.-R.
+36699969000	Li S.	Li S.-X.
+55621468900	Lim Bin Abdullah A.F.	Abdullah A.F.L.
+7410109640	Liu J.	Liu J.-T.
+7410109640	Liu J.	Liu J.-T.
+56779547000	Luo P.	Luo P.-B.
+55651176800	Mabbott A.	Mabbott A.J.
+57196751377	Menzel E.Roland	Menzel E.R.
+14047616900	Neil Waddell J.	Waddell J.N.
+23066390300	Nic Daéid N.	Daéid N.N.
+7003470262	Ortíz-Rey J.A.	Ortiz-Rey J.A.
+36787758700	Pasqualucci C.A.	Pasqualucci C.A.G.
+56990337800	Pelton W.	Pelton W.R.
+15823128700	Peluso J.	Peluso J.S.
+6603239644	Pigou P.	Pigou P.E.
+35500896800	Püschel K.	Puschel K.
+35500896800	Püschel K.	Puschel K.
+35500896800	Püschel K.	Puschel K.
+35500896800	Püschel K.	Puschel K.
+56041871900	Reedy B.	Reedy B.J.
+57192437463	Reichard E.	Reichard E.J.
+7201465378	Roberts H.	Roberts H.L.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+7202017940	Roux C.	Roux C.P.
+23489768100	Ruder T.	Ruder T.D.
+7004078270	Ruifrok A.	Ruifrok A.C.C.
+6508292376	Saverio Romolo F.	Romolo F.S.
+7404768168	Shen Y.	Shen Y.-W.
+6701362372	Stoney D.	Stoney D.A.
+6602185784	Suárez-Mier M.P.	Suarez-Mier M.P.
+24176029100	Taylor M.	Taylor M.C.
+24176029100	Taylor M.	Taylor M.C.
+55886266900	Templeton J.E.	Templeton J.E.L.
+7005096122	Thali M.	Thali M.J.
+35453492500	Thompson R.	Thompson R.C.
+7005194760	Troncoso J.	Troncoso J.C.
+6603650278	van der Weerd J.	Van Der Weerd J.
+6603650278	van der Weerd J.	Van Der Weerd J.
+6603650278	van der Weerd J.	Van Der Weerd J.
+6603650278	van der Weerd J.	Van Der Weerd J.
+6603650278	van der Weerd J.	Van Der Weerd J.
+6603650278	van der Weerd J.	Van Der Weerd J.
+6603650278	van der Weerd J.	Van Der Weerd J.
+7004446554	van Leeuwen T.G.	Van Leeuwen T.G.
+6602826971	Voelcker N.	Voelcker N.H.
+6602427411	Vowles G.	Vowles G.H.
+6602268152	W?s-Guba?a J.	Was-Gubala J.
+6507523171	Wa?s J.	Was J.
+6507523171	Wa?s J.	Was J.
+6507523171	Wa?s J.	Was J.
+6602268152	Wa?s-Guba?a J.	Was-Gubala J.
+6602268152	Wa?s-Guba?a J.	Was-Gubala J.
+56991929900	Wang Z.	Wang Z.-Y.
+56991929900	Wang Z.Y.	Wang Z.-Y.
+6602268152	Was-Guba?a J.	Was-Gubala J.
+6602268152	Was-Guba?a J.	Was-Gubala J.
+6602268152	Was-Guba?a J.	Was-Gubala J.
+6602268152	Was-Guba?a J.	Was-Gubala J.
+7201757449	Watson N.	Watson N.D.
+7003873724	Wiggins K.	Wiggins K.G.
+7003873724	Wiggins K.	Wiggins K.G.
+7003873724	Wiggins K.	Wiggins K.G.
+7003873724	Wiggins K.	Wiggins K.G.
+7003873724	Wiggins K.	Wiggins K.G.
+7003873724	Wiggins K.	Wiggins K.G.
+7003873724	Wiggins K.	Wiggins K.G.
+23977228200	Xu Y.C.	Xu Y.-C.
+36097416800	Yu T.	Yu T.-S.
+36097416800	Yu T.	Yu T.-S.
+36097416800	Yu T.	Yu T.-S.
+42062559600	Zhang H.	Zhang H.-D.
+55705163200	Zhao X.	Zhao X.-L.
+7404148989	Zhao Z.	Zhao Z.-Q.
+8898881800	Zhou Y.	Zhou Y.-W.
+8898881800	Zhou Y.W.	Zhou Y.-W.
+6602086334	Zi?ba-Palus J.	Zieba-Palus J.
+7003818190	Ziegan J.	Ziegan J.B.
+	[No author name available]	
