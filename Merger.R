@@ -322,7 +322,7 @@ WebOfScienceReducedDatasetCorrected$DT <- gsub("PROCEEDINGS PAPER","PROCEEDINGS"
 ##### Search for match by Source between the two datasets
 ##### to generate a list of titles with a partial match for external check
 
-matches=partialMatch(WebOfScienceReducedDataset$SO,ScopusReducedDataset$SO)
+matches=partialMatch(WebOfScienceReducedDatasetCorrected$SO,ScopusReducedDataset$SO)
 
 aggregate(matches$pass, by=list(matches$pass), FUN=length)
 
@@ -338,11 +338,11 @@ PartialExport <- matches %>% filter(pass == "Partial")
 SourceCorrection <- read.csv("PartialExport_SourceCorrected.txt", sep = "\t", header = TRUE)
 SourceCorrection <- as.data.frame(SourceCorrection)
 
-WebOfScienceReducedDataset$SOCorrected <- gsr(as.character(WebOfScienceReducedDataset$SO), as.character(SourceCorrection$raw.x), as.character(SourceCorrection$raw.y))
-WebOfScienceReducedDataset <- WebOfScienceReducedDataset%>%
+WebOfScienceReducedDatasetCorrected$SOCorrected <- gsr(as.character(WebOfScienceReducedDatasetCorrected$SO), as.character(SourceCorrection$raw.x), as.character(SourceCorrection$raw.y))
+WebOfScienceReducedDatasetCorrected <- WebOfScienceReducedDatasetCorrected%>%
   select(PY,AU,DEW,IDW,C1W,DI,SOCorrected,DT)
 # rename TICorrected column
-names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="SOCorrected"] <- "SO"
+names(WebOfScienceReducedDatasetCorrected)[names(WebOfScienceReducedDatasetCorrected)=="SOCorrected"] <- "SO"
 
 ########################################################
 #####         To combine both lists into one       #####
@@ -356,10 +356,8 @@ DatabaseOutput <- DatabaseOutputTemp %>%
 
 # To summarise by removing duplicate, grouping by Title and year. 
 CombinedDataset <- DatabaseOutput %>%
-  group_by(TI,PY) %>% summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse=", ")), 
+  group_by(TI,PY, SO, DT) %>% summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse=", ")), 
                                 DOI = rem_dup_word(paste(DI[!is.na(DI)], collapse=", ")),
-                                SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", ")),
-                                DT = rem_dup_word(paste(DT[!is.na(DT)], collapse=", ")),
                                 DEW = paste(DEW[!is.na(DEW)], collapse=", "), 
                                 IDW = paste(IDW[!is.na(IDW)], collapse=", "), 
                                 DES = paste(DES[!is.na(DES)], collapse=", "),
@@ -532,6 +530,8 @@ ExclusionDataSet <- setdiff(CombinedDataset,InclusionDataSet)
 Keyword.list <- paste(c("FIBRE", 
                         "FIBER",
                         "CLOTHING", 
+                        "TEXTILE FIBRE",
+                        "TEXTILE FIBER",
                         "TEXTILE"), collapse = '|')
 
 # Creating a new list of document which don't have any of the keywords from Keyword.list
@@ -578,6 +578,10 @@ test2 <- FNdocument + TNdocument
 ifelse(Excludeddocument == test2, "Correct", "Not correct")
 V2 <- as.data.frame(ifelse(Excludeddocument == test2, "Correct", "Not correct"))
 
+# 3) Recreating the dataset after the first cleaning
+# creating a new dataset "ScopusCleanedData" with the True positive documents from InclusionDataSetBis and False negative documents from ExclusionDataSetBis
+CombinedDataset2 <- rbind(TruePositiveList, FalseNegativeList)
+
 #######################################################################
 #####     Second cleansing of the dataset based on AIKeywords     #####
 #######################################################################
@@ -595,8 +599,8 @@ removeKeywords.list <- paste(c("GUNSHOT RESIDUE", "GSR", "GUNSHOT","FIREAMRS",
 removeKeywordslist <- as.data.frame(removeKeywords.list)
 
 # Creating a new list of document which don't have any of the keywords from removeKeywords.list
-InclusionDataSetBis <- InclusionDataSet %>%
-  filter(!grepl(removeKeywords.list, InclusionDataSet$AIK))
+InclusionDataSetBis <- CombinedDataset2 %>%
+  filter(!grepl(removeKeywords.list, CombinedDataset2$AIK))
 
 # testing the new inclusion list with the previous"Keyword.list"
 FalsePositiveListBis <- InclusionDataSetBis[-grep(Keyword.list, InclusionDataSetBis$AIK), ]
@@ -626,8 +630,8 @@ addKeywords.list <- paste(c("TEXTILE",
 addKeywordslist <- as.data.frame(addKeywords.list)
 
 # Creating a new list of document which don't have any of the keywords from addKeywords.list
-ExclusionDataSetbis <- ExclusionDataSet %>%
-  filter(!grepl(addKeywords.list, ExclusionDataSet$AIK))
+ExclusionDataSetbis <- CombinedDataset2 %>%
+  filter(!grepl(addKeywords.list, CombinedDataset2$AIK))
 
 # testing the new exlusion list with the previous "Keyword.list"
 FalseNegativeListBis <- ExclusionDataSetbis[grep(Keyword.list, ExclusionDataSetbis$AIK), ]
@@ -676,7 +680,7 @@ V6 <- as.data.frame(ifelse(FNdocumentTer == FNdocumentBis, "Correct", "Not corre
 #######################################################################
 
 # creating a new dataset "ScopusCleanedData" with the True positive documents from InclusionDataSetBis and False negative documents from ExclusionDataSetBis
-ScopusCleanedData <- rbind(TruePositiveListBis, FalseNegativeListBis)
+CombinedDataset3 <- rbind(TruePositiveListBis, FalseNegativeListBis)
 
 #######################################################################
 #####              Overview of all the verifications              #####
