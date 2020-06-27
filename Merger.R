@@ -1,7 +1,7 @@
 #############################################################
 #####                 File requirement                  #####
 #############################################################
-# The files to be imported is generated from Scopus.
+# The files to be imported is generated from Scopus and Web Of Science.
 # The columns will need to contain:
 #   Year; Title; Source.title; Authors; AuthorID; DE; DES; EID
 
@@ -16,6 +16,7 @@ library(countrycode)
 library(RColorBrewer)
 library(bibliometrix)
 library(tidyverse)
+library(plotly)
 
 #############################################################
 #####                      Function  1/4                #####
@@ -706,15 +707,15 @@ show(Verifications)
 #############################################################
 
 #Split Column "AIK" in row by the separator ";", remove leading white space to generate list
-ScopusKeywordList <- CombinedDataset %>% 
+MergeDataKeywordList <- CombinedDataset3 %>% 
   mutate(AIKeywords = strsplit(as.character(AIK), ";")) %>% 
   unnest(AIKeywords) %>%
   mutate_if(is.character, str_trim)
 
 # Upper case "AIK" in "KeywordList" and save in dataframe
 # Extract list of "AIK" and remove duplicate
-ScopusKeywordList$AIKeywords <- toupper(ScopusKeywordList$AIKeywords)
-KeywordList <- ScopusKeywordList %>%
+MergeDataKeywordList$AIKeywords <- toupper(MergeDataKeywordList$AIKeywords)
+KeywordList <- MergeDataKeywordList %>%
   select(AIKeywords)
 Keyword <- KeywordList %>%
   distinct()
@@ -722,7 +723,7 @@ Keyword <- KeywordList %>%
 # Most cited keywords before correction - Extract a list of keywords to apply corrections
 KeywordListCount <- aggregate(KeywordList$AIKeywords, by=list(Freq=KeywordList$AIKeywords), FUN=length)
 names(KeywordListCount) <- c("Keywords","Count")
-write.csv(KeywordListCount,"Keywords to correct.csv")
+#write.csv(KeywordListCount,"Keywords to correct.csv")
 
 #############################################################
 #####                  Data cleansing                   #####
@@ -731,20 +732,21 @@ write.csv(KeywordListCount,"Keywords to correct.csv")
 #Correction to the keywords can be applied at this stage. This can be done in Notepad++, Excel etc. The ultimate order of the list must be kept so it can be binded to the orignial data.
 
 #read the corrected list of keywords and combine it to the original list
-KeywordsCorrected <- read.csv("KeywordsCorrection.txt", sep="\t", header=TRUE)
+KeywordsCorrected <- read.csv("Merger_AKeywords_Corrected.txt", sep="\t", header=TRUE)
 KeywordsCorrected <- as.data.frame(KeywordsCorrected)
-ScopusKeywordList$KeywordsCorrected <- gsr(as.character(ScopusKeywordList$AIKeywords),as.character(KeywordsCorrected$AIKeywords),as.character(KeywordsCorrected$CorrectedAIKeywords))
+MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$AIKeywords),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$KeywordsCorrected))
 
 
 #############################################################
 #####               Data analysis - Keywords            #####
 #############################################################
+#####________________Table Keyword Count________________#####
 # Count the number of references with DES, DEW, IDS and IDW as well as their % to the total number of references
-Totalref <- data.frame(nrow(CombinedDataset))
-CountDES <- data.frame(table(CombinedDataset$DES, exclude = ""));CountDES
-CountDEW <- data.frame(table(CombinedDataset$DEW, exclude = ""));CountDEW
-CountIDS <- data.frame(table(CombinedDataset$IDS, exclude = ""));CountIDS
-CountIDW <- data.frame(table(CombinedDataset$IDW, exclude = ""));CountIDW
+Totalref <- data.frame(nrow(CombinedDataset3))
+CountDES <- data.frame(table(CombinedDataset3$AIKS, exclude = ""));CountDES
+CountDEW <- data.frame(table(CombinedDataset3$AIKW, exclude = ""));CountDEW
+CountIDS <- data.frame(table(CombinedDataset3$IDS, exclude = ""));CountIDS
+CountIDW <- data.frame(table(CombinedDataset3$IDW, exclude = ""));CountIDW
 
 KeywordTable_1 <- data.frame(nrow(CountDES))
 KeywordTable_1[2,1] <- nrow(CountDEW)
@@ -767,27 +769,28 @@ names(KeywordTable_1) <- c("Keywords", "Count", "%")
 #Export to text file
 #write.table(KeywordTable_1, file = "Merger_KeywordTable_1.csv", sep = ",", row.names = F)
 
+#####________________Graph Preparation________________#####
 #Count to number of time the same year is repeated in the "ScopusKeywordList$Year" and save in a data.frame "Year" 
-PublicationYear<- data.frame(table(CombinedDataset$PY));PublicationYear
+PublicationYear<- data.frame(table(CombinedDataset3$PY));PublicationYear
 names(PublicationYear) <- c("Year","Publications")
 
 #count the number of keywords per title paper 
-ScopusKeywordListTemp1 <- ScopusKeywordList  %>%
+MergeDataKeywordListTemp1 <- MergeDataKeywordList  %>%
   select(PY,TI,KeywordsCorrected) %>%
   distinct()
-names(ScopusKeywordListTemp1) <- c("Year","Title","KeywordsCorrected")
+names(MergeDataKeywordListTemp1) <- c("Year","Title","KeywordsCorrected")
 
-ScopusKeywordListTemp2 <-ScopusKeywordListTemp1[complete.cases(ScopusKeywordListTemp1), ]
-sum(is.na(ScopusKeywordListTemp2$KeywordsCorrected))
+MergeDataKeywordListTemp2 <- MergeDataKeywordListTemp1[complete.cases(MergeDataKeywordListTemp1), ]
+sum(is.na(MergeDataKeywordListTemp2$KeywordsCorrected))
 
-ScopusKeywordYearCount <- aggregate(ScopusKeywordListTemp2$Year, by=list(Year=ScopusKeywordListTemp2$Year, Rtitle=ScopusKeywordListTemp2$KeywordsCorrected), FUN=length)
-ScopusKeywordTotalCount <- aggregate(ScopusKeywordListTemp2$Year, by=list(Rtitle=ScopusKeywordListTemp2$KeywordsCorrected), FUN=length)
-# ScopusKeywordListTemp5 <- aggregate(ScopusKeywordListTemp2, by=list(ScopusKeywordListTemp2$Year), FUN=length)
+MergeDataKeywordYearCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Year=MergeDataKeywordListTemp2$Year, Rtitle=MergeDataKeywordListTemp2$KeywordsCorrected), FUN=length)
+MergeDataKeywordTotalCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Rtitle=MergeDataKeywordListTemp2$KeywordsCorrected), FUN=length)
+# MergeDataKeywordListTemp5 <- aggregate(MergeDataKeywordListTemp2, by=list(MergeDataKeywordListTemp2$Year), FUN=length)
 
 # narrowing range for plot
-ScopusKeywordNarrowRangeGraph <- subset(ScopusKeywordTotalCount,x>30)
+MergeDataKeywordNarrowRangeGraph <- subset(MergeDataKeywordTotalCount,x>=5)
 
-SubsetKeywordNarrowRangeGraph <-subset(ScopusKeywordYearCount,Rtitle %in% ScopusKeywordNarrowRangeGraph$Rtitle)
+SubsetKeywordNarrowRangeGraph <-subset(MergeDataKeywordYearCount,Rtitle %in% MergeDataKeywordNarrowRangeGraph$Rtitle)
 #Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
 SubsetKeywordNarrowRangeGraph$x <- as.numeric(SubsetKeywordNarrowRangeGraph$x)
 
@@ -797,15 +800,15 @@ SubsetKeywordNarrowRangeGraph$x <- as.numeric(SubsetKeywordNarrowRangeGraph$x)
 
 # Create a new variable from incidence
 SubsetKeywordNarrowRangeGraph$Incidenceweight <- cut(SubsetKeywordNarrowRangeGraph$x,
-                                                     breaks = c(-1,0,1,2,5,10,20,30,max(SubsetKeywordNarrowRangeGraph$x,na.rm=T)),
-                                                     labels=c("0","1","2","3-5","6-10","11-20","21-30",">30"))
+                                                     breaks = c(-1,0,1,2,5,10,max(SubsetKeywordNarrowRangeGraph$x,na.rm=T)),
+                                                     labels=c("0","1","2","3-5","6-10","11-20"))
 
 GraphTemp1 <- SubsetKeywordNarrowRangeGraph %>%
   # convert state to factor and reverse order of levels
   mutate(KeywordsCorrected=factor(Rtitle,levels=rev(sort(unique(Rtitle))))) %>%
   # create a new variable from count
-  mutate(countfactor=cut(x,breaks=c(-1,0,1,2,5,10,20,30,max(x,na.rm=T)),
-                         labels=c("0","1","2","3-5","6-10","11-20","21-30",">30")))  %>%
+  mutate(countfactor=cut(x,breaks=c(-1,0,1,2,5,10,max(x,na.rm=T)),
+                         labels=c("0","1","2","3-5","6-10","11-20")))  %>%
   # change level order
   mutate(countfactor=factor(as.character(countfactor),levels=rev(levels(countfactor))))
 # KeywordList$WYear <- gsr(KeywordList$Year,year$Var1,1/year$Freq)
@@ -820,18 +823,17 @@ textcol <- "black"
 p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=countfactor))+
   geom_tile(colour="white",size=0.2)+
   guides(fill=guide_legend(title="Count"))+
-  #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
+  #  labs(x="",y="",title="Keywords found in fibre publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
   scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
-  scale_fill_manual(values=c("#d53e4f","#f46d43","#fdae61","#fee08b","#d5ee52","#77c86c","#66afc6","#ddf1da"),na.value = "grey90")+
+  scale_fill_manual(values=c("#08519C","#3182BD","#6BAED6","#9ECAE1","#C6DBEF","#EFF3FF"),na.value = "grey90")+
   #coord_fixed()+
-  theme_grey(base_size=8)+
-  theme(text = element_text(family = "Palatino"),
-        legend.position="right",legend.direction="vertical",
+  theme_grey(base_size=12)+
+  theme(legend.position="right",legend.direction="vertical",
         legend.title=element_text(colour=textcol),
         legend.margin=margin(grid::unit(0,"cm")),
-        legend.text=element_text(colour=textcol,size=7),
+        legend.text=element_text(colour=textcol,),
         legend.key.height=grid::unit(0.8,"cm"),
         legend.key.width=grid::unit(0.2,"cm"),
         axis.text.x=element_text(size=8,colour=textcol),
@@ -841,7 +843,9 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         panel.border=element_blank(),
         plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
         plot.title=element_text(colour=textcol,hjust=0,size=12))
+show(p)
 
+ggplotly(p)
 ggsave("Fig5_KeywordTrend.png", p, width = 6, height = 8, units = "in", dpi=150)
 
 #############################################################
