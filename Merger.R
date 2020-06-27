@@ -164,7 +164,7 @@ WebofScience<-convert2df(Wos,dbsource = "isi",format = "bibtex")
 #####             For the results from Scopus           #####
 # Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI
 ScopusReducedDataset <- Scopus %>%
-  select(PY,AU,TI,DE,ID,C1,DI,url)
+  select(PY,AU,TI,DE,ID,C1,DI,url,SO,DT)
 # transfor the year into numeric
 ScopusReducedDataset$PY <- as.numeric(ScopusReducedDataset$PY)
 
@@ -182,7 +182,7 @@ names(ScopusReducedDataset)[names(ScopusReducedDataset)=="C1"] <- "C1S"
 #####        For the results from Web of Science        #####
 # Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI
 WebOfScienceReducedDataset <- WebofScience %>%
-  select(PY,AU,TI,DE,ID,C1,DI)
+  select(PY,AU,TI,DE,ID,C1,DI,SO,DT)
 # removing the extra "." in the affiliation after the country
 WebOfScienceReducedDataset$C1  <- as.character(gsub("\\.","\\",WebOfScienceReducedDataset$C1))
 
@@ -228,7 +228,7 @@ ScopusReducedDataset$TICorrected <- gsr(as.character(ScopusReducedDataset$TI),as
 
 # Split Column "AU" with the separator ";" and place it in AuthorListScopusExtended
 AuthorListScopus <- ScopusReducedDataset %>%
-  select(PY,TICorrected,AU,DES,IDS,C1S,DI)
+  select(PY,TICorrected,AU,DES,IDS,C1S,DI,SO,DT)
 # rename TICorrected column
 names(AuthorListScopus)[names(AuthorListScopus)=="TICorrected"] <- "TI"
 
@@ -239,7 +239,7 @@ AuthorListScopusExtended <- AuthorListScopus %>%
   mutate_if(is.character, str_trim)
 
 # export to correct the author names
-write.table(AuthorListScopusExtended, "Authors to correct.txt", sep = "\t")
+#write.table(AuthorListScopusExtended, "Authors to correct.txt", sep = "\t")
 
 # read the corrected list of "Authors" and combine it to the original list
 AuthorCorrected <- read.csv("Authors Name Corrected.txt", sep="\t", header=TRUE)
@@ -248,7 +248,7 @@ AuthorListScopusExtended$AuthorsCor <- gsr(AuthorListScopusExtended$Authors,Auth
 # generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
 # The corrected list should be the same lenght as the original version. Duplicates will be removed and they will need to be checked individually.
 ScopusReducedDatasetCorrected <- AuthorListScopusExtended %>%
-  group_by(PY,TI,AU,DES,IDS,C1S,DI) %>%
+  group_by(PY,TI,AU,DES,IDS,C1S,DI,SO,DT) %>%
   summarise(Authors = paste(Authors, collapse = ";"), AuthorCorrected = paste(AuthorsCor, collapse = ";"))
 
 # Duplicate check on the output:
@@ -262,7 +262,7 @@ ScopusReducedDataset <- ScopusReducedDataset %>%
   unnest(IDS) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(PY,AU,TI,DES,C1S,DI) %>%
+  group_by(PY,AU,TI,DES,C1S,DI,SO,DT) %>%
   summarise(IDS = sort(paste(IDS, collapse= ";")))%>%
   ungroup()
 
@@ -275,7 +275,7 @@ ScopusReducedDataset <- ScopusReducedDataset %>%
   unnest(C1S) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(PY,AU,TI,DES,IDS,DI) %>%
+  group_by(PY,AU,TI,DES,IDS,DI,SO,DT) %>%
   summarise(C1S = sort(paste(C1S, collapse= ",")))%>%
   ungroup()
 
@@ -292,7 +292,7 @@ ScopusReducedDataset <- arrange(ScopusReducedDataset, AU)
 
 # Split Column "AU" with the separator ";" and place it in AuthorListWebOfScienceExtended
 AuthorListWebOfScience <- WebOfScienceReducedDataset %>%
-  select(PY,TI,AU,DEW,IDW,C1W,DI)
+  select(PY,TI,AU,DEW,IDW,C1W,DI,SO,DT)
 
 # Split Column "Authors" in row by the separator ";", remove leading white space to generate list
 AuthorListWebOfScienceExtended <- AuthorListWebOfScience %>% 
@@ -306,11 +306,43 @@ AuthorListWebOfScienceExtended$AuthorsCor <- gsr(AuthorListWebOfScienceExtended$
 # generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
 
 WebOfScienceReducedDatasetCorrected <- AuthorListWebOfScienceExtended %>%
-  group_by(PY,TI,AU,DEW,IDW,C1W,DI) %>%
+  group_by(PY,TI,AU,DEW,IDW,C1W,DI,SO,DT) %>%
   summarise(Authors = paste(Authors, collapse = ";"), AuthorCorrected = paste(AuthorsCor, collapse = ";"))
 
 DupeWebOfScience <- WebOfScienceReducedDataset %>%
   find_duplicates(PY,TI,AU)
+
+########################################################
+##### make some correction to DT
+WebOfScienceReducedDatasetCorrected$DT <- gsub("ARTICLE; BOOK CHAPTER","BOOK CHAPTER",WebOfScienceReducedDatasetCorrected$DT)
+WebOfScienceReducedDatasetCorrected$DT <- gsub("ARTICLE; PROCEEDINGS PAPER","PROCEEDINGS",WebOfScienceReducedDatasetCorrected$DT)
+WebOfScienceReducedDatasetCorrected$DT <- gsub("PROCEEDINGS PAPER","PROCEEDINGS",WebOfScienceReducedDatasetCorrected$DT)
+
+########################################################
+##### Search for match by Source between the two datasets
+##### to generate a list of titles with a partial match for external check
+
+matches=partialMatch(WebOfScienceReducedDataset$SO,ScopusReducedDataset$SO)
+
+aggregate(matches$pass, by=list(matches$pass), FUN=length)
+
+PartialExport <- matches %>% filter(pass == "Partial")
+
+# The PArtialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
+#write.table(PartialExport, file = "PartialExport_Source.txt", quote = F, sep="\t", row.names = F)
+
+# Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
+# The Source generated in Scopus will be use to correct the one in WoS
+# The \& symbol present in the source from Web of science must be corrected as well
+# Applying the title correction does not necessary mean there will not be further partial match is the function is rerun on the new (corrected) Scopus dataframe. 
+SourceCorrection <- read.csv("PartialExport_SourceCorrected.txt", sep = "\t", header = TRUE)
+SourceCorrection <- as.data.frame(SourceCorrection)
+
+WebOfScienceReducedDataset$SOCorrected <- gsr(as.character(WebOfScienceReducedDataset$SO), as.character(SourceCorrection$raw.x), as.character(SourceCorrection$raw.y))
+WebOfScienceReducedDataset <- WebOfScienceReducedDataset%>%
+  select(PY,AU,DEW,IDW,C1W,DI,SOCorrected,DT)
+# rename TICorrected column
+names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="SOCorrected"] <- "SO"
 
 ########################################################
 #####         To combine both lists into one       #####
@@ -320,11 +352,20 @@ DatabaseOutputTemp <- bind_rows(WebOfScienceReducedDatasetCorrected, ScopusReduc
 DatabaseOutputTemp <- as.data.frame(DatabaseOutputTemp)
 
 DatabaseOutput <- DatabaseOutputTemp %>%
-  select(TI,PY,AuthorCorrected,DEW,IDW,DES,IDS,C1W,C1S,DI)
+  select(TI,PY,AuthorCorrected,DEW,IDW,DES,IDS,C1W,C1S,DI,SO,DT)
 
 # To summarise by removing duplicate, grouping by Title and year. 
 CombinedDataset <- DatabaseOutput %>%
-  group_by(TI,PY) %>% summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse=", ")), DOI = rem_dup_word(paste(DI[!is.na(DI)], collapse=", ")), DEW = paste(DEW[!is.na(DEW)], collapse=", "), IDW = paste(IDW[!is.na(IDW)], collapse=", "), DES = paste(DES[!is.na(DES)], collapse=", "),IDS = paste(IDS[!is.na(IDS)], collapse=", "),C1W = paste(C1W[!is.na(C1W)], collapse=", "),C1S = paste(C1S[!is.na(C1S)], collapse=", "))
+  group_by(TI,PY) %>% summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse=", ")), 
+                                DOI = rem_dup_word(paste(DI[!is.na(DI)], collapse=", ")),
+                                SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", ")),
+                                DT = rem_dup_word(paste(DT[!is.na(DT)], collapse=", ")),
+                                DEW = paste(DEW[!is.na(DEW)], collapse=", "), 
+                                IDW = paste(IDW[!is.na(IDW)], collapse=", "), 
+                                DES = paste(DES[!is.na(DES)], collapse=", "),
+                                IDS = paste(IDS[!is.na(IDS)], collapse=", "),
+                                C1W = paste(C1W[!is.na(C1W)], collapse=", "),
+                                C1S = paste(C1S[!is.na(C1S)], collapse=", "))
 
 # Filling Affiliations columns empty string with NA
  CombinedDataset$C1S[CombinedDataset$C1S==""]<-NA
@@ -353,34 +394,6 @@ DupeCombinedDataset <- CombinedDataset %>%
 # It is best to remove  the white space present with the ";"
 CombinedDataset <- transform(CombinedDataset, DE=paste(DEW, DES, sep="; "))
 CombinedDataset$DE  <- as.character(gsub("; ",";",CombinedDataset$DE))
-
-# Count the number of references with DES, DEW, IDS and IDW as well as their % to the total number of references
-Totalref <- data.frame(nrow(CombinedDataset))
-CountDES <- data.frame(table(CombinedDataset$DES, exclude = ""));CountDES
-CountDEW <- data.frame(table(CombinedDataset$DEW, exclude = ""));CountDEW
-CountIDS <- data.frame(table(CombinedDataset$IDS, exclude = ""));CountIDS
-CountIDW <- data.frame(table(CombinedDataset$IDW, exclude = ""));CountIDW
-
-KeywordTable_1 <- data.frame(nrow(CountDES))
-KeywordTable_1[2,1] <- nrow(CountDEW)
-KeywordTable_1[3,1] <- nrow(CountIDS)
-KeywordTable_1[4,1] <- nrow(CountIDW)
-
-rownames(KeywordTable_1)[rownames(KeywordTable_1)=="1"] <- "Author keywords Scopus"
-rownames(KeywordTable_1)[rownames(KeywordTable_1)=="2"] <- "Author keywords WoS"
-rownames(KeywordTable_1)[rownames(KeywordTable_1)=="3"] <- "Index keywords Scopus"
-rownames(KeywordTable_1)[rownames(KeywordTable_1)=="4"] <- "Index keywords WoS"
-
-KeywordTable_1[1,2] <- (KeywordTable_1[1,1]/Totalref)*100
-KeywordTable_1[2,2] <- (KeywordTable_1[2,1]/Totalref)*100
-KeywordTable_1[3,2] <- (KeywordTable_1[3,1]/Totalref)*100
-KeywordTable_1[4,2] <- (KeywordTable_1[4,1]/Totalref)*100
-
-KeywordTable_1 <- rownames_to_column(KeywordTable_1)
-names(KeywordTable_1) <- c("Keywords", "Count", "%")
-
-#Export to text file
-#write.table(KeywordTable_1, file = "Merger_KeywordTable_1.csv", sep = ",", row.names = F)
 
 #############################################################
 #####                    Countries                      #####
@@ -450,8 +463,6 @@ ggsave("Fig2_CountryCounts.png", p, width = 8, height = 6, units = "in", dpi=150
 # This section looks at Keywords
 
 #############################################################
-
-#############################################################
 #####        Select one of the following options        #####
 #############################################################
 
@@ -468,6 +479,225 @@ ggsave("Fig2_CountryCounts.png", p, width = 8, height = 6, units = "in", dpi=150
 # Combine Columns DE, DES and DEW, place in Column name "AIK" and remove original columns
  #CombinedDataset <- CombinedDataset %>%
   #unite("AIK", DE, IDS, IDW, sep = ";", remove = TRUE)
+
+#######################################################################
+#####       Creating an exclusion list based on Source.title      #####
+#######################################################################
+
+# Journal list from scopus is available at https://www.scopus.com/sources.uri?zone=TopNavBar&origin=searchbasic
+# read the export *.csv forensic Journal list from Scopus, separation "\t", and place it in data.frame "ScopusForensicJournalList"
+ScopusForensicJournalList <- read.csv("Scopus_Journal list_Forensic and Justice_21-04-20.txt", sep="\t", header=TRUE)
+
+# Creating a list of keywords for exclusion
+# The keywords should be chosen in relation to the research areas to be excluded
+removejournal.list <- paste(c("Medicine", 
+                              "medicine", 
+                              "Genetics", 
+                              "genetics", 
+                              "Psychology",
+                              "Nursing",
+                              "Psychiatry",
+                              "Neuropsychology",
+                              "Social",
+                              "Digital",
+                              "Toxicology",
+                              "Radiology"), collapse = '|')
+removejournallist <- as.data.frame(removejournal.list)
+
+# Remove from "ScopusForensicJournalList" every Journal with keywords from "removejournal.list" and place it in a new list "InclusionJournals"
+InclusionJournals <- ScopusForensicJournalList %>%
+  filter(!grepl(removejournal.list, ScopusForensicJournalList$Source.title))
+InclusionJournalsReduced <- InclusionJournals %>%
+  select(Source.title)
+# Upper case "Source.title" in "InclusionJournals"
+InclusionJournalsReduced$Source.title <- toupper(InclusionJournals$Source.title)
+
+# Creating a list of documents included, based on Source.title
+InclusionDataSet <-subset(CombinedDataset,SO %in% InclusionJournalsReduced$Source.title)
+
+# Creating a list of documents excluded, based on Source.title
+ExclusionDataSet <- setdiff(CombinedDataset,InclusionDataSet)
+
+#######################################################################
+#####           Testing the exclusion and inclusion list          #####
+#######################################################################
+#Definition
+# True Positive : documents declared relevant to the research subject, and they are relevant
+# False positive : documents declared relevant to the research subject, while they are not relevant
+# True negative : documents declared not relevant to the research subject, and they are not relevant
+# False negative : documents declared not relevant to the research subject, while they are relevant
+
+# 1) Inclusion List
+# Creating a list of keywords relevant to the field of research
+Keyword.list <- paste(c("FIBRE", 
+                        "FIBER",
+                        "CLOTHING", 
+                        "TEXTILE"), collapse = '|')
+
+# Creating a new list of document which don't have any of the keywords from Keyword.list
+FalsePositiveList <- InclusionDataSet[-grep(Keyword.list, InclusionDataSet$AIK), ]
+
+# False positive (FP) documents - documents in InclusionDataSet which can be not relevant (based on Keyword.list)
+FPdocument  <- as.numeric(count(FalsePositiveList))
+
+# True Positive (TP) documents - documents in InclusionDataSet which are relevant (based on Keyword.list)
+TruePositiveList <- InclusionDataSet[grep(Keyword.list, InclusionDataSet$AIK), ]
+TPdocument  <- as.numeric(count(TruePositiveList))
+
+# Total number of documnet in the inclusion list
+Includeddocument <- as.numeric(count(InclusionDataSet))
+
+# % of FP in the exlusion list
+FPdocument/Includeddocument*100
+
+# Verification - Is FPdocument + TPdocument = Includeddocument ?
+test1 <- FPdocument + TPdocument
+ifelse(Includeddocument == test1, "Correct", "Not correct")
+V1 <- as.data.frame(ifelse(Includeddocument == test1, "Correct", "Not correct"))
+
+
+# 2) Exclusion List
+# Creating a new list of document which have, at least, one of the keywords from Keyword.list
+FalseNegativeList <- ExclusionDataSet[grep(Keyword.list, ExclusionDataSet$AIK), ]
+
+# False negative (FN) documents - documents in ExclusionDataSet which can be relevant (based on Keyword.list)
+FNdocument  <- as.numeric(count(FalseNegativeList))
+
+# True Negative documents - documents in ExclusionDataSet which are not relevant (based on Keyword.list)
+TrueNegativeList <- ExclusionDataSet[-grep(Keyword.list, ExclusionDataSet$AIK), ]
+TNdocument  <- as.numeric(count(TrueNegativeList))
+
+# Total number of documnet in the excluded list
+Excludeddocument <- as.numeric(count(ExclusionDataSet))
+
+# Number of FN in the exlusion list
+FNdocument/Excludeddocument*100
+
+# Verification - Is FNdocument + TNdocument = Excludeddocument ?
+test2 <- FNdocument + TNdocument
+ifelse(Excludeddocument == test2, "Correct", "Not correct")
+V2 <- as.data.frame(ifelse(Excludeddocument == test2, "Correct", "Not correct"))
+
+#######################################################################
+#####     Second cleansing of the dataset based on AIKeywords     #####
+#######################################################################
+
+# 1) Cleaning the inclusion List
+# The keywords should be chosen in relation to the research areas to be excluded
+# Remove from inclusion list every document with particular keywords in it
+removeKeywords.list <- paste(c("GUNSHOT RESIDUE", "GSR", "GUNSHOT","FIREAMRS", 
+                               "DNA", 
+                               "FINGERPRINT", 
+                               "DRUG",
+                               "DOCUMENT",
+                               "AXONAL", "HISTOLOGY",
+                               "OPTIC"), collapse = '|')
+removeKeywordslist <- as.data.frame(removeKeywords.list)
+
+# Creating a new list of document which don't have any of the keywords from removeKeywords.list
+InclusionDataSetBis <- InclusionDataSet %>%
+  filter(!grepl(removeKeywords.list, InclusionDataSet$AIK))
+
+# testing the new inclusion list with the previous"Keyword.list"
+FalsePositiveListBis <- InclusionDataSetBis[-grep(Keyword.list, InclusionDataSetBis$AIK), ]
+
+# New calcul of False positive (FP) (based on the previous Ketword.list)
+FPdocumentBis  <- as.numeric(count(FalsePositiveListBis))
+
+# New calcul of True positive (TP) (based on the previous Ketword.list)
+TruePositiveListBis <- InclusionDataSetBis[grep(Keyword.list, InclusionDataSetBis$AIK), ]
+TPdocumentBis  <- as.numeric(count(TruePositiveListBis))
+
+# Total number of document in the inclusion list
+IncludeddocumentBis <- as.numeric(count(InclusionDataSetBis))
+
+# % of FP in the exlusion list
+FPdocumentBis/IncludeddocumentBis*100
+
+# Verification - Is FPdocumentBis + TPdocumentBis = IncludeddocumentBis ?
+test3 <- FPdocumentBis + TPdocumentBis
+ifelse(IncludeddocumentBis == test3, "Correct", "Not correct")
+V3 <- as.data.frame(ifelse(IncludeddocumentBis == test3, "Correct", "Not correct"))
+
+# 2) Cleaning the exclusion List
+# Remove from Exclusion list each document with particular keywords in it
+addKeywords.list <- paste(c("TEXTILE",
+                            "CLOTHING"), collapse = '|')
+addKeywordslist <- as.data.frame(addKeywords.list)
+
+# Creating a new list of document which don't have any of the keywords from addKeywords.list
+ExclusionDataSetbis <- ExclusionDataSet %>%
+  filter(!grepl(addKeywords.list, ExclusionDataSet$AIK))
+
+# testing the new exlusion list with the previous "Keyword.list"
+FalseNegativeListBis <- ExclusionDataSetbis[grep(Keyword.list, ExclusionDataSetbis$AIK), ]
+
+# New calcul of False positive (FP) (based on the previous keyword.list)
+FNdocumentBis  <- as.numeric(count(FalseNegativeListBis))
+
+# New calcul of True negative (FP) (based on the previous keyword.list)
+TrueNegativeListBis <- ExclusionDataSetbis[-grep(Keyword.list, ExclusionDataSetbis$AIK), ]
+TNdocumentBis  <- as.numeric(count(TrueNegativeListBis))
+
+# Total number of documnet in the excluded list
+Excludeddocumentbis <- as.numeric(count(ExclusionDataSetbis))
+
+# Number of FN in the exlusion list
+FNdocumentBis/Excludeddocumentbis*100
+
+# Verification - Is FNdocumentBis + TNdocumentBis = Excludeddocumentbis ?
+test4 <- FNdocumentBis + TNdocumentBis
+ifelse(Excludeddocumentbis == test4, "Correct", "Not correct")
+V4 <- as.data.frame(ifelse(Excludeddocumentbis == test4, "Correct", "Not correct"))
+
+# 3) Are FN and FP in relation to Forensic ?
+# If the number of False positive and False negative is still high after, it is important that these to are in relation to the field of research
+Forensic.list <- paste(c("FORENCIC"), collapse = '|')
+Forensiclist <- as.data.frame(Forensic.list)
+
+# Creating a new list of document which have any of the keywords from Forensic.list
+FalsePositiveListTer <- FalsePositiveListBis %>%
+  filter(!grepl(Forensic.list, FalsePositiveListBis$AIK))
+FalseNegativeListTer <- FalseNegativeListBis %>%
+  filter(!grepl(Forensic.list, FalseNegativeListBis$AIK))
+
+FPdocumentTer  <- as.numeric(count(FalsePositiveListTer))
+FNdocumentTer  <- as.numeric(count(FalseNegativeListTer))
+
+# Verification - if FPdocumentTer = FPdocumentBis then all False positive document in the InclusionDataSetBis are in relation with to Forensic
+ifelse(FPdocumentTer == FPdocumentBis, "Correct", "Not correct")
+V5 <- as.data.frame(ifelse(FPdocumentTer == FPdocumentBis, "Correct", "Not correct"))
+# Verification - if FNdocumentTer = FNdocumentBis then all False negative document in the ExclusionDataSetBis are in relation with to Forensic
+ifelse(FNdocumentTer == FNdocumentBis, "Correct", "Not correct")
+V6 <- as.data.frame(ifelse(FNdocumentTer == FNdocumentBis, "Correct", "Not correct"))
+
+#######################################################################
+#####                Creating the new dataset                     #####
+#######################################################################
+
+# creating a new dataset "ScopusCleanedData" with the True positive documents from InclusionDataSetBis and False negative documents from ExclusionDataSetBis
+ScopusCleanedData <- rbind(TruePositiveListBis, FalseNegativeListBis)
+
+#######################################################################
+#####              Overview of all the verifications              #####
+#######################################################################
+Verifications <- V1
+names(Verifications) <- c("Verifications")
+
+Verifications[2,1] <- V2
+Verifications[3,1] <- V3
+Verifications[4,1] <- V4
+Verifications[5,1] <- V5
+Verifications[6,1] <- V6
+
+rownames(Verifications)[rownames(Verifications)=="1"] <- "FPdocument + TPdocument = Includeddocument ?"
+rownames(Verifications)[rownames(Verifications)=="2"] <- "FNdocument + TNdocument = Excludeddocument ?"
+rownames(Verifications)[rownames(Verifications)=="3"] <- "FPdocumentBis + TPdocumentBis = IncludeddocumentBis ?"
+rownames(Verifications)[rownames(Verifications)=="4"] <- "FNdocumentBis + TNdocumentBis = Excludeddocumentbis ?"
+rownames(Verifications)[rownames(Verifications)=="5"] <- "FPdocumentTer = FPdocumentBis ?"
+rownames(Verifications)[rownames(Verifications)=="6"] <- "FNdocumentTer = FNdocumentBis ?"
+
+show(Verifications)
 
 #############################################################
 
@@ -505,7 +735,33 @@ ScopusKeywordList$KeywordsCorrected <- gsr(as.character(ScopusKeywordList$AIKeyw
 #############################################################
 #####               Data analysis - Keywords            #####
 #############################################################
+# Count the number of references with DES, DEW, IDS and IDW as well as their % to the total number of references
+Totalref <- data.frame(nrow(CombinedDataset))
+CountDES <- data.frame(table(CombinedDataset$DES, exclude = ""));CountDES
+CountDEW <- data.frame(table(CombinedDataset$DEW, exclude = ""));CountDEW
+CountIDS <- data.frame(table(CombinedDataset$IDS, exclude = ""));CountIDS
+CountIDW <- data.frame(table(CombinedDataset$IDW, exclude = ""));CountIDW
 
+KeywordTable_1 <- data.frame(nrow(CountDES))
+KeywordTable_1[2,1] <- nrow(CountDEW)
+KeywordTable_1[3,1] <- nrow(CountIDS)
+KeywordTable_1[4,1] <- nrow(CountIDW)
+
+rownames(KeywordTable_1)[rownames(KeywordTable_1)=="1"] <- "Author keywords Scopus"
+rownames(KeywordTable_1)[rownames(KeywordTable_1)=="2"] <- "Author keywords WoS"
+rownames(KeywordTable_1)[rownames(KeywordTable_1)=="3"] <- "Index keywords Scopus"
+rownames(KeywordTable_1)[rownames(KeywordTable_1)=="4"] <- "Index keywords WoS"
+
+KeywordTable_1[1,2] <- (KeywordTable_1[1,1]/Totalref)*100
+KeywordTable_1[2,2] <- (KeywordTable_1[2,1]/Totalref)*100
+KeywordTable_1[3,2] <- (KeywordTable_1[3,1]/Totalref)*100
+KeywordTable_1[4,2] <- (KeywordTable_1[4,1]/Totalref)*100
+
+KeywordTable_1 <- rownames_to_column(KeywordTable_1)
+names(KeywordTable_1) <- c("Keywords", "Count", "%")
+
+#Export to text file
+#write.table(KeywordTable_1, file = "Merger_KeywordTable_1.csv", sep = ",", row.names = F)
 
 #Count to number of time the same year is repeated in the "ScopusKeywordList$Year" and save in a data.frame "Year" 
 PublicationYear<- data.frame(table(CombinedDataset$PY));PublicationYear
