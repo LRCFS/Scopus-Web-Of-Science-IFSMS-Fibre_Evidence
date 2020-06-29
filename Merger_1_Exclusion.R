@@ -504,10 +504,11 @@ ExclusionDataSet <- setdiff(CombinedDataset,InclusionDataSet)
 
 # 1) Inclusion List
 # Creating a list of keywords relevant to the field of research
-Keyword.list <- paste(c("FIBRE", 
-                        "FIBER",
+Keyword.list <- paste(c("FIBRE","FIBER",
                         "CLOTHING", 
-                        "TEXTILE"), collapse = '|')
+                        "TEXTILE",
+                        "TEXTILE FIBRE", "TEXTILE FIBER",
+                        "DYE", "COLOUR", "COLOR"), collapse = '|')
 
 # Creating a new list of document which don't have any of the keywords from Keyword.list
 FalsePositiveList <- InclusionDataSet[-grep(Keyword.list, InclusionDataSet$AIK), ]
@@ -602,7 +603,8 @@ V3 <- as.data.frame(ifelse(IncludeddocumentBis == test3, "Correct", "Not correct
 # 2) Cleaning the exclusion List
 # Remove from Exclusion list each document with particular keywords in it
 addKeywords.list <- paste(c("TEXTILE",
-                            "CLOTHING"), collapse = '|')
+                            "CLOTHING", 
+                            "DYE", "COLOUR","COLOR"), collapse = '|')
 addKeywordslist <- as.data.frame(addKeywords.list)
 
 # Creating a new list of document which don't have any of the keywords from addKeywords.list
@@ -657,7 +659,8 @@ V6 <- as.data.frame(ifelse(FNdocumentTer == FNdocumentBis, "Correct", "Not corre
 #######################################################################
 
 # creating a new dataset "ScopusCleanedData" with the True positive documents from InclusionDataSetBis and False negative documents from ExclusionDataSetBis
-CombinedDataset3 <- rbind(TruePositiveListBis, FalseNegativeListBis)
+CombinedDataset3 <- rbind(TruePositiveListBis, FalseNegativeListBis) %>%
+  distinct()
 
 #######################################################################
 #####              Overview of all the verifications              #####
