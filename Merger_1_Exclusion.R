@@ -256,8 +256,8 @@ AuthorListScopusExtended <- AuthorListScopus %>%
 #write.table(AuthorListScopusExtended, "Authors to correct.txt", sep = "\t")
 
 # read the corrected list of "Authors" and combine it to the original list
-AuthorCorrected <- read.csv("Authors Name Corrected.txt", sep="\t", header=TRUE)
-AuthorListScopusExtended$AuthorsCor <- gsr(AuthorListScopusExtended$Authors,AuthorCorrected$Name,as.character(AuthorCorrected$Name.Corrected))
+AuthorCorrected <- read.csv("Authors Name Corrected_ScopWoS.txt", sep="\t", header=TRUE)
+AuthorListScopusExtended$AuthorsCor <- gsr(AuthorListScopusExtended$Authors,AuthorCorrected$name, as.character(AuthorCorrected$Name.corrected))
 
 # generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
 # The corrected list should be the same lenght as the original version. Duplicates will be removed and they will need to be checked individually.
@@ -328,7 +328,7 @@ AuthorListWebOfScienceExtended <- AuthorListWebOfScience %>%
   mutate_if(is.character, str_trim)
 
 # read the corrected list of "Authors" and combine it to the original list
-AuthorListWebOfScienceExtended$AuthorsCor <- gsr(AuthorListWebOfScienceExtended$Authors,AuthorCorrected$Name,as.character(AuthorCorrected$Name.Corrected))
+AuthorListWebOfScienceExtended$AuthorsCor <- gsr(AuthorListWebOfScienceExtended$Authors,AuthorCorrected$name, as.character(AuthorCorrected$Name.corrected))
 
 # generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
 WebOfScienceReducedDatasetCorrected <- AuthorListWebOfScienceExtended %>%
@@ -685,4 +685,4 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-write.table(CombinedDataset3, file = "Merger_Dataset_Final.txt", sep = "\t", row.names = F)
+#write.table(CombinedDataset3, file = "Merger_Dataset_Final.txt", sep = "\t", row.names = F)
