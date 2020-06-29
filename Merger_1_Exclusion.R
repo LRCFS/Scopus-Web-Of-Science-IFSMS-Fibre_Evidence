@@ -175,7 +175,7 @@ WebofScience<-convert2df(Wos,dbsource = "isi",format = "bibtex")
 #####    To remove duplicate, some correction is needed on the Title
 
 #####             For the results from Scopus           #####
-# Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI
+# Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI, url, $SO, $DT, $
 ScopusReducedDataset <- Scopus %>%
   select(PY,AU,TI,DE,ID,C1,DI,url,SO,DT)
 # transfor the year into numeric
@@ -219,7 +219,7 @@ aggregate(matches$pass, by=list(matches$pass), FUN=length)
 PartialExport <- matches %>% filter(pass == "Partial")
 
 # The PArtialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
-#write.table(PartialExport, file = "PartialExport.txt", quote = F, sep="\t", row.names = F)
+#write.table(PartialExport, file = "PartialExport.txt", quote = F, sep="\t", row.names = F, path = "Results")
 
 # Correction to the title can be applied at this stage. This can be done in Notepad++, Excel etc.
 # The title generated in Web of Science will be used to correct the one in Scopus
@@ -237,7 +237,6 @@ ScopusReducedDataset$TICorrected <- gsr(as.character(ScopusReducedDataset$TI),as
 ##### The recombined list should be the same length as the original minus any duplicates. Duplicates must be checked.
 
 
-
       # 1) SCOPUS
 
 # Split Column "AU" with the separator ";" and place it in AuthorListScopusExtended
@@ -253,7 +252,7 @@ AuthorListScopusExtended <- AuthorListScopus %>%
   mutate_if(is.character, str_trim)
 
 # export to correct the author names
-#write.table(AuthorListScopusExtended, "Authors to correct.txt", sep = "\t")
+#write.table(AuthorListScopusExtended, "Authors to correct Scopus.txt", sep = "\t")
 
 # read the corrected list of "Authors" and combine it to the original list
 AuthorCorrected <- read.csv("Authors Name Corrected_ScopWoS.txt", sep="\t", header=TRUE)
@@ -327,6 +326,9 @@ AuthorListWebOfScienceExtended <- AuthorListWebOfScience %>%
   unnest(Authors) %>%
   mutate_if(is.character, str_trim)
 
+# export to correct the author names
+write.table(AuthorListWebOfScienceExtended, "Authors to correct WoS.txt", sep = "\t")
+
 # read the corrected list of "Authors" and combine it to the original list
 AuthorListWebOfScienceExtended$AuthorsCor <- gsr(AuthorListWebOfScienceExtended$Authors,AuthorCorrected$name, as.character(AuthorCorrected$Name.corrected))
 
@@ -387,7 +389,7 @@ DatabaseOutput <- DatabaseOutputTemp %>%
 
 # To summarise by removing duplicate, grouping by Title and year. 
 CombinedDataset <- DatabaseOutput %>%
-  group_by(TI, PY) %>% summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse=", ")), 
+  group_by(TI, PY) %>% summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse="; ")), 
                                 DOI = rem_dup_word(paste(DI[!is.na(DI)], collapse=", ")),
                                 DEW = paste(DEW[!is.na(DEW)], collapse=", "), 
                                 IDW = paste(IDW[!is.na(IDW)], collapse=", "), 
@@ -396,7 +398,18 @@ CombinedDataset <- DatabaseOutput %>%
                                 C1W = paste(C1W[!is.na(C1W)], collapse=", "),
                                 C1S = paste(C1S[!is.na(C1S)], collapse=", "),
                                 DT = rem_dup_word(paste(DT[!is.na(DT)], collapse=", ")),
-                                SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", ")))
+                                SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", "))) %>% ungroup()
+
+# In the Authors column, because the number of author is sometimes different between Scopus and Web of Science, a correction must be done
+CombinedDataset <- CombinedDataset %>%
+  mutate(AU = strsplit(as.character(AU), ";", ))%>%
+  unnest(AU) %>%
+  mutate_if(is.character, str_trim) %>%
+  distinct() %>%
+  group_by(TI,PY,DEW,IDW,DES,IDS,C1W,C1S,DOI,SO,DT) %>%
+  summarise(AU = sort(paste(AU, collapse= "; ")))%>%
+  ungroup()
+
 
 # Add some correction to SO
 # This error is particular to the dataset and need to be checked
@@ -422,7 +435,7 @@ CombinedDataset <- rbind(TempScopusAffiliations,TempWebOfSAffiliations)
 
 # Check for duplicate in the combined datasets
 DupeCombinedDataset <- CombinedDataset %>%
-  find_duplicates(PY,TI,AU)
+  find_duplicates(TI)
 
 # The Authors' keywords (i.e. DEW amd DES) between the two lists should be the same, however it is not the case and some correction will be needed.
 # The user can decide to use the original list of keywords given by the databases instead, adding "S" or "W" to "DE"
@@ -689,3 +702,75 @@ show(Verifications)
 #######################################################################
 
 #write.table(CombinedDataset3, file = "Merger_Dataset_Final.txt", sep = "\t", row.names = F)
+
+#############################################################
+#####                 General information               #####
+#############################################################
+
+#Number of document (ND)
+ND <- data.frame(nrow(CombinedDataset3))
+names(ND) <- c("Information")
+GF <- ND
+rownames(GF)[rownames(GF)=="1"] <- "Total number of document"
+
+#Number of different sources (NDS)
+NDS <- data.frame(table(CombinedDataset3$SO, exclude = ""));NDS
+GF[2,1] <- nrow(NDS)
+rownames(GF)[rownames(GF)=="2"] <- "Number of different sources"
+
+# Number of Keywords before correction
+X <- CombinedDataset3 %>% 
+  select(AIKeywords) %>% 
+  mutate(AIKeywords = strsplit(as.character(AIKeywords), ";")) %>% 
+  unnest(AIKeywords) %>%
+  mutate_if(is.character, str_trim) #calculating the total number of keywords
+GF[3,1] <-nrow(X)
+rownames(GF)[rownames(GF)=="3"] <- "Total number of Keywords"
+NK <- data.frame(table(X, exclude = ""));NK
+GF[4,1] <-nrow(NK)
+rownames(GF)[rownames(GF)=="4"] <- "Distinct Keywords"
+
+# Number of Distinct keyword after correction
+Y <- data.frame(InterpolKeywordList$KeywordsCorrected)
+Y <- na.omit(Y)
+Y <- data.frame(table(Y, exclude = ""));Y
+GF[6,1] <-nrow(Y)
+rownames(GF)[rownames(GF)=="6"] <- "Distinct Keywords after correction"
+
+# List of "Author" with one publication only
+ACSP <- data.frame(sum(AuthorCountSinglePaper$Frequency))
+GF[9,1] <- ACSP
+rownames(GF)[rownames(GF)=="1"] <- "Authors with one publication only"
+
+# List of Authors with multiple publications only
+ACMP <- data.frame(sum(AuthorCountMultiplePaper$Frequency))
+GF[10,1] <- ACMP
+rownames(GF)[rownames(GF)=="1"] <- "Authors with multiple publication only"
+
+#Total number of authors
+NOA <- data.frame(ACSP+ACMP)
+GF[11,1] <- NOA
+rownames(GF)[rownames(GF)=="1"] <- "Total number of authors"
+
+# Number of new author per year (NAY)
+NAY <- YearNewAuthor
+NAYmean <- mean(NAY$`New Authors`)
+NAYmean <- round(NAYmean,2)
+NAYmedian <- median(NAY$`New Authors`)
+NAYmedian <- round(NAYmedian,2)
+GF[12,1] <- NAYmean
+rownames(GF)[rownames(GF)=="12"] <- "Average value of new authors per year"
+GF[13,1] <- NAYmedian
+rownames(GF)[rownames(GF)=="13"] <- "Median value of new authors per year"
+
+# Document Types (DT)
+DT <- data.frame(table(InterpolReducedDataSet$Document.Type, exclude = ""));DT
+DT2 <- data.frame(DT[,-1])
+rownames(DT2) <- DT$`Var1`
+colnames(DT2)[colnames(DT2)=="DT....1."] <- "Information"
+GeneralInformationFinal <- rbind(GF,DT2)
+GeneralInformationFinal
+
+# To export data
+#write.table(GeneralInformationFinal, file = "General Information_Scopus.csv", quote = F, sep = "\t", row.names = F)
+
