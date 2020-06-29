@@ -207,7 +207,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p)
 ggplotly(p)
-#ggsave("ScopWoS_KeywordTrend.png", p, width = 11, height = 10, units = "in", dpi=150)
+#ggsave("ScopWoS_KeywordTrend.png", p, width = 11, height = 10, units = "in", dpi=150, path = "Results", path = "Results")
 
 
 #####______________Graph for Techniques analysis only______________##########
@@ -302,7 +302,7 @@ p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p1)
 ggplotly(p1)
-ggsave("ScopWoS_Techniques Keyword Trend.png", p1,  width = 8, height = 3, units = "in", dpi=150)
+ggsave("ScopWoS_Techniques Keyword Trend.png", p1,  width = 8, height = 3, units = "in", dpi=150, path = "Results")
 
 #####______________Graph for Textile analysis only______________##########
 
@@ -386,7 +386,7 @@ p2 <- ggplot(GraphTemp1Ter,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p2)
 ggplotly(p2)
-ggsave("SopWoS_Textile Keyword Trend_04-06-20.png", p2, width = 8, height = 3, units = "in", dpi=150)
+ggsave("SopWoS_Textile Keyword Trend_04-06-20.png", p2, width = 8, height = 3, units = "in", dpi=150, path = "Results")
 
 #####______________2D matrix______________##########
 # create a list with the keywords with a frequency >5
