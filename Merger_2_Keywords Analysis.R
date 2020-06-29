@@ -4,7 +4,7 @@ rm(list=ls())
 #############################################################
 #####                     To read                       #####
 #############################################################
-# This R script is the second step to after merging Scopus and Web of Sciences (BibTex format)
+# This R script is the second step after merging Scopus and Web of Sciences (BibTex format)
 # This script allows a bibliometric analysis on the Keywords 
 # The choice of the keywords to analyse (Authors Keywords, Index Keywords, Both) is done in the previous script
 
@@ -159,6 +159,7 @@ SubsetKeywordNarrowRangeGraph$x <- as.numeric(SubsetKeywordNarrowRangeGraph$x)
 #####                      GRAPH                        #####
 #############################################################
 
+#####______________Graph for keywords with a frequency >=5 ______________##########
 # Create a new variable from incidence
 SubsetKeywordNarrowRangeGraph$Incidenceweight <- cut(SubsetKeywordNarrowRangeGraph$x,
                                                      breaks = c(-1,0,1,2,5,10,max(SubsetKeywordNarrowRangeGraph$x,na.rm=T)),
@@ -190,7 +191,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
   scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
   scale_fill_manual(values=c("#08519C","#3182BD","#6BAED6","#9ECAE1","#C6DBEF","#EFF3FF"),na.value = "grey90")+
   #coord_fixed()+
-  theme_grey(base_size=12)+
+  theme_grey(base_size=14)+
   theme(legend.position="right",legend.direction="vertical",
         legend.title=element_text(colour=textcol),
         legend.margin=margin(grid::unit(0,"cm")),
@@ -206,7 +207,9 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p)
 ggplotly(p)
-ggsave("Fig5_KeywordTrend.png", p, width = 6, height = 8, units = "in", dpi=150)
+#ggsave("ScopWoS_KeywordTrend.png", p, width = 11, height = 10, units = "in", dpi=150)
+
+
 #####______________Graph for Techniques analysis only______________##########
 
 #Create a new variable of MergeKeywordNarrowRangeGraph to not overwrite data
@@ -242,6 +245,14 @@ techniqueslist <- techniqueslist %>%
 # Select from "MergeDataKeywordNarrowRangeGraph2" every keywords from "techniques.list" and place it in a new list "TechniqueList"
 TechniqueList <-subset(MergeDataKeywordNarrowRangeGraph2,Rtitle %in% techniqueslist$techniques.list)
 
+# Rename some of the techniques that are too long
+# read the corrected list of techniques and combine it to TechniqueList
+TechniqueCorrected <- read.csv("Technique Name Corrected_ScopWoS.txt", sep="\t", header=TRUE)
+TechniqueList$Rtitle2 <- gsr(TechniqueList$Rtitle,TechniqueCorrected$name, as.character(TechniqueCorrected$Name.Corrected))
+TechniqueList <- TechniqueList %>% select("Year", "Rtitle2", "x")
+names(TechniqueList) <- c("Year", "Rtitle", "x")
+
+
 #### plot second graph
 # Create a new variable from incidence
 TechniqueList$Incidenceweight <- cut(TechniqueList$x,
@@ -275,7 +286,7 @@ p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
   scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
   scale_fill_manual(values=c("#f46d43","#fdae61","#fee08b","#d5ee52","#77c86c","#66afc6","#ddf1da"),na.value = "grey90")+
   coord_fixed()+
-  theme_grey(base_size=12)+
+  theme_grey(base_size=8)+
   theme(legend.position="right",legend.direction="vertical",
         legend.title=element_text(colour=textcol),
         legend.margin=margin(grid::unit(0,"cm")),
@@ -291,7 +302,7 @@ p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p1)
 ggplotly(p1)
-#ggsave("Techniques Keyword Trend.png", p1, width = 8, height = 8, units = "in", dpi=150)
+ggsave("ScopWoS_Techniques Keyword Trend.png", p1,  width = 8, height = 3, units = "in", dpi=150)
 
 #####______________Graph for Textile analysis only______________##########
 
@@ -375,7 +386,7 @@ p2 <- ggplot(GraphTemp1Ter,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p2)
 ggplotly(p2)
-#ggsave("Interpol Textile Keyword Trend_04-06-20.png", p2, width = 5, height = 2.5, units = "in", dpi=150)
+ggsave("SopWoS_Textile Keyword Trend_04-06-20.png", p2, width = 8, height = 3, units = "in", dpi=150)
 
 #####______________2D matrix______________##########
 # create a list with the keywords with a frequency >5
