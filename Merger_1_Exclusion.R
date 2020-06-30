@@ -706,71 +706,51 @@ show(Verifications)
 #############################################################
 #####                 General information               #####
 #############################################################
+# This section is for generating a table with general information from the dataset
 
-#Number of document (ND)
-ND <- data.frame(nrow(CombinedDataset3))
-names(ND) <- c("Information")
-GF <- ND
-rownames(GF)[rownames(GF)=="1"] <- "Total number of document"
+#####______________Number of document______________##########
+# From Scopus
+NDScop <- data.frame(nrow(Scopus))
+names(NDScop) <- c("Number")
+GF <- NDScop
+rownames(GF)[rownames(GF)=="1"] <- "Number of document from Scopus"
 
-#Number of different sources (NDS)
+#from WoS
+NDWoS <- data.frame(nrow(WebofScience))
+GF[2,1] <- NDWoS
+rownames(GF)[rownames(GF)=="1"] <- "Number of document from Web of Science"
+
+# From Merge before exclusion
+ND <- data.frame(nrow(CombinedDataset))
+GF[3,1] <- ND
+rownames(GF)[rownames(GF)=="1"] <- "Total of document before exclusion"
+
+# From Merge after exclusion
+NDex <- data.frame(nrow(CombinedDataset3))
+GF[4,1] <- NDex
+rownames(GF)[rownames(GF)=="1"] <- "Total of document after exclusion"
+
+#####______________Keywords______________##########
+#after exclusion
+
+#Number of different sources (NDS) 
 NDS <- data.frame(table(CombinedDataset3$SO, exclude = ""));NDS
-GF[2,1] <- nrow(NDS)
-rownames(GF)[rownames(GF)=="2"] <- "Number of different sources"
+GF[5,1] <- nrow(NDS)
+rownames(GF)[rownames(GF)=="5"] <- "Number of different sources"
 
-# Number of Keywords before correction
+# Number of Authors Keywords before correction
 X <- CombinedDataset3 %>% 
-  select(AIKeywords) %>% 
-  mutate(AIKeywords = strsplit(as.character(AIKeywords), ";")) %>% 
-  unnest(AIKeywords) %>%
+  select(AIK) %>% 
+  mutate(AIK = strsplit(as.character(AIK), ";")) %>% 
+  unnest(AIK) %>%
   mutate_if(is.character, str_trim) #calculating the total number of keywords
-GF[3,1] <-nrow(X)
-rownames(GF)[rownames(GF)=="3"] <- "Total number of Keywords"
+GF[6,1] <-nrow(X)
+rownames(GF)[rownames(GF)=="6"] <- "Total number of AKeywords"
 NK <- data.frame(table(X, exclude = ""));NK
-GF[4,1] <-nrow(NK)
-rownames(GF)[rownames(GF)=="4"] <- "Distinct Keywords"
+GF[7,1] <-nrow(NK)
+rownames(GF)[rownames(GF)=="7"] <- "Distinct AKeywords"
 
-# Number of Distinct keyword after correction
-Y <- data.frame(InterpolKeywordList$KeywordsCorrected)
-Y <- na.omit(Y)
-Y <- data.frame(table(Y, exclude = ""));Y
-GF[6,1] <-nrow(Y)
-rownames(GF)[rownames(GF)=="6"] <- "Distinct Keywords after correction"
-
-# List of "Author" with one publication only
-ACSP <- data.frame(sum(AuthorCountSinglePaper$Frequency))
-GF[9,1] <- ACSP
-rownames(GF)[rownames(GF)=="1"] <- "Authors with one publication only"
-
-# List of Authors with multiple publications only
-ACMP <- data.frame(sum(AuthorCountMultiplePaper$Frequency))
-GF[10,1] <- ACMP
-rownames(GF)[rownames(GF)=="1"] <- "Authors with multiple publication only"
-
-#Total number of authors
-NOA <- data.frame(ACSP+ACMP)
-GF[11,1] <- NOA
-rownames(GF)[rownames(GF)=="1"] <- "Total number of authors"
-
-# Number of new author per year (NAY)
-NAY <- YearNewAuthor
-NAYmean <- mean(NAY$`New Authors`)
-NAYmean <- round(NAYmean,2)
-NAYmedian <- median(NAY$`New Authors`)
-NAYmedian <- round(NAYmedian,2)
-GF[12,1] <- NAYmean
-rownames(GF)[rownames(GF)=="12"] <- "Average value of new authors per year"
-GF[13,1] <- NAYmedian
-rownames(GF)[rownames(GF)=="13"] <- "Median value of new authors per year"
-
-# Document Types (DT)
-DT <- data.frame(table(InterpolReducedDataSet$Document.Type, exclude = ""));DT
-DT2 <- data.frame(DT[,-1])
-rownames(DT2) <- DT$`Var1`
-colnames(DT2)[colnames(DT2)=="DT....1."] <- "Information"
-GeneralInformationFinal <- rbind(GF,DT2)
-GeneralInformationFinal
-
+#####______________Final Table______________##########
 # To export data
-#write.table(GeneralInformationFinal, file = "General Information_Scopus.csv", quote = F, sep = "\t", row.names = F)
+write.table(GF, file = "General Information_ScopWoS.csv", quote = F, sep = "\t", row.names = F)
 
