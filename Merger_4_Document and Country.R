@@ -99,6 +99,10 @@ document <- document%>%
 # rename SOCorrected column
 names(document)[names(document)=="Document.TypeC"] <- "Document.Type"
 
+# To export data relative to document
+DT <- data.frame(table(InterpolReducedDataSet$Document.Type, exclude = ""));DT
+write.table(DT, file = "Document type_ScopWoS.csv", quote = F, sep = "\t", row.names = F)
+
 # List of "Articles and their first "Year" of appearance
 Articles <- filter(document, Document.Type=="ARTICLE")
 ArticlesCount <- aggregate(Articles$Document.Type, list(Articles$Year), FUN=length)
