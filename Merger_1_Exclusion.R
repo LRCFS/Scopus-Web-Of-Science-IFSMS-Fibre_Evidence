@@ -750,7 +750,24 @@ NK <- data.frame(table(X, exclude = ""));NK
 GF[7,1] <-nrow(NK)
 rownames(GF)[rownames(GF)=="7"] <- "Distinct AKeywords"
 
+#####______________Document type______________##########
+# For Scopus
+# Change the name of the type of document
+# read the corrected list of "document" and combine it to the original list
+DocumentCorrected <- read.csv("Document Type Name Corrected_ScopWoS.txt", sep="\t", header=TRUE)
+Scopus$Document.TypeC <- gsr(Scopus$DT, DocumentCorrected$name, as.character(DocumentCorrected$Name.Corrected))
+
+# Count the number of time each document type appear
+DTScop <- data.frame(table(Scopus$Document.TypeC, exclude = ""));DTScop
+
+# For WoS
+# Change the name of the type of document
+WebofScience$Document.TypeC <- gsr(WebofScience$DT, DocumentCorrected$name, as.character(DocumentCorrected$Name.Corrected))
+
+# Count the number of time each document type appear
+DTWoS <- data.frame(table(Scopus$Document.TypeC, exclude = ""));DTScop
+
 #####______________Final Table______________##########
 # To export data
-write.table(GF, file = "General Information_ScopWoS.csv", quote = F, sep = "\t", row.names = F)
+#write.table(GF, file = "General Information_ScopWoS.csv", quote = F, sep = "\t", row.names = F)
 
