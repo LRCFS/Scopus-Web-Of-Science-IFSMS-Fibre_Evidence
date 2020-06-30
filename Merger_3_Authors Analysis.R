@@ -209,7 +209,7 @@ ggarrange(YearNewAuthorplot, YearNewAuthorplotpercent,labels = c("A", "B"),ncol 
 
 # create new data.frame of the number of Authors contributed to publications
 Authors <- NumberAuthorYear
-names(Authorsyear) <- c("Year","Freq")
+names(Authors) <- c("Year","Freq")
 
 # create new data.frame of the number of Single Authors contributed to publications 
 SingleAuthors <- AuthorCountSinglePaperReduced %>%
@@ -229,7 +229,7 @@ MultipleAuthorsyear$Var1 <- as.numeric(as.character(MultipleAuthorsyear$Var1))
 names(MultipleAuthorsyear) <- c("Year","Freq")
 
 # Add yearsin which no authors published
-DFfilledauthors <- Authorsyear %>%
+DFfilledauthors <- Authors %>%
   complete(Year = 1978:2020,
            fill = list(Freq = 0)) %>%
   as.data.frame()
