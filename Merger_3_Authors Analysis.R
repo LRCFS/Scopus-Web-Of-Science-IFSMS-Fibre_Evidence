@@ -96,9 +96,14 @@ AuthorListExtended <- AuthorList %>%
 
 #####____________________________##########
 #Count to number of time the same year is repeated in the "AuthorListExtended$Year" and save in a data.frame "Year" 
-PublicationYear<- data.frame(table(AuthorList$Year));PublicationYear
+PublicationYear <- aggregate(AuthorList$Authors,list(AuthorList$Year), FUN=length)
 names(PublicationYear) <- c("Year","Publications")
-sum(PublicationYear$Publications)
+# add missing year to PublicationYear
+DFfilledPublicationYear <- PublicationYear %>%
+  complete(Year = 1978:2020,
+           fill = list(Freq = 0)) %>%
+  as.data.frame()
+PublicationYear <- DFfilledPublicationYear
 
 AuthorCountPaper <- aggregate(AuthorListExtended$Authors, list(AuthorListExtended$Authors), FUN=length)
 names(AuthorCountPaper) <- c("Author","Frequency")
@@ -106,7 +111,12 @@ names(AuthorCountPaper) <- c("Author","Frequency")
 # Number of Authors per year
 NumberAuthorYear <- aggregate(AuthorListExtended$Authors,list(AuthorListExtended$Year), FUN=length)
 names(NumberAuthorYear) <- c("Year","Author")
-sum(NumberAuthorYear$Author)
+# add missing year to NumberAuthorYear
+DFfilledNumberAuthorYear <- NumberAuthorYear %>%
+  complete(Year = 1978:2020,
+           fill = list(Freq = 0)) %>%
+  as.data.frame()
+NumberAuthorYear <- DFfilledNumberAuthorYear
 
 # List of "Author" with one publication only
 AuthorCountSinglePaper <- subset(AuthorCountPaper,Frequency<2)
@@ -116,6 +126,12 @@ sum(AuthorCountSinglePaper$Frequency)
 # List of "Author" with one publication only and their publication "Year"
 YearNewAuthorSinglePaper <- aggregate(AuthorCountSinglePaperReduced$Authors,list(AuthorCountSinglePaperReduced$Year), FUN=length)
 names(YearNewAuthorSinglePaper) <- c("Year","Single Author")
+# add missing year to NumberAuthorYear
+DFfilledYearNewAuthorSinglePaper <- YearNewAuthorSinglePaper %>%
+  complete(Year = 1978:2020,
+           fill = list(Freq = 0)) %>%
+  as.data.frame()
+YearNewAuthorSinglePaper <- DFfilledYearNewAuthorSinglePaper
 
 # List of Authors with multiple publications only
 AuthorCountMultiplePaper <- subset(AuthorCountPaper,Frequency>1)
@@ -160,8 +176,16 @@ names(AuthorMultipleOutputLastYear) <- c("Id","Year")
 AuthorFirstAppearance<- aggregate(AuthorListExtended$Year, list(AuthorListExtended$Authors), min)
 names(AuthorFirstAppearance) <- c("Author","Year")
 
+# New authors
 YearNewAuthor <- aggregate(AuthorFirstAppearance$Author,list(AuthorFirstAppearance$Year), FUN=length)
+# Add years in which no authors published
+DFfilledNewauthors <- YearNewAuthor %>%
+  complete(Group.1 = 1978:2020,
+           fill = list(Freq = 0)) %>%
+  as.data.frame()
+YearNewAuthor <- DFfilledNewauthors
 names(YearNewAuthor) <- c("Year","New Authors")
+
 YearOutput <- Reduce(merge, list(NumberAuthorYear,PublicationYear,YearNewAuthor))
 YearTableOutput <- merge(YearOutput, YearNewAuthorSinglePaper, by="Year", all = T)
 YearTableOutput$Ratio <- round(YearOutput$Author/YearOutput$Publications, 1)
@@ -171,7 +195,7 @@ YearTableOutput$`New Author Percentage` <- round(YearOutput$`New Authors`/YearOu
 YearTableOutput[is.na(YearTableOutput)] <- 0
 
 #Export to text file for Latex import
-#write.table(YearTableOutput, file = "Authors_table.csv", sep = ",", row.names = F)
+write.table(YearTableOutput, file = "Authors_table.csv", sep = ",", row.names = F)
 
 # GRAPH
 YearNewAuthorplot <- ggplot(data=YearTableOutput, aes(x=Year, y=`New Authors`))+
@@ -201,7 +225,9 @@ YearNewAuthorplotpercent <- ggplot()+
 show(YearNewAuthorplotpercent)
 ggplotly(YearNewAuthorplotpercent)
 
-ggarrange(YearNewAuthorplot, YearNewAuthorplotpercent,labels = c("A", "B"),ncol = 1, nrow = 2,legend = "none")
+plot1 <- ggarrange(YearNewAuthorplot, YearNewAuthorplotpercent,labels = c("A", "B"),ncol = 1, nrow = 2,legend = "none")
+plot1
+ggsave("NewAuthors_year.png", plot1, width = 7, height = 6, units = "in", dpi=200, path = "Results")
 
 #####__________________Authors per year _________________#####
 
@@ -228,7 +254,7 @@ MultipleAuthorsyear <- data.frame(table(MultipleAuthors$Year));MultipleAuthorsye
 MultipleAuthorsyear$Var1 <- as.numeric(as.character(MultipleAuthorsyear$Var1))
 names(MultipleAuthorsyear) <- c("Year","Freq")
 
-# Add yearsin which no authors published
+# Add years in which no authors published
 DFfilledauthors <- Authors %>%
   complete(Year = 1978:2020,
            fill = list(Freq = 0)) %>%
