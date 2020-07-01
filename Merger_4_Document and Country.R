@@ -100,7 +100,7 @@ document <- document%>%
 names(document)[names(document)=="Document.TypeC"] <- "Document.Type"
 
 # To export data relative to document
-DT <- data.frame(table(InterpolReducedDataSet$Document.Type, exclude = ""));DT
+DT <- data.frame(table(document$Document.Type, exclude = ""));DT
 write.table(DT, file = "Document type_ScopWoS.csv", quote = F, sep = "\t", row.names = F)
 
 # List of "Articles and their first "Year" of appearance
@@ -170,7 +170,7 @@ DFfilled
 DFfilled[is.na(DFfilled)] <- 0
 
 # To caculate the AAGR and CAGR
-#write.csv(DFfilled,"Interpol AAGR.csv")
+#write.csv(DFfilled,"Merger AAGR.csv")
 
 # GRAPH
 DocumentPerYear <-ggplot(DFfilled, aes(x =Year, y = Total)) +
