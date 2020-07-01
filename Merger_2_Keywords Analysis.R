@@ -207,7 +207,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p)
 ggplotly(p)
-#ggsave("ScopWoS_KeywordTrend.png", p, width = 11, height = 10, units = "in", dpi=150, path = "Results", path = "Results")
+#ggsave("ScopWoS_KeywordTrend.png", p, width = 11, height = 10, units = "in", dpi=150, path = "Results")
 
 
 #####______________Graph for Techniques analysis only______________##########
