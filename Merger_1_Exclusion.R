@@ -765,9 +765,150 @@ DTScop <- data.frame(table(Scopus$Document.TypeC, exclude = ""));DTScop
 WebofScience$Document.TypeC <- gsr(WebofScience$DT, DocumentCorrected$name, as.character(DocumentCorrected$Name.Corrected))
 
 # Count the number of time each document type appear
-DTWoS <- data.frame(table(Scopus$Document.TypeC, exclude = ""));DTScop
+DTWoS <- data.frame(table(WebofScience$Document.TypeC, exclude = ""));DTWoS
 
 #####______________Final Table______________##########
 # To export data
 #write.table(GF, file = "General Information_ScopWoS.csv", quote = F, sep = "\t", row.names = F)
+
+
+##################################################################################
+#####                    Comparison Scopus/Web Of Science all year                 #####
+##################################################################################
+# Creating 2 new dataset to not overwrite the data 
+WebOfScience2 <- WebOfScienceReducedDatasetCorrected
+Scopus2 <- ScopusReducedDatasetCorrected
+
+# Label each row with the database it came from 
+Scopus2$Coder <- "Scopus"
+WebOfScience2$Coder <- "WebOfScience"
+
+# 1) Creating a list or document present in Interpol but not in Scopus
+# Creating a list from Scopus Title
+ScopusTitleList <- Scopus2 %>%
+  select(TI)
+
+# List of records from Interpol that are not in the Scopus database (Title based)
+WoSExclusive <- subset(WebOfScience2,!(TI %in% ScopusTitleList$TI))
+# List of records from WoS that are in the Scopus database (Title based)
+WoSNotExclusive <- subset(WebOfScience2,TI %in% ScopusTitleList$TI)
+
+### Just to check that WoSExclusive + WoSNotExclusive = WebOfScience2 ###
+X <- as.numeric(count(WoSExclusive))
+Y <- as.numeric(count(WoSNotExclusive))
+Z <- as.numeric(count(WebOfScience2))
+X+Y
+Z
+
+# 2) Calculating the % of record present in WoS but not in Scopus
+# Total number of record in the excluded list
+NumberofexcludedDocument <- as.numeric(count(WoSExclusive)) # same thing as X above, just gave it another name
+
+# Number Total of record on WoS
+TotalWoS <- as.numeric(count(WebOfScience2)) # same thing as Z above, just gave it another name
+
+# % of record from WoS present in Scopus
+NumberofexcludedDocument/TotalWoS*100 
+
+
+# 3) Creating a list or document present in Scopus but not in Interpol
+# Creating a list from Scopus Title
+WoSTitleList <- WebOfScience2 %>%
+  select(TI)
+
+# List of records from Scopus that are not in the Interpol database (TI based)
+ScopusExclusive <- subset(Scopus2,!(TI %in% WoSTitleList$TI))
+# List of records from Scopus that are in the Interpol database (TI based)
+ScopusNotExclusive <- subset(Scopus2,TI %in% WoSTitleList$TI)
+
+### Just to check that ScopusExclusive + ScopusNotExclusive = Scopus2 ###
+A <- as.numeric(count(ScopusExclusive))
+B <- as.numeric(count(ScopusNotExclusive))
+C <- as.numeric(count(Scopus2))
+A
+B
+A+B
+C
+
+# 4) Calculating the % of record present in Scopus but not in Interpol
+# Total number of record in the excluded list
+ScopusNumberofexcludedDocument <- as.numeric(count(ScopusExclusive)) # same thing as A above, just gave it another name
+
+# Number Total of record on Scopus
+TotalScopus <- as.numeric(count(Scopus2)) # same thing as C above, just gave it another name
+
+# % of record from Scopus present in Interpol
+ScopusNumberofexcludedDocument/TotalScopus*100
+
+### Just to check that WoSNotExclusive = ScopusNotExclusive  ###
+Y <- as.numeric(count(WoSNotExclusive))
+B <- as.numeric(count(ScopusNotExclusive))
+Y
+B
+
+# there is 3 differences between Y and B
+# ADVANCING THE FORENSIC ANALYSIS OF DYED FIBERS BY TIME-OF-FLIGHT MASS SPECTROMETRY is in double in Scopus because one is a conference paper, the other one is an article
+# APPLICATION OF DYE ANALYSIS IN FORENSIC FIBRE AND TEXTILE EXAMINATION: CASE EXAMPLES is in double in WoS for the same reason as above
+# FORENSIC SCIENCE, APPLICATIONS OF RAMAN SPECTROSCOPY TO FIBER ANALYSIS is in double in Scopus because they don't have the same IDS (one entry don't have one)
+# these file must be deleted manually, the code to remove these will be add at the begining
+Scopus2 <- arrange(Scopus2, TI)
+WebOfScience2 <- arrange(WebOfScience2, TI)
+# to delete them
+#Scopus2 <-Scopus2[-129,] #for the first one
+#WebOfScience2 <-WebOfScience2[-114,] #for the second one
+#Scopus2 <-Scopus2[-687,] #for the third one
+
+#creating the graph
+df <- data.frame(
+  group = c("WOS", "WOS and Scopus"),
+  value = c(X, Y)
+)
+df2 <- data.frame(
+  group = c("Scopus", "WOS and Scopus"),
+  value = c(A, B)
+)
+
+dfc <- df %>%
+  group_by(group) %>%
+  summarise(volume = sum(value)) %>%
+  mutate(share=volume/sum(volume)*100.0) %>%
+  arrange(desc(volume))
+dfc2 <- df2 %>%
+  group_by(group) %>%
+  summarise(volume = sum(value)) %>%
+  mutate(share=volume/sum(volume)*100.0) %>%
+  arrange(desc(volume))
+
+plot1 <- ggplot(dfc[1:2, ], aes("", share, fill = group)) +
+  geom_bar(width = 1, size = 1, color = "white", stat = "identity") +
+  coord_polar("y") +
+  geom_text(aes(label = paste0(round(share), "%")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Record from Web of Science") +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  scale_fill_manual(values=c("#ddf1da", "grey"))+
+  theme_classic(base_size = 16) +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.title = element_text(hjust = 0.5, color = "#666666"),
+        plot.background = element_rect(size=1,linetype="solid",color="black"))
+
+plot2 <- ggplot(dfc2[1:2, ], aes("", share, fill = group)) +
+  geom_bar(width = 1, size = 1, color = "white", stat = "identity") +
+  coord_polar("y") +
+  geom_text(aes(label = paste0(round(share), "%")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Record from Scopus") +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  scale_fill_manual(values=c("#6BAED6","grey"))+
+  theme_classic(base_size = 16) +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.title = element_text(hjust = 0.5, color = "#666666"),
+        plot.background = element_rect(size=1,linetype="solid",color="black"))
+
+plot3 <- ggarrange(plot1, plot2,labels = c("A","B"), ncol = 2, nrow = 1,legend = "bottom")
+plot3
+
+ggsave("PieChart_ScopWoS.png", plot3, width = 10, height = 7, units = "in", dpi=150, path = "Results")
 
