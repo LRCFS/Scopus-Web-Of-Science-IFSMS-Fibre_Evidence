@@ -334,12 +334,12 @@ StatsMultipleAuthorsyear <- data.frame(stat.desc(MultipleAuthorsyear$Freq))
 
 #####__________________Authors per document and per year _________________#####
 # Create a new dataframe with column Year, Title and Authors
-Authorperdocument <- AuthorListExtended %>% group_by(Year,Title, Affiliation) %>%
+Authorperdocument <- AuthorListExtended %>% group_by(Year,Title) %>%
   summarise(AuthorCorrected = paste(Authors, collapse = ";"))
 Authorperdocument <- as.data.frame(Authorperdocument)
 
 # Combine column Year, Affiliation and Title with the separator ";"
-Authorperdocument$Title <- paste(Authorperdocument$Year, Authorperdocument$Title, Authorperdocument$Affiliations, sep = ";")
+Authorperdocument$Title <- paste(Authorperdocument$Year, Authorperdocument$Title, sep = ";")
 Authorperdocument <- as.data.frame(Authorperdocument) %>% 
   select(Title, AuthorCorrected)
 
@@ -348,13 +348,14 @@ Authorperdocument <- Authorperdocument %>%
   mutate(AuthorCorrected = strsplit(as.character(AuthorCorrected), ";"))%>% 
   unnest(AuthorCorrected) %>%
   mutate_if(is.character, str_trim)
+names(Authorperdocument) <- c("Title","AuthorCorrected")
 
 # Number of Authors per Title
 Authorperdocument <- aggregate(Authorperdocument$AuthorCorrected,list(Authorperdocument$Title), FUN=length)
 names(Authorperdocument) <- c("Title","Frequency")
 
 # Separate Column Title in to "Year" and "Title" by the separator ";" 
-Authorperdocument <- separate(data = Authorperdocument, col = Title, into = c("Year", "Title", "Affiliation"), sep = ";")
+Authorperdocument <- separate(data = Authorperdocument, col = Title, into = c("Year", "Title"), sep = ";")
 
 # Calculate the average number of authors per document and per year
 means2 <- aggregate(Frequency ~  Year, Authorperdocument, mean)
