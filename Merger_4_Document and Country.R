@@ -248,7 +248,7 @@ cntry.dat <- rbind(other.dat, data.frame(cntry.dat))
 # plot
 p <- ggplot(cntry.dat, aes(x=Country, y=Count, fill=Continent)) + 
   geom_col() +
-  scale_fill_manual(values = c("gray", brewer.pal(6, "Set1")), breaks = c("Americas", "Asia", "Europe", "Oceania","Africa", "Other")) +
+  scale_fill_manual(values = c("gray", brewer.pal(5, "Paired")), breaks = c("Europe","Americas", "Asia", "Oceania","Africa", "Other")) +
   xlab('Country Affiliation') +
   ylab('Total Papers') +
   coord_flip() +
