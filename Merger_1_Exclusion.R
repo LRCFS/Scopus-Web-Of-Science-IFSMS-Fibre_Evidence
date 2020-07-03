@@ -181,6 +181,7 @@ ScopusReducedDataset <- Scopus %>%
 # transfor the year into numeric
 ScopusReducedDataset$PY <- as.numeric(ScopusReducedDataset$PY)
 
+
 ####  for rebuilding EID  ####
 #### If added need to be included later in merge #####
 
@@ -199,6 +200,10 @@ WebOfScienceReducedDataset <- WebofScience %>%
   select(PY,AU,TI,DE,ID,C1,DI,SO,DT)
 # removing the extra "." in the affiliation after the country
 WebOfScienceReducedDataset$C1  <- as.character(gsub("\\.","\\",WebOfScienceReducedDataset$C1))
+# Removing each ";" in double in the DE column
+WebOfScienceReducedDataset$DE  <- as.character(gsub(";;",";",WebOfScienceReducedDataset$DE))
+# removing the extra "NA NA" in the AU column, replace by "" 
+#WebOfScienceReducedDataset$AU  <- as.character(gsub("NA NA","", WebOfScienceReducedDataset$AU))
 
 #####    Rename the Keywords lists
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="ID"] <- "IDW"
@@ -212,11 +217,11 @@ WebOfScienceReducedDataset <- WebOfScienceReducedDataset %>%
 #####_________Search for match by title between the two datasets_________##########
 # To generate a list of titles with a partial match for external check
 
-matches=partialMatch(WebOfScienceReducedDataset$TI,ScopusReducedDataset$TI)
+#matches=partialMatch(WebOfScienceReducedDataset$TI,ScopusReducedDataset$TI)
 
-aggregate(matches$pass, by=list(matches$pass), FUN=length)
+#aggregate(matches$pass, by=list(matches$pass), FUN=length)
 
-PartialExport <- matches %>% filter(pass == "Partial")
+#PartialExport <- matches %>% filter(pass == "Partial")
 
 # The PArtialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
 #write.table(PartialExport, file = "PartialExport.txt", quote = F, sep="\t", row.names = F, path = "Results")
@@ -257,6 +262,13 @@ AuthorListScopusExtended <- AuthorListScopus %>%
 # read the corrected list of "Authors" and combine it to the original list
 AuthorCorrected <- read.csv("Authors Name Corrected_ScopWoS.txt", sep="\t", header=TRUE)
 AuthorListScopusExtended$AuthorsCor <- gsr(AuthorListScopusExtended$Authors,AuthorCorrected$name, as.character(AuthorCorrected$Name.corrected))
+
+# In one record in Scopus, the name of the author is not correct : SMITH C instead of SMITH S. Because SMITH C is an other author, correction with gsr function can't be apply.
+# This must be change manually
+# order by Title name
+AuthorListScopusExtended <- arrange(AuthorListScopusExtended, TI)
+# row to make the correction is 3680 and column is 11
+AuthorListScopusExtended[3680,11] <- gsub("SMITH C", "SMITH S", AuthorListScopusExtended[3680,11])
 
 # generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
 # The corrected list should be the same lenght as the original version. Duplicates will be removed and they will need to be checked individually.
@@ -354,11 +366,11 @@ WebOfScienceReducedDatasetCorrected$DT <- gsub("PROCEEDINGS PAPER","PROCEEDINGS"
 #####_________Search for match by Source between the two datasets_________##########
 ##### to generate a list of titles with a partial match for external check
 
-matches2=partialMatch(WebOfScienceReducedDatasetCorrected$SO,ScopusReducedDatasetCorrected$SO)
+#matches2=partialMatch(WebOfScienceReducedDatasetCorrected$SO,ScopusReducedDatasetCorrected$SO)
 
-aggregate(matches2$pass, by=list(matches2$pass), FUN=length)
+#aggregate(matches2$pass, by=list(matches2$pass), FUN=length)
 
-PartialExport2 <- matches2 %>% filter(pass == "Partial")
+#PartialExport2 <- matches2 %>% filter(pass == "Partial")
 
 # The PArtialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
 #write.table(PartialExport2, file = "PartialExport_Source.txt", quote = F, sep="\t", row.names = F)
@@ -391,25 +403,25 @@ DatabaseOutput <- DatabaseOutputTemp %>%
 CombinedDataset <- DatabaseOutput %>%
   group_by(TI, PY) %>% summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse="; ")), 
                                 DOI = rem_dup_word(paste(DI[!is.na(DI)], collapse=", ")),
-                                DEW = paste(DEW[!is.na(DEW)], collapse=", "), 
-                                IDW = paste(IDW[!is.na(IDW)], collapse=", "), 
-                                DES = paste(DES[!is.na(DES)], collapse=", "),
-                                IDS = paste(IDS[!is.na(IDS)], collapse=", "),
-                                C1W = paste(C1W[!is.na(C1W)], collapse=", "),
-                                C1S = paste(C1S[!is.na(C1S)], collapse=", "),
+                                DEW = paste(DEW[!is.na(DEW)], collapse=";"), 
+                                IDW = paste(IDW[!is.na(IDW)], collapse=";"), 
+                                DES = paste(DES[!is.na(DES)], collapse=";"),
+                                IDS = paste(IDS[!is.na(IDS)], collapse=";"),
+                                C1W = paste(C1W[!is.na(C1W)], collapse=","),
+                                C1S = paste(C1S[!is.na(C1S)], collapse=","),
                                 DT = rem_dup_word(paste(DT[!is.na(DT)], collapse=", ")),
                                 SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", "))) %>% ungroup()
 
 # In the Authors column, because the number of author is sometimes different between Scopus and Web of Science, a correction must be done
 CombinedDataset <- CombinedDataset %>%
-  mutate(AU = strsplit(as.character(AU), ";", ))%>%
+  mutate(AU = strsplit(as.character(AU), ";"))%>%
   unnest(AU) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
   group_by(TI,PY,DEW,IDW,DES,IDS,C1W,C1S,DOI,SO,DT) %>%
-  summarise(AU = sort(paste(AU, collapse= "; ")))%>%
+  summarise(AU = sort(paste(AU, collapse= ";")))%>%
   ungroup()
-
+CombinedDataset$AU[CombinedDataset$AU==""]<-NA
 
 # Add some correction to SO
 # This error is particular to the dataset and need to be checked
@@ -444,8 +456,19 @@ DupeCombinedDataset <- CombinedDataset %>%
 CombinedDataset <- transform(CombinedDataset, DE=paste(DEW, DES, sep="; "))
 CombinedDataset$DE  <- as.character(gsub("; ",";",CombinedDataset$DE))
 CombinedDataset <- CombinedDataset %>%
-  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,DT,SOCorrected,C1,DE)
+  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,DT,SOCorrected,C1,DE,DOI)
 names(CombinedDataset)[names(CombinedDataset)=="SOCorrected"] <- "SO"
+
+# In the DE column, because the order of the author's keyword is sometimes different between Scopus and Web of Science, a correction has been done
+# It has been chosen to remove each keywords that were duplicated in the column DE
+CombinedDataset <- CombinedDataset %>%
+  mutate(DE = strsplit(as.character(DE), ";"))%>%
+  unnest(DE) %>%
+  mutate_if(is.character, str_trim) %>%
+  distinct() %>%
+  group_by(TI,PY,AU,DEW,IDW,DES,IDS,C1W,C1S,DOI,SO,DT) %>%
+  summarise(DE = sort(paste(DE, collapse= ";")))%>%
+  ungroup()
 
 #######################################################################
 #####                       EXCLUSION LIST                        #####
