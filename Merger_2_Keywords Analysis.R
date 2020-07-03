@@ -102,27 +102,31 @@ MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$
 #############################################################
 
 #####________________Table Keyword Count________________#####
-# Count the number of references with DES, DEW, IDS and IDW as well as their % to the total number of references
+# Count the number of references with DES, DEW, IDS, IDW and AIK as well as their % to the total number of references
 Totalref <- data.frame(nrow(MergerOriginalData))
 CountDES <- data.frame(table(MergerOriginalData$AIKS, exclude = ""));CountDES
 CountDEW <- data.frame(table(MergerOriginalData$AIKW, exclude = ""));CountDEW
 CountIDS <- data.frame(table(MergerOriginalData$IDS, exclude = ""));CountIDS
 CountIDW <- data.frame(table(MergerOriginalData$IDW, exclude = ""));CountIDW
+CountAIK <- data.frame(table(MergerOriginalData$AIK, exclude = ""));CountAIK
 
 KeywordTable_1 <- data.frame(nrow(CountDES))
 KeywordTable_1[2,1] <- nrow(CountDEW)
 KeywordTable_1[3,1] <- nrow(CountIDS)
 KeywordTable_1[4,1] <- nrow(CountIDW)
+KeywordTable_1[5,1] <- nrow(CountAIK)
 
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="1"] <- "Author keywords Scopus"
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="2"] <- "Author keywords WoS"
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="3"] <- "Index keywords Scopus"
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="4"] <- "Index keywords WoS"
+rownames(KeywordTable_1)[rownames(KeywordTable_1)=="5"] <- "Authors keywords Scopus+WoS"
 
 KeywordTable_1[1,2] <- (KeywordTable_1[1,1]/Totalref)*100
 KeywordTable_1[2,2] <- (KeywordTable_1[2,1]/Totalref)*100
 KeywordTable_1[3,2] <- (KeywordTable_1[3,1]/Totalref)*100
 KeywordTable_1[4,2] <- (KeywordTable_1[4,1]/Totalref)*100
+KeywordTable_1[5,2] <- (KeywordTable_1[5,1]/Totalref)*100
 
 KeywordTable_1 <- rownames_to_column(KeywordTable_1)
 names(KeywordTable_1) <- c("Keywords", "Count", "%")
