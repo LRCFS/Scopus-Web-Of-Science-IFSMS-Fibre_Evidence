@@ -26,6 +26,8 @@ library(tidyverse)
 library(plotly)
 library(corrplot)
 library(reshape2)
+library(extrafont)
+library(ggpubr)
 
 #######################################################################
 #####                           Function                          #####
@@ -62,9 +64,9 @@ gsr <- function(Source, Search, Replace)
 MergerOriginalData <- read.csv("Merger_Dataset_Final.txt", sep="\t", header=TRUE)
 
 
-#######################################################################
-#####                            Keywords                         #####
-#######################################################################
+#############################################################
+#####                  Data cleansing                   #####
+#############################################################
 
 #Split Column "AIK" in row by the separator ";", remove leading white space to generate list
 MergeDataKeywordList <- MergerOriginalData %>% 
@@ -85,12 +87,7 @@ KeywordListCount <- aggregate(KeywordList$AIKeywords, by=list(Freq=KeywordList$A
 names(KeywordListCount) <- c("Keywords","Count")
 #write.csv(KeywordListCount,"Keywords to correct.csv")
 
-#############################################################
-#####                  Data cleansing                   #####
-#############################################################
-
 #Correction to the keywords can be applied at this stage. This can be done in Notepad++, Excel etc. The ultimate order of the list must be kept so it can be binded to the orignial data.
-
 #read the corrected list of keywords and combine it to the original list
 KeywordsCorrected <- read.csv("Merger_AKeywords_Corrected.txt", sep="\t", header=TRUE)
 KeywordsCorrected <- as.data.frame(KeywordsCorrected)
@@ -101,7 +98,8 @@ MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$
 #####               Data analysis - Keywords            #####
 #############################################################
 
-#####________________Table Keyword Count________________#####
+#####________________References with keywords________________#####
+# This part allows to calculate the references with keywords provided, from Scopus, from Web of Science and both Scopus+WoS
 # Count the number of references with DES, DEW, IDS, IDW and AIK as well as their % to the total number of references
 Totalref <- data.frame(nrow(MergerOriginalData))
 CountDES <- data.frame(table(MergerOriginalData$AIKS, exclude = ""));CountDES
@@ -110,11 +108,11 @@ CountIDS <- data.frame(table(MergerOriginalData$IDS, exclude = ""));CountIDS
 CountIDW <- data.frame(table(MergerOriginalData$IDW, exclude = ""));CountIDW
 CountAIK <- data.frame(table(MergerOriginalData$AIK, exclude = ""));CountAIK
 
-KeywordTable_1 <- data.frame(nrow(CountDES))
-KeywordTable_1[2,1] <- nrow(CountDEW)
-KeywordTable_1[3,1] <- nrow(CountIDS)
-KeywordTable_1[4,1] <- nrow(CountIDW)
-KeywordTable_1[5,1] <- nrow(CountAIK)
+KeywordTable_1 <- data.frame(sum(CountDES$Freq))
+KeywordTable_1[2,1] <- sum(CountDEW$Freq)
+KeywordTable_1[3,1] <- sum(CountIDS$Freq)
+KeywordTable_1[4,1] <- sum(CountIDW$Freq)
+KeywordTable_1[5,1] <- sum(CountAIK$Freq)
 
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="1"] <- "Author keywords Scopus"
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="2"] <- "Author keywords WoS"
@@ -134,19 +132,128 @@ names(KeywordTable_1) <- c("Keywords", "Count", "%")
 #Export to text file
 #write.table(KeywordTable_1, file = "Merger_KeywordTable_1.csv", sep = ",", row.names = F)
 
-#####________________Graph Preparation________________#####
+#####__________________Average number of keywords per year_________________#####
 #Count to number of time the same year is repeated in the "ScopusKeywordList$Year" and save in a data.frame "Year" 
 PublicationYear<- data.frame(table(MergerOriginalData$PY));PublicationYear
 names(PublicationYear) <- c("Year","Publications")
 
 #count the number of keywords per title paper 
 MergeDataKeywordListTemp1 <- MergeDataKeywordList  %>%
-  select(PY,TI,KeywordsCorrected) %>%
-  distinct()
+  select(PY,TI,KeywordsCorrected)
 names(MergeDataKeywordListTemp1) <- c("Year","Title","KeywordsCorrected")
-
 MergeDataKeywordListTemp2 <- MergeDataKeywordListTemp1[complete.cases(MergeDataKeywordListTemp1), ]
 sum(is.na(MergeDataKeywordListTemp2$KeywordsCorrected))
+
+#count the number of time each keywords appear each year 
+MergeDataKeywordYearCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Year=MergeDataKeywordListTemp2$Year, Rtitle=MergeDataKeywordListTemp2$KeywordsCorrected), FUN=length)
+
+#count the number of keywords per year 
+MergeDataKeywordYearCountBis <- aggregate(MergeDataKeywordYearCount$x, list(MergeDataKeywordYearCount$Year), FUN=sum)
+names(MergeDataKeywordYearCountBis) <- c("Year","Freq")
+
+# Add in each MergerOriginalData a column with the number of document each year
+# create a new data.frame of the number of document published each year
+Year <- MergerOriginalData %>%
+  select(PY)
+#Count to number of time the same year is repeated in the "Year" and save in a data.frame "year" 
+year <- data.frame(table(Year$PY));year
+year$Var1 <- as.numeric(as.character(year$Var1))
+names(year) <- c("Year","Freq")
+#add in year the missing year
+DFfilledYear <- year %>%
+  complete(Year = 1978:2020,
+           fill = list(Freq = 0)) %>%
+  as.data.frame()
+year <- DFfilledYear
+
+TableAKeywords <- merge(MergeDataKeywordYearCountBis, year, by="Year", all = F)
+
+# Calculate the average number of keywords per document and per year
+MeanAK <- data.frame(MeanAK=TableAKeywords$Freq.x/TableAKeywords$Freq.y)
+MeanAK <- round(MeanAK, 2)
+
+# Combine the calculated mean "MeanA/IK" with the rest of the table "TableA/IKeywords" and add a Coder
+FinalTableAKeywords <- cbind(TableAKeywords, MeanAK)
+FinalTableAKeywords$Coder <- "Authors Keywords"
+
+#Calculate the mean of the mean for each variable
+MeanAK2 <- mean(FinalTableAKeywords$MeanAK)
+MeanAK2 <- round(MeanAK2, 2)
+
+#  GRAPH
+KeywordsPerYear <- ggplot(FinalTableAKeywords, aes(x=Year, y=MeanAK))+
+  geom_line()+ 
+  geom_point()+
+  scale_x_continuous(breaks=c(1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
+  scale_linetype_manual(values=c("solid"))+
+  scale_color_manual(values=c("black"))+
+  labs(x="Year", y="Average number of keywords")+
+  theme_classic(base_family = "Arial", base_size = 12)+
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        legend.background = element_rect(fill="grey95",size=1, linetype="solid", colour="grey80"))+
+  geom_hline(yintercept=MeanAK2, linetype="dashed", color = "blue", size=0.5)
+show(KeywordsPerYear)
+ggplotly(KeywordsPerYear)
+
+#To save the graph
+ggsave("Average KeywordsPerYear_ScopWoS.png", KeywordsPerYear, width = 7, height = 3, units = "in", dpi=200, path = "Results")
+
+#####__________________Keywords per document and per year _________________#####
+# Create a new dataframe with column Year, Title and Authors
+Keywordsperdocument <- MergeDataKeywordListTemp1 %>% group_by(Year,Title) %>%
+  summarise(KeywordsCorrected = paste(KeywordsCorrected, collapse = ";"))
+Keywordsperdocument <- as.data.frame(Keywordsperdocument)
+
+# Combine column Year and Title with the separator ";"
+Keywordsperdocument$Title <- paste(Keywordsperdocument$Year, Keywordsperdocument$Title, sep = ";")
+Keywordsperdocument <- as.data.frame(Keywordsperdocument) %>% 
+  select(Title, KeywordsCorrected)
+
+#Split Column "KeywordsCorrected" in row by the separator ";", remove leading white space to generate list
+Keywordsperdocument <- Keywordsperdocument %>% 
+  mutate(KeywordsCorrected = strsplit(as.character(KeywordsCorrected), ";"))%>% 
+  unnest(KeywordsCorrected) %>%
+  mutate_if(is.character, str_trim)
+Keywordsperdocumentbis <- filter(Keywordsperdocument, KeywordsCorrected=="NA")
+Keywordsperdocumentfinal <- setdiff(Keywordsperdocument, Keywordsperdocumentbis)
+
+# Number of Keywords per Title
+Keywordsperdocumentfinal <- aggregate(Keywordsperdocumentfinal$KeywordsCorrected,list(Keywordsperdocumentfinal$Title), FUN=length)
+names(Keywordsperdocumentfinal) <- c("Title","Frequency")
+
+# Separate Column Title in to "Year" and "Title" by the separator ";" 
+Keywordsperdocumentfinal <- separate(data = Keywordsperdocumentfinal, col = Title, into = c("Year", "Title"), sep = ";")
+
+# Calculate the average number of authors per document and per year
+means2 <- aggregate(Frequency ~  Year, Keywordsperdocumentfinal, mean)
+
+#  GRAPH
+jitter <- position_jitter(width = 0.2, height =0)
+Keywordsperdocumentplot <-ggplot() +
+  geom_point(data =Keywordsperdocumentfinal, aes(x =Year, y = Frequency), color = "black", shape=1, size=1, position= jitter)+
+  geom_point(data =means2, aes(x =Year, y = Frequency), color = "darkred", shape=17, size=2)+  geom_line(data = means2, aes(x =Year, y = Frequency, group=1), color = "darkred")+
+  labs(x="Year", y="Keywords per documents")+
+  theme_bw(base_family = "Arial", base_size = 12)+
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
+show(Keywordsperdocumentplot)
+ggsave("Keywordsperdocumentplot.png", Keywordsperdocumentplot, width = 7, height = 5, units = "in", dpi=200)
+
+Keywordsperdocumentboxplot <-ggplot() +
+  geom_boxplot(data =Keywordsperdocumentfinal, aes(x =Year, y = Frequency), outlier.colour= "red", outlier.shape = 8, color = "black", shape=1, size=0.5)+
+  labs(x="Year", y="Authors per documents")+
+  theme_bw(base_family = "Arial", base_size = 12)+
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
+show(Keywordsperdocumentboxplot)
+ggsave("Keywordsperdocumentboxplot.png", Keywordsperdocumentboxplot, width = 6, height = 4, units = "in", dpi=200)
+
+p3 <- ggarrange(Keywordsperdocumentplot, Keywordsperdocumentboxplot,labels = c("A", "B"),ncol = 1, nrow = 2,legend = "none")
+show(p3)
+ggsave("Keywords perdocument combine.png", p3, width = 6, height = 6, units = "in", dpi=200, path = "Results")
+
+#############################################################
+#####               Keyword trend graph                 #####
+#############################################################
 
 MergeDataKeywordYearCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Year=MergeDataKeywordListTemp2$Year, Rtitle=MergeDataKeywordListTemp2$KeywordsCorrected), FUN=length)
 MergeDataKeywordTotalCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Rtitle=MergeDataKeywordListTemp2$KeywordsCorrected), FUN=length)
@@ -158,10 +265,6 @@ MergeDataKeywordNarrowRangeGraph <- subset(MergeDataKeywordTotalCount,x>=5)
 SubsetKeywordNarrowRangeGraph <-subset(MergeDataKeywordYearCount,Rtitle %in% MergeDataKeywordNarrowRangeGraph$Rtitle)
 #Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
 SubsetKeywordNarrowRangeGraph$x <- as.numeric(SubsetKeywordNarrowRangeGraph$x)
-
-#############################################################
-#####                      GRAPH                        #####
-#############################################################
 
 #####______________Graph for keywords with a frequency >=5 ______________##########
 # Create a new variable from incidence
@@ -413,7 +516,7 @@ MatrixKeywordbis <- as.data.frame(sapply(MatrixKeyword[,2:67], function(x) as.nu
 Matrix <- cbind(Title=MatrixKeyword$Title, MatrixKeywordbis)
 Matrixbis <- rowsum(Matrix[,2:67], Matrix$Title)
 
-# remove from Matrixbis keywords that are not realeant 
+# remove from Matrixbis keywords that are not realevant 
 # for Index+ authors keywords mixed
 #MatrixFinal <- subset(Matrixbis, select=-c(ARTICLE, PRIORITY.JOURNAL, REVIEW, CONFERENCE.PAPER, HUMAN, FEMALE, MALE,ANIMAL, NONHUMAN))
 # for authors keywords only
