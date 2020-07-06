@@ -456,7 +456,7 @@ DupeCombinedDataset <- CombinedDataset %>%
 CombinedDataset <- transform(CombinedDataset, DE=paste(DEW, DES, sep="; "))
 CombinedDataset$DE  <- as.character(gsub("; ",";",CombinedDataset$DE))
 CombinedDataset <- CombinedDataset %>%
-  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,DT,SOCorrected,C1,DE,DOI)
+  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,C1,DT,SOCorrected,C1,DE,DOI)
 names(CombinedDataset)[names(CombinedDataset)=="SOCorrected"] <- "SO"
 
 # In the DE column, because the order of the author's keyword is sometimes different between Scopus and Web of Science, a correction has been done
@@ -466,7 +466,7 @@ CombinedDataset <- CombinedDataset %>%
   unnest(DE) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(TI,PY,AU,DEW,IDW,DES,IDS,C1W,C1S,DOI,SO,DT) %>%
+  group_by(TI,PY,AU,DEW,IDW,DES,IDS,C1W,C1,C1S,DOI,SO,DT) %>%
   summarise(DE = sort(paste(DE, collapse= ";")))%>%
   ungroup()
 
@@ -663,7 +663,7 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-write.table(CombinedDataset3, file = "Merger_Dataset_Final.txt", sep = "\t", row.names = F)
+#write.table(CombinedDataset3, file = "Merger_Dataset_Final.txt", sep = "\t", row.names = F)
 
 #############################################################
 #####                 General information               #####
