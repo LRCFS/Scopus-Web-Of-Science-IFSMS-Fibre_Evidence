@@ -607,13 +607,15 @@ removeKeywords.list <- paste(c("GUNSHOT RESIDUE", "GSR", "GUNSHOT","FIREAMRS",
                                "DRUG",
                                "DOCUMENT",
                                "AXONAL", "HISTOLOGY",
-                               "OPTIC", 
-                               "URINE"), collapse = '|')
+                               "OPTICAL FIBRE", "OPTICAL FIBER"), collapse = '|')
 removeKeywordslist <- as.data.frame(removeKeywords.list)
 
 # Creating a new list of document which don't have any of the keywords from removeKeywords.list
 InclusionDataSetBis <- CombinedDataset2 %>%
   filter(!grepl(removeKeywords.list, CombinedDataset2$AIK))
+
+# Eclusion List bis
+ExclusionDataSetBis <- setdiff(CombinedDataset2,InclusionDataSetBis)
 
 # testing the new inclusion list with the previous"Keyword.list"
 FalsePositiveListBis <- InclusionDataSetBis[-grep(Keyword.list, InclusionDataSetBis$AIK), ]
@@ -636,67 +638,12 @@ test3 <- FPdocumentBis + TPdocumentBis
 ifelse(IncludeddocumentBis == test3, "Correct", "Not correct")
 V3 <- as.data.frame(ifelse(IncludeddocumentBis == test3, "Correct", "Not correct"))
 
-# 2) Cleaning the exclusion List
-# Remove from Exclusion list each document with particular keywords in it
-addKeywords.list <- paste(c("TEXTILE",
-                            "CLOTHING", 
-                            "DYE", "COLOUR","COLOR"), collapse = '|')
-addKeywordslist <- as.data.frame(addKeywords.list)
-
-# Creating a new list of document which don't have any of the keywords from addKeywords.list
-ExclusionDataSetbis <- CombinedDataset2 %>%
-  filter(!grepl(addKeywords.list, CombinedDataset2$AIK))
-
-# testing the new exlusion list with the previous "Keyword.list"
-
-FalseNegativeListBis <- ExclusionDataSetbis[grep(Keyword.list, ExclusionDataSetbis$AIK), ]
-
-# New calcul of False positive (FP) (based on the previous keyword.list)
-FNdocumentBis  <- as.numeric(count(FalseNegativeListBis))
-
-# New calcul of True negative (FP) (based on the previous keyword.list)
-TrueNegativeListBis <- ExclusionDataSetbis[-grep(Keyword.list, ExclusionDataSetbis$AIK), ]
-TNdocumentBis  <- as.numeric(count(TrueNegativeListBis))
-
-# Total number of documnet in the excluded list
-Excludeddocumentbis <- as.numeric(count(ExclusionDataSetbis))
-
-# Number of FN in the exlusion list
-FNdocumentBis/Excludeddocumentbis*100
-
-# Verification - Is FNdocumentBis + TNdocumentBis = Excludeddocumentbis ?
-test4 <- FNdocumentBis + TNdocumentBis
-ifelse(Excludeddocumentbis == test4, "Correct", "Not correct")
-V4 <- as.data.frame(ifelse(Excludeddocumentbis == test4, "Correct", "Not correct"))
-
-# 3) Are FN and FP in relation to Forensic ?
-# If the number of False positive and False negative is still high after, it is important that these to are in relation to the field of research
-Forensic.list <- paste(c("FORENCIC"), collapse = '|')
-Forensiclist <- as.data.frame(Forensic.list)
-
-# Creating a new list of document which have any of the keywords from Forensic.list
-FalsePositiveListTer <- FalsePositiveListBis %>%
-  filter(!grepl(Forensic.list, FalsePositiveListBis$AIK))
-FalseNegativeListTer <- FalseNegativeListBis %>%
-  filter(!grepl(Forensic.list, FalseNegativeListBis$AIK))
-
-FPdocumentTer  <- as.numeric(count(FalsePositiveListTer))
-FNdocumentTer  <- as.numeric(count(FalseNegativeListTer))
-
-# Verification - if FPdocumentTer = FPdocumentBis then all False positive document in the InclusionDataSetBis are in relation with to Forensic
-ifelse(FPdocumentTer == FPdocumentBis, "Correct", "Not correct")
-V5 <- as.data.frame(ifelse(FPdocumentTer == FPdocumentBis, "Correct", "Not correct"))
-# Verification - if FNdocumentTer = FNdocumentBis then all False negative document in the ExclusionDataSetBis are in relation with to Forensic
-ifelse(FNdocumentTer == FNdocumentBis, "Correct", "Not correct")
-V6 <- as.data.frame(ifelse(FNdocumentTer == FNdocumentBis, "Correct", "Not correct"))
-
 #######################################################################
 #####                Creating the new dataset                     #####
 #######################################################################
 
-# creating a new dataset "ScopusCleanedData" with the True positive documents from InclusionDataSetBis and False negative documents from ExclusionDataSetBis
-CombinedDataset3 <- rbind(TruePositiveListBis, FalseNegativeListBis) %>%
-  distinct()
+# creating a new dataset "ScopusCleanedData" with the True positive documents from InclusionDataSetBis
+CombinedDataset3 <- TruePositiveListBis
 
 #######################################################################
 #####              Overview of all the verifications              #####
@@ -706,25 +653,17 @@ names(Verifications) <- c("Verifications")
 
 Verifications[2,1] <- V2
 Verifications[3,1] <- V3
-Verifications[4,1] <- V4
-Verifications[5,1] <- V5
-Verifications[6,1] <- V6
-
 rownames(Verifications)[rownames(Verifications)=="1"] <- "FPdocument + TPdocument = Includeddocument ?"
 rownames(Verifications)[rownames(Verifications)=="2"] <- "FNdocument + TNdocument = Excludeddocument ?"
 rownames(Verifications)[rownames(Verifications)=="3"] <- "FPdocumentBis + TPdocumentBis = IncludeddocumentBis ?"
-rownames(Verifications)[rownames(Verifications)=="4"] <- "FNdocumentBis + TNdocumentBis = Excludeddocumentbis ?"
-rownames(Verifications)[rownames(Verifications)=="5"] <- "FPdocumentTer = FPdocumentBis ?"
-rownames(Verifications)[rownames(Verifications)=="6"] <- "FNdocumentTer = FNdocumentBis ?"
 
 show(Verifications)
-
 
 #######################################################################
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-#write.table(CombinedDataset3, file = "Merger_Dataset_Final.txt", sep = "\t", row.names = F)
+write.table(CombinedDataset3, file = "Merger_Dataset_Final.txt", sep = "\t", row.names = F)
 
 #############################################################
 #####                 General information               #####
@@ -793,7 +732,6 @@ DTWoS <- data.frame(table(WebofScience$Document.TypeC, exclude = ""));DTWoS
 #####______________Final Table______________##########
 # To export data
 #write.table(GF, file = "General Information_ScopWoS.csv", quote = F, sep = "\t", row.names = F)
-
 
 ##################################################################################
 #####                    Comparison Scopus/Web Of Science all year                 #####
@@ -932,6 +870,5 @@ plot2 <- ggplot(dfc2[1:2, ], aes("", share, fill = group)) +
 
 plot3 <- ggarrange(plot1, plot2,labels = c("A","B"), ncol = 2, nrow = 1,legend = "bottom")
 plot3
-
-ggsave("PieChart_ScopWoS.png", plot3, width = 10, height = 7, units = "in", dpi=150, path = "Results")
+#ggsave("PieChart_ScopWoS.png", plot3, width = 10, height = 7, units = "in", dpi=150, path = "Results")
 
