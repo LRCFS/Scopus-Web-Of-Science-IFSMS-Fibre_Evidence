@@ -80,7 +80,7 @@ MergerOriginalData <- read.csv("Merger_Dataset_Final.txt", sep="\t", header=TRUE
 #####__________________ Document Table ____________________#####
 # create a new data.frame of the number of document published each year
 document <- MergerOriginalData %>%
-  select(PY,TI,AU,C1, DT)
+  select(PY,TI,AU,C1,DT)
 # Change the column name
 names(document) <- c("Year", "Title", "Authors", "Affiliation", "Document.Type")
 
@@ -111,6 +111,7 @@ names(ArticlesCount) <- c("Year","Articles")
 ArticlesCountExtended <- ArticlesCount %>%
   complete(Year = 1978:2020, fill = list(Freq = 0)) %>%
   as.data.frame()
+ArticlesCountExtended[is.na(ArticlesCountExtended)] <- 0
 
 Proceedings <- filter(document, Document.Type=="PROCEEDINGS")
 ProceedingsCount <- aggregate(Proceedings$Document.Type, list(Proceedings$Year), FUN=length)
@@ -139,7 +140,6 @@ ConferenceCountExtended <- ConferenceCount %>%
   as.data.frame()
 ConferenceCountExtended[is.na(ConferenceCountExtended)] <- 0
 
-
 Other <- filter(document, Document.Type=="BOOK CHAPTER" | Document.Type=="PROCEEDINGS" | Document.Type=="CONFERENCE PAPER" |  Document.Type=="ARTICLE" | Document.Type=="EDITORIAL MATERIAL; BOOK CHAPTER BOOK CHAPTER")
 Other2 <- setdiff(document, Other)
 OtherCount <- aggregate(Other2$Document.Type, list(Other2$Year), FUN=length)
@@ -151,7 +151,7 @@ OtherCountExtended <- OtherCount %>%
 OtherCountExtended[is.na(OtherCountExtended)] <- 0
 
 # Create a table to export it
-Table2Output <- Reduce(merge, list(year, ArticlesCountExtended,ProceedingsCountExtended, BookCountExtended, OtherCountExtended))
+Table2Output <- Reduce(merge, list(year, ArticlesCountExtended,ConferenceCountExtended,ProceedingsCountExtended, BookCountExtended, OtherCountExtended))
 
 # Statistics for each variables
 summary(Table2Output)
