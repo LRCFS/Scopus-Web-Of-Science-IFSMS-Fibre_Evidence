@@ -170,7 +170,7 @@ names(AuthorMultipleOutputLastYear) <- c("Id","Year")
 #write.table(AuthorMultipleOutputLastYear, file = "GephiListAuthorLastYear.csv", quote = F, sep = "\t", row.names = F)
 
 
-#####__________________Authors Table____________________#####
+#####__________________Authors Table/New authors____________________#####
 
 # List of new "Authors" and their first "Year" of appearance
 AuthorFirstAppearance<- aggregate(AuthorListExtended$Year, list(AuthorListExtended$Authors), min)
@@ -328,9 +328,6 @@ summary(Authorsyear$Freq)
 summary(SingleAuthorsyear$Freq)
 summary(MultipleAuthorsyear$Freq)
 
-StatsAuthorsyear <- data.frame(stat.desc(Authorsyear$Freq))
-StatsSingleAuthorsyear <- data.frame(stat.desc(SingleAuthorsyear$Freq))
-StatsMultipleAuthorsyear <- data.frame(stat.desc(MultipleAuthorsyear$Freq))
 
 #####__________________Authors per document and per year _________________#####
 # Create a new dataframe with column Year, Title and Authors
