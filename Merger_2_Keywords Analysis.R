@@ -29,9 +29,9 @@ library(reshape2)
 library(extrafont)
 library(ggpubr)
 
-#######################################################################
-#####                           Function                          #####
-#######################################################################
+#############################################################
+#####                      Function  1/4                #####
+#############################################################
 
 #### Function to search and replace ####
 
@@ -54,11 +54,125 @@ gsr <- function(Source, Search, Replace)
   Changed 
 }
 
-#######################################################################
-#####                         Data loading                        #####
-#######################################################################
+#############################################################
+#####                      Function  2/3                #####
+#############################################################
 
-# set working directory
+# function to replace accented characters with unaccented equivalents 
+# adapted from https://stackoverflow.com/questions/15253954/replace-multiple-letters-with-accents-with-gsub
+removeDiacritics <- function(string) {
+  chartr(
+    "ŠŽšžŸÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝàáâãäåçèéêëìíîïðñòóôõöøùúûüýÿ",
+    "SZszYAAAAAACEEEEIIIIDNOOOOOOUUUUYaaaaaaceeeeiiiidnoooooouuuuyy", 
+    string
+  )
+}
+
+#############################################################
+#####                      Function  3/4                #####
+#############################################################
+
+# Function, adapted from https://www.r-bloggers.com/merging-data-sets-based-on-partially-matched-data-elements/
+
+# Function to check for duplicate and partial match between database imports. The genreted list can then be used to make the appropriate changes to the lists
+
+#Data loaded in from downloaded files as:
+##PercentageUsingTheNet
+##ccode
+
+##Here's where the algorithm starts...
+##I'm going to generate a signature from country names to reduce some of the minor differences between strings
+##In this case, convert all characters to lower case, sort the words alphabetically, and then concatenate them with no spaces.
+##So for example, United Kingdom would become kingdomunited
+##We might also remove stopwords such as 'the' and 'of'.
+
+# Separator <- list(c("\\. |\\.| | \\& |\\: | \\ - |\\-|\\ -|\\- |\\-"))
+
+signature=function(x){
+  #  sig=paste(sort(unlist(strsplit(tolower(x)," "))),collapse='')
+  sig=paste(sort(unlist(strsplit(x," "))),collapse = '')
+  #  sig=paste(x)
+  #  sig=paste(x, sep =" ", collapse = " ")
+  sig=x
+  return(sig)
+}
+
+number = 4.0
+
+partialMatch=function(x,y,levDist = number){
+  xx=data.frame(sig=sapply(x, signature),row.names=NULL)
+  yy=data.frame(sig=sapply(y, signature),row.names=NULL)
+  xx$raw=x
+  yy$raw=y
+  xx=subset(xx,subset=(sig!=''))
+  xy=merge(xx,yy,by='sig',all=T)
+  matched=subset(xy,subset=(!(is.na(raw.x)) & !(is.na(raw.y))))
+  matched$pass="Duplicate"
+  todo=subset(xy,subset=(is.na(raw.y)),select=c(sig,raw.x))
+  colnames(todo)=c('sig','raw')
+  todo$partials= as.character(sapply(todo$sig, agrep, yy$sig,max.distance = levDist,value=T))
+  todo=merge(todo,yy,by.x='partials',by.y='sig')
+  partial.matched=subset(todo,subset=(!(is.na(raw.x)) & !(is.na(raw.y))),select=c("sig","raw.x","raw.y"))
+  partial.matched$pass="Partial"
+  matched=rbind(matched,partial.matched)
+  un.matched=subset(todo,subset=(is.na(raw.x)),select=c("sig","raw.x","raw.y"))
+  if (nrow(un.matched)>0){
+    un.matched$pass="Unmatched"
+    matched=rbind(matched,un.matched)
+  }
+  matched=subset(matched,select=c("raw.x","raw.y","pass"))
+  
+  return(matched)
+}
+
+#############################################################
+#####                   Function  4/4                   #####
+#############################################################
+
+
+rem_dup_word <- function(x){
+  paste(unique(trimws(unlist(strsplit(x,split="\\, ",fixed=F,perl=T)))),collapse = 
+          " ")
+}
+
+
+#############################################################
+#####                  Global variable                  #####
+#############################################################
+
+Wos.path = 'Wos/'    #WEb of Science folder
+Sco.path = 'Scopus/' #Scopus folder
+
+#############################################################
+#####         Data loading Individual citation list     #####
+#############################################################
+
+# set extension and folder
+extension <- ".bib"
+Wos <- Sys.glob(paste(Wos.path, "*", extension, sep = ""))
+Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
+
+
+#############################################################
+#####                    Data loading                   #####
+#############################################################
+
+# Using bibtex files instead of csv. This is to resolve avoid one loading issue with Web of Science; incorrect file format and coding.
+# This also works for Scopus. Some information is lost such as the EID not available in the bibtex export. 
+# Keeping the Scopus csv also offers access to a greater range of entries.
+
+Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
+WebofScience<-convert2df(Wos,dbsource = "isi",format = "bibtex")
+
+#####             For the results from Scopus           #####
+# Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI, url, $SO, $DT, $
+ScopusReducedDataset <- Scopus %>%
+  select(PY,AU,TI,DE,ID,C1,DI,url,SO,DT)
+
+####        For the results from Web of Science        #####
+# Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI
+WebOfScienceReducedDataset <- WebofScience %>%
+  select(PY,AU,TI,DE,ID,C1,DI,SO,DT)
 
 # read the export *.csv document from Merger, separation ",", and place it in data.frame "MergerOriginalData"
 MergerOriginalData <- read.csv("Merger_Dataset_Final.txt", sep="\t", header=TRUE)
@@ -340,7 +454,8 @@ techniques.list <- paste(c("MICROSPECTROPHOTOMETRY (MSP)",
                            "GAS CHROMATOGRAPHY–MASS SPECTROMETRY (GC–MS)",
                            "HOLLOW-FIBRE LIQUID-PHASE MICROEXTRACTION (HF-LPME)",
                            "POLARIZED LIGHT MICROSCOPY",
-                           "SPECTROSCOPY"), collapse = ';')
+                           "SPECTROSCOPY",
+                           "HIGH-PERFORMANCE LIQUID CHROMATOGRAPHY (HPLC)"), collapse = ';')
 techniqueslist <- as.data.frame(techniques.list)
 
 #Split Column "techniques.list" in row by the separator ";", remove leading white space to generate list
@@ -425,14 +540,7 @@ Textiles.list <- paste(c("WOOL",
                          "VISCOSE",
                          "POLYESTER",
                          "COTTON",
-                         "ACRYLIC ACID",
-                         "SYNTHETIC FIBRE",
-                         "NYLON",
-                         "POLYMER",
-                         "POLYAMIDE",
-                         "TEXTILE",
-                         "TEXTILE FIBRE",
-                         "CLOTHING"), collapse = ';')
+                         "SYNTHETIC FIBRE","POLYETHYLENE"), collapse = ';')
 Textileslist <- as.data.frame(Textiles.list)
 
 #Split Column "Textiles.list" in row by the separator ";", remove leading white space to generate list
@@ -444,6 +552,8 @@ Textileslist <- Textileslist %>%
 # Select from "ScopusKeywordNarrowRangeGraph3" every keywords from "Textiles.list" and place it in a new list "TechniqueList"
 Textileslist <-subset(MergeDataKeywordNarrowRangeGraph3,Rtitle %in% Textileslist$Textiles.list)
 
+# Total count of the keywords
+TextileslistCount <- aggregate(Textileslist$x, list(Textileslist$Rtitle), sum)
 
 #### plot second graph
 # Create a new variable from incidence
@@ -493,7 +603,89 @@ p2 <- ggplot(GraphTemp1Ter,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p2)
 ggplotly(p2)
-ggsave("SopWoS_Textile Keyword Trend_04-06-20.png", p2, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+ggsave("SopWoS_Textile Keyword Trend.png", p2, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+
+
+#####______________Graph for Transfer/Persistence analysis only______________##########
+
+#Create a new variable of ScopusKeywordNarrowRangeGraph to not overwrite data
+MergeDataKeywordNarrowRangeGraph4 <-subset(MergeDataKeywordYearCount,Rtitle %in% MergeDataKeywordYearCount$Rtitle)
+
+#Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
+MergeDataKeywordNarrowRangeGraph4$x <- as.numeric(MergeDataKeywordNarrowRangeGraph4$x)
+
+# Create a list of techniques to include
+Transfer.list <- paste(c("TRANSFER",
+                         "FIBRE TRANSFER",
+                         "TRANSFERENCE", "TRANSFERRING",
+                         "SECONDARY TRANSFER",
+                         "DIFFERENTIAL TRANSFER", "	FIBRE TRANSFER AND RETENTION","FIBRE: TRANSFER AND DISPERSAL",
+                         "INTERPRETATION OF FIBRE TRANSFER", "PRIMARY TRANSFER SIMULATION", "RELEVANCE OF TRANSFER",
+                         "RELEVANCE OF TRANSFER MATERIALS", "SCENT TRANSFER UNIT (STU-100)", "TRANSFER SIMULATION	",
+                         "TRANSFER UNIT (STU-100)",
+                         "PERSITENCE","TRANSFER PERSISTENCE", "FIBRE PERSISTENCE"), collapse = ';')
+Transferlist <- as.data.frame(Transfer.list)
+
+#Split Column "Transfer.list" in row by the separator ";", remove leading white space to generate list
+Transferlist <- Transferlist %>% 
+  mutate(Transfer.list = strsplit(as.character(Transfer.list), ";")) %>% 
+  unnest(Transfer.list) %>%
+  mutate_if(is.character, str_trim)
+
+# Select from "ScopusKeywordNarrowRangeGraph3" every keywords from "Transfer.list" and place it in a new list "TechniqueList"
+Transferlist <-subset(MergeDataKeywordNarrowRangeGraph4,Rtitle %in% Transferlist$Transfer.list)
+
+
+#### plot second graph
+# Create a new variable from incidence
+Transferlist$Incidenceweight <- cut(Transferlist$x,
+                                    breaks = c(-1,0,1,max(Transferlist$x,na.rm=T)),
+                                    labels=c("0","1","2"))
+
+GraphTemp1Transfer <- Transferlist %>%
+  # convert state to factor and reverse order of levels
+  mutate(KeywordsCorrected=factor(Rtitle,levels=rev(sort(unique(Rtitle))))) %>%
+  # create a new variable from count
+  mutate(countfactor=cut(x,breaks=c(-1,0,1,max(x,na.rm=T)),
+                         labels=c("0","1","2")))  %>%
+  # change level order
+  mutate(countfactor=factor(as.character(countfactor),levels=rev(levels(countfactor))))
+# InterpolKeywordList$WYear <- gsr(InterpolKeywordList$Year,year$Var1,1/year$Freq)
+GraphTemp2 <- aggregate(GraphTemp1Transfer[, 1], list(GraphTemp1Transfer$KeywordsCorrected), min)
+
+GraphTemp1Transfer$graphorder <- as.numeric(gsr(GraphTemp1Transfer$KeywordsCorrected,GraphTemp2$Group.1,GraphTemp2$x))
+
+# assign text colour
+textcol <- "black"
+
+# further modified ggplot
+p3 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=countfactor))+
+  geom_tile(colour="white",size=0.2)+
+  guides(fill=guide_legend(title="Count"))+
+  #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
+  labs(x="Year",y="",title="")+
+  scale_y_discrete(expand=c(0,0))+
+  scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
+  scale_fill_manual(values=c("#000099","#3366ff","#99ccff"),na.value = "grey90")+
+  coord_fixed()+
+  theme_grey(base_size=8)+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.title=element_text(colour=textcol),
+        legend.margin=margin(grid::unit(0,"cm")),
+        legend.text=element_text(colour=textcol,size=7),
+        legend.key.height=grid::unit(0.8,"cm"),
+        legend.key.width=grid::unit(0.2,"cm"),
+        axis.text.x=element_text(size=8,colour=textcol),
+        axis.text.y=element_text(vjust=0.2,colour=textcol),
+        axis.ticks=element_line(size=0.4),
+        plot.background=element_blank(),  # element_rect(fill, colour, size, linetype, color))
+        panel.border=element_blank(),
+        plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
+        plot.title=element_text(colour=textcol,hjust=0,size=12))
+show(p3)
+ggplotly(p3)
+ggsave("SopWoS_Transfer Keyword Trend_04-06-20.png", p3, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+
 
 #####______________2D matrix______________##########
 # create a list with the keywords with a frequency >5
