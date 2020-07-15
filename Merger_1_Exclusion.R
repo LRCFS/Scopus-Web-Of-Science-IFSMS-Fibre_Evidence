@@ -595,7 +595,7 @@ V2 <- as.data.frame(ifelse(Excludeddocument == test2, "Correct", "Not correct"))
 CombinedDataset2 <- rbind(TruePositiveList, FalseNegativeList)
 
 #######################################################################
-#####     Second cleaning of the dataset based on AIKeywords     #####
+#####     Second cleaning of the dataset based on AIKeywords      #####
 #######################################################################
 
 # 1) Cleaning the inclusion List
@@ -639,11 +639,50 @@ ifelse(IncludeddocumentBis == test3, "Correct", "Not correct")
 V3 <- as.data.frame(ifelse(IncludeddocumentBis == test3, "Correct", "Not correct"))
 
 #######################################################################
+#####        Third cleaning of the dataset based on Title         #####
+#######################################################################
+# The aim of this part is to include earlier articles about fibre, excluded in the first place because they did not provide keywords
+# the keyword.list and removeKeyword.list from the first cleaning will be use on the title from the exclusion lisst
+# These articles will be indentify in the first Exclusion dataset (ExclusionDataSet)
+
+# 1) Remove from ExclusionDataSet references which have keywords from the fibre forensic field in the Title
+# Creating a new list of document which have, at least, one of the keywords from Keyword.list in the title
+FalseNegativeListBis <- ExclusionDataSet[grep(Keyword.list, ExclusionDataSet$TI), ]
+
+# False negative (FNBis) documents - documents in ExclusionDataSet which can be relevant (based on Keyword.list)
+FNdocumentBis  <- as.numeric(count(FalseNegativeListBis))
+
+# True Negative documents - documents in ExclusionDataSet which are not relevant (based on Keyword.list)
+TrueNegativeListBis <- ExclusionDataSet[-grep(Keyword.list, ExclusionDataSet$TI), ]
+TNdocumentBis  <- as.numeric(count(TrueNegativeListBis))
+
+# Total number of document in the excluded list
+Excludeddocumentbis <- as.numeric(count(ExclusionDataSet))
+
+# Number of FN in the exlusion list
+FNdocumentBis/Excludeddocumentbis*100
+
+# Verification - Is FNdocumentBis + TNdocumentBis = Excludeddocumentbis ?
+test4 <- FNdocumentBis + TNdocumentBis
+ifelse(Excludeddocumentbis == test4, "Correct", "Not correct")
+V4 <- as.data.frame(ifelse(Excludeddocumentbis == test4, "Correct", "Not correct"))
+
+# 2) Remove from the new FalseNegative list references which have keywords from other field in the Title
+# Creating a new list of document which don't have any of the keywords from removeKeywords.list
+FinalFalseNegativelist <- FalseNegativeListBis %>%
+  filter(!grepl(removeKeywords.list, FalseNegativeListBis$TI))
+
+# FinalTrueNegative list
+FinalTrueNegativelist <- setdiff(FalseNegativeListBis,FinalFalseNegativelist)
+X <- rbind(FinalTrueNegativelist, TrueNegativeListBis)
+FinalTrueNegativelist <- X
+
+#######################################################################
 #####                Creating the new dataset                     #####
 #######################################################################
 
 # creating a new dataset "ScopusCleanedData" with the True positive documents from InclusionDataSetBis
-CombinedDataset3 <- TruePositiveListBis
+CombinedDataset3 <- rbind(TruePositiveListBis, FinalFalseNegativelist) %>% distinct()
 
 #######################################################################
 #####              Overview of all the verifications              #####
