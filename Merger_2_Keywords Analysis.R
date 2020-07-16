@@ -211,7 +211,6 @@ MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$
 #############################################################
 #####               Data analysis - Keywords            #####
 #############################################################
-
 #####________________References with keywords________________#####
 # This part allows to calculate the references with keywords provided, from Scopus, from Web of Science and both Scopus+WoS
 # Count the number of references with DES, DEW, IDS, IDW and AIK as well as their % to the total number of references
@@ -467,6 +466,9 @@ techniqueslist <- techniqueslist %>%
 # Select from "MergeDataKeywordNarrowRangeGraph2" every keywords from "techniques.list" and place it in a new list "TechniqueList"
 TechniqueList <-subset(MergeDataKeywordNarrowRangeGraph2,Rtitle %in% techniqueslist$techniques.list)
 
+# Total count of the keywords
+TechniqueListCount <- aggregate(TechniqueList$x, list(TechniqueList$Rtitle), sum)
+
 # Rename some of the techniques that are too long
 # read the corrected list of techniques and combine it to TechniqueList
 TechniqueCorrected <- read.csv("Technique Name Corrected_ScopWoS.txt", sep="\t", header=TRUE)
@@ -686,6 +688,158 @@ show(p3)
 ggplotly(p3)
 ggsave("SopWoS_Transfer Keyword Trend_04-06-20.png", p3, width = 8, height = 3, units = "in", dpi=150, path = "Results")
 
+
+#####______________Graph for Colour analysis only______________##########
+
+#Create a new variable of ScopusKeywordNarrowRangeGraph to not overwrite data
+MergeDataKeywordNarrowRangeGraph5 <-subset(MergeDataKeywordYearCount,Rtitle %in% MergeDataKeywordYearCount$Rtitle)
+
+#Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
+MergeDataKeywordNarrowRangeGraph5$x <- as.numeric(MergeDataKeywordNarrowRangeGraph5$x)
+
+# Create a list of techniques to include
+Colour.list <- paste(c("DYE",
+                       "COLOUR",
+                       "REACTIVE DYE",
+                       "PIGMENTS",
+                       "DISPERSE DYES"), collapse = ';')
+Colourlist <- as.data.frame(Colour.list)
+
+#Split Column "Colour.list" in row by the separator ";", remove leading white space to generate list
+Colourlist <- Colourlist %>% 
+  mutate(Colour.list = strsplit(as.character(Colour.list), ";")) %>% 
+  unnest(Colour.list) %>%
+  mutate_if(is.character, str_trim)
+
+# Select from "ScopusKeywordNarrowRangeGraph3" every keywords from "Transfer.list" and place it in a new list "TechniqueList"
+Colourlist <-subset(MergeDataKeywordNarrowRangeGraph5,Rtitle %in% Colourlist$Colour.list)
+
+
+#### plot second graph
+# Create a new variable from incidence
+Colourlist$Incidenceweight <- cut(Colourlist$x,
+                                    breaks = c(-1,0,1,max(Colourlist$x,na.rm=T)),
+                                    labels=c("0","1","2"))
+
+GraphTemp1Transfer <- Colourlist %>%
+  # convert state to factor and reverse order of levels
+  mutate(KeywordsCorrected=factor(Rtitle,levels=rev(sort(unique(Rtitle))))) %>%
+  # create a new variable from count
+  mutate(countfactor=cut(x,breaks=c(-1,0,1,max(x,na.rm=T)),
+                         labels=c("0","1","2")))  %>%
+  # change level order
+  mutate(countfactor=factor(as.character(countfactor),levels=rev(levels(countfactor))))
+# InterpolKeywordList$WYear <- gsr(InterpolKeywordList$Year,year$Var1,1/year$Freq)
+GraphTemp2 <- aggregate(GraphTemp1Transfer[, 1], list(GraphTemp1Transfer$KeywordsCorrected), min)
+
+GraphTemp1Transfer$graphorder <- as.numeric(gsr(GraphTemp1Transfer$KeywordsCorrected,GraphTemp2$Group.1,GraphTemp2$x))
+
+# assign text colour
+textcol <- "black"
+
+# further modified ggplot
+p4 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=countfactor))+
+  geom_tile(colour="white",size=0.2)+
+  guides(fill=guide_legend(title="Count"))+
+  #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
+  labs(x="Year",y="",title="")+
+  scale_y_discrete(expand=c(0,0))+
+  scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
+  scale_fill_manual(values=c("#000099","#3366ff","#99ccff"),na.value = "grey90")+
+  coord_fixed()+
+  theme_grey(base_size=8)+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.title=element_text(colour=textcol),
+        legend.margin=margin(grid::unit(0,"cm")),
+        legend.text=element_text(colour=textcol,size=7),
+        legend.key.height=grid::unit(0.8,"cm"),
+        legend.key.width=grid::unit(0.2,"cm"),
+        axis.text.x=element_text(size=8,colour=textcol),
+        axis.text.y=element_text(vjust=0.2,colour=textcol),
+        axis.ticks=element_line(size=0.4),
+        plot.background=element_blank(),  # element_rect(fill, colour, size, linetype, color))
+        panel.border=element_blank(),
+        plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
+        plot.title=element_text(colour=textcol,hjust=0,size=12))
+show(p4)
+ggplotly(p4)
+ggsave("SopWoS_Colour Keyword Trend.png", p4, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+
+#####______________Graph for Bayesian analysis only______________##########
+
+#Create a new variable of ScopusKeywordNarrowRangeGraph to not overwrite data
+MergeDataKeywordNarrowRangeGraph6 <-subset(MergeDataKeywordYearCount,Rtitle %in% MergeDataKeywordYearCount$Rtitle)
+
+#Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
+MergeDataKeywordNarrowRangeGraph6$x <- as.numeric(MergeDataKeywordNarrowRangeGraph6$x)
+
+# Create a list of techniques to include
+Bayesian.list <- paste(c("INTERPRETATION",
+                       "LIKELYHOOD RATIO",
+                       "BAYESIAN APPROACH",
+                       "STATISTICS",
+                       "EVIDENTIAL VALUE"), collapse = ';')
+Bayesianlist <- as.data.frame(Bayesian.list)
+
+#Split Column "Bayesian.list" in row by the separator ";", remove leading white space to generate list
+Bayesianlist <- Bayesianlist %>% 
+  mutate(Bayesian.list = strsplit(as.character(Bayesian.list), ";")) %>% 
+  unnest(Bayesian.list) %>%
+  mutate_if(is.character, str_trim)
+
+# Select from "ScopusKeywordNarrowRangeGraph3" every keywords from "Transfer.list" and place it in a new list "TechniqueList"
+Bayesianlist <-subset(MergeDataKeywordNarrowRangeGraph6,Rtitle %in% Bayesianlist$Bayesian.list)
+
+
+#### plot second graph
+# Create a new variable from incidence
+Bayesianlist$Incidenceweight <- cut(Bayesianlist$x,
+                                  breaks = c(-1,0,1,max(Bayesianlist$x,na.rm=T)),
+                                  labels=c("0","1","2"))
+
+GraphTemp1Transfer <- Bayesianlist %>%
+  # convert state to factor and reverse order of levels
+  mutate(KeywordsCorrected=factor(Rtitle,levels=rev(sort(unique(Rtitle))))) %>%
+  # create a new variable from count
+  mutate(countfactor=cut(x,breaks=c(-1,0,1,max(x,na.rm=T)),
+                         labels=c("0","1","2")))  %>%
+  # change level order
+  mutate(countfactor=factor(as.character(countfactor),levels=rev(levels(countfactor))))
+# InterpolKeywordList$WYear <- gsr(InterpolKeywordList$Year,year$Var1,1/year$Freq)
+GraphTemp2 <- aggregate(GraphTemp1Transfer[, 1], list(GraphTemp1Transfer$KeywordsCorrected), min)
+
+GraphTemp1Transfer$graphorder <- as.numeric(gsr(GraphTemp1Transfer$KeywordsCorrected,GraphTemp2$Group.1,GraphTemp2$x))
+
+# assign text colour
+textcol <- "black"
+
+# further modified ggplot
+p5 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=countfactor))+
+  geom_tile(colour="white",size=0.2)+
+  guides(fill=guide_legend(title="Count"))+
+  #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
+  labs(x="Year",y="",title="")+
+  scale_y_discrete(expand=c(0,0))+
+  scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
+  scale_fill_manual(values=c("#000099","#3366ff","#99ccff"),na.value = "grey90")+
+  coord_fixed()+
+  theme_grey(base_size=8)+
+  theme(legend.position="right",legend.direction="vertical",
+        legend.title=element_text(colour=textcol),
+        legend.margin=margin(grid::unit(0,"cm")),
+        legend.text=element_text(colour=textcol,size=7),
+        legend.key.height=grid::unit(0.8,"cm"),
+        legend.key.width=grid::unit(0.2,"cm"),
+        axis.text.x=element_text(size=8,colour=textcol),
+        axis.text.y=element_text(vjust=0.2,colour=textcol),
+        axis.ticks=element_line(size=0.4),
+        plot.background=element_blank(),  # element_rect(fill, colour, size, linetype, color))
+        panel.border=element_blank(),
+        plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
+        plot.title=element_text(colour=textcol,hjust=0,size=12))
+show(p5)
+ggplotly(p5)
+ggsave("SopWoS_bayesian Keyword Trend.png", p5, width = 8, height = 3, units = "in", dpi=150, path = "Results")
 
 #####______________2D matrix______________##########
 # create a list with the keywords with a frequency >5
