@@ -183,7 +183,7 @@ DocumentPerYear <-ggplot(DFfilled, aes(x =Year, y = Total)) +
         axis.title.x = element_text(colour="black", vjust=-2),
         axis.title.y = element_text(colour="black", vjust=3))
 show(DocumentPerYear)
-ggsave("DocumentPerYear.png", DocumentPerYear, width = 7, height = 4, units = "in", dpi=150, path = "Results")
+ggsave("DocumentPerYear.png", DocumentPerYear, width = 7, height = 4, units = "in", dpi=500, path = "Results")
 
 #####__________________Top journal_________________#####
 
