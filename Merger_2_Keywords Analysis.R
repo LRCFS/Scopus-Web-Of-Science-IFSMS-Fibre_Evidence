@@ -408,7 +408,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
   #  labs(x="",y="",title="Keywords found in fibre publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
   scale_fill_manual(values=c("#08519C","#3182BD","#6BAED6","#9ECAE1","#C6DBEF","#EFF3FF"),na.value = "grey90")+
   #coord_fixed()+
   theme_grey(base_size=14)+
@@ -427,8 +427,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p)
 ggplotly(p)
-#ggsave("ScopWoS_KeywordTrend.png", p, width = 11, height = 10, units = "in", dpi=150, path = "Results")
-
+ggsave("ScopWoS_KeywordTrend.png", p, width = 13, height = 20, units = "in", dpi=500, path = "Results")
 
 #####______________Graph for Techniques analysis only______________##########
 
@@ -480,15 +479,15 @@ names(TechniqueList) <- c("Year", "Rtitle", "x")
 #### plot second graph
 # Create a new variable from incidence
 TechniqueList$Incidenceweight <- cut(TechniqueList$x,
-                                     breaks = c(-1,0,1,2,max(TechniqueList$x,na.rm=T)),
-                                     labels=c("0","1","2","3-5"))
+                                     breaks = c(-1,0,1,2,3,4,max(TechniqueList$x,na.rm=T)),
+                                     labels=c("0","1","2","3","4","5"))
 
 GraphTemp1Bis <- TechniqueList %>%
   # convert state to factor and reverse order of levels
   mutate(KeywordsCorrected=factor(Rtitle,levels=rev(sort(unique(Rtitle))))) %>%
   # create a new variable from count
-  mutate(countfactor=cut(x,breaks=c(-1,0,1,2,max(x,na.rm=T)),
-                         labels=c("0","1","2","3-5")))  %>%
+  mutate(countfactor=cut(x,breaks=c(-1,0,1,2,3,4,max(x,na.rm=T)),
+                         labels=c("0","1","2","3","4","5")))  %>%
   # change level order
   mutate(countfactor=factor(as.character(countfactor),levels=rev(levels(countfactor))))
 # InterpolKeywordList$WYear <- gsr(InterpolKeywordList$Year,year$Var1,1/year$Freq)
@@ -507,10 +506,10 @@ p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
   #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0),labels = function(x) str_wrap(x, width = 30))+
-  scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
-  scale_fill_manual(values=c("#f46d43","#fdae61","#fee08b","#d5ee52","#77c86c","#66afc6","#ddf1da"),na.value = "grey90")+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2020))+
+  scale_fill_manual(values=c("#BD0026", "#F03B20", "#FD8D3C", "#FECC5C","lightgoldenrod1"),na.value = "grey90")+
   coord_fixed()+
-  theme_grey(base_size=8)+
+  theme_bw(base_size=8)+
   theme(legend.position="right",legend.direction="vertical",
         legend.title=element_text(colour=textcol),
         legend.margin=margin(grid::unit(0,"cm")),
@@ -526,7 +525,7 @@ p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p1)
 ggplotly(p1)
-ggsave("ScopWoS_Techniques Keyword Trend.png", p1,  width = 8, height = 3, units = "in", dpi=150, path = "Results")
+ggsave("ScopWoS_Techniques Keyword Trend.png", p1,  width = 6, height = 6, units = "in", dpi=150, path = "Results")
 
 #####______________Graph for Textile analysis only______________##########
 
@@ -560,15 +559,15 @@ TextileslistCount <- aggregate(Textileslist$x, list(Textileslist$Rtitle), sum)
 #### plot second graph
 # Create a new variable from incidence
 Textileslist$Incidenceweight <- cut(Textileslist$x,
-                                    breaks = c(-1,0,1,2,max(Textileslist$x,na.rm=T)),
-                                    labels=c("0","1","2","3-5"))
+                                    breaks = c(-1,0,1,2,3,max(Textileslist$x,na.rm=T)),
+                                    labels=c("0","1","2","3","4"))
 
 GraphTemp1Ter <- Textileslist %>%
   # convert state to factor and reverse order of levels
   mutate(KeywordsCorrected=factor(Rtitle,levels=rev(sort(unique(Rtitle))))) %>%
   # create a new variable from count
-  mutate(countfactor=cut(x,breaks=c(-1,0,1,2,max(x,na.rm=T)),
-                         labels=c("0","1","2","3-5")))  %>%
+  mutate(countfactor=cut(x,breaks=c(-1,0,1,2,3,max(x,na.rm=T)),
+                         labels=c("0","1","2","3","4")))  %>%
   # change level order
   mutate(countfactor=factor(as.character(countfactor),levels=rev(levels(countfactor))))
 # InterpolKeywordList$WYear <- gsr(InterpolKeywordList$Year,year$Var1,1/year$Freq)
@@ -586,10 +585,10 @@ p2 <- ggplot(GraphTemp1Ter,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
   #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
-  scale_fill_manual(values=c("#000099","#3366ff","#99ccff"),na.value = "grey90")+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2020))+
+  scale_fill_manual(values=c("#08519C","#3182BD","#6BAED6","#9ECAE1","#C6DBEF","#EFF3FF"),na.value = "grey90")+
   coord_fixed()+
-  theme_grey(base_size=8)+
+  theme_bw(base_size=8)+
   theme(legend.position="right",legend.direction="vertical",
         legend.title=element_text(colour=textcol),
         legend.margin=margin(grid::unit(0,"cm")),
@@ -605,7 +604,7 @@ p2 <- ggplot(GraphTemp1Ter,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p2)
 ggplotly(p2)
-ggsave("SopWoS_Textile Keyword Trend.png", p2, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+ggsave("SopWoS_Textile Keyword Trend.png", p2, width = 6, height = 6, units = "in", dpi=500, path = "Results")
 
 
 #####______________Graph for Transfer/Persistence analysis only______________##########
@@ -744,10 +743,10 @@ p4 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
   #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
-  scale_fill_manual(values=c("#000099","#3366ff","#99ccff"),na.value = "grey90")+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2020))+
+  scale_fill_manual(values=c("#9E9AC8","#6A51A3"),na.value = "grey90")+
   coord_fixed()+
-  theme_grey(base_size=8)+
+  theme_bw(base_size=8)+
   theme(legend.position="right",legend.direction="vertical",
         legend.title=element_text(colour=textcol),
         legend.margin=margin(grid::unit(0,"cm")),
@@ -763,7 +762,7 @@ p4 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p4)
 ggplotly(p4)
-ggsave("SopWoS_Colour Keyword Trend.png", p4, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+ggsave("SopWoS_Colour Keyword Trend.png", p4, width = 6, height = 6, units = "in", dpi=300, path = "Results")
 
 #####______________Graph for Bayesian analysis only______________##########
 
@@ -820,10 +819,10 @@ p5 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
   #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1975,1985,1995,2005,2015))+
-  scale_fill_manual(values=c("#000099","#3366ff","#99ccff"),na.value = "grey90")+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2020))+
+  scale_fill_manual(values=c("#006D2C","#A1D99B"),na.value = "grey90")+
   coord_fixed()+
-  theme_grey(base_size=8)+
+  theme_bw(base_size=8)+
   theme(legend.position="right",legend.direction="vertical",
         legend.title=element_text(colour=textcol),
         legend.margin=margin(grid::unit(0,"cm")),
@@ -839,7 +838,7 @@ p5 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p5)
 ggplotly(p5)
-ggsave("SopWoS_bayesian Keyword Trend.png", p5, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+ggsave("SopWoS_bayesian Keyword Trend.png", p5, width = 6, height = 6, units = "in", dpi=500, path = "Results")
 
 #####______________2D matrix______________##########
 # create a list with the keywords with a frequency >5
