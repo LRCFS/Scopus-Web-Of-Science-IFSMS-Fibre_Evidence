@@ -871,7 +871,7 @@ MatrixFinal <- Matrixbis
 Matriceplot <- cor(MatrixFinal, method = "spearman")
 
 # Plot the matix
-corrplot(Matriceplot, method = "color", type = "upper", tl.col = "black", tl.cex=0.5, col = brewer.pal(n = 11, name = "RdBu"))
+corrplot(Matriceplot, method = "color", type = "upper", tl.col = "black", tl.cex=0.5, col = brewer.pal(n = 11, name = "RdBu"), diag = F)
 
 ####################### Plot the matrix with ggplot ##############################
 # the matrix need to be melt first ( package reshape2 require)
@@ -909,3 +909,33 @@ ggplotly(ggplotmatrix)
 
 # to export the table
 #write.table(melted_matrice, file = "Matrix_table sup5.csv", sep = ",", row.names = F)
+
+
+######################### test count (Harry's code) #########################
+testmatrix <- MergeDataKeywordList %>%
+  select(TI,KeywordsCorrected)
+testmatrix <- testmatrix %>% group_by(TI) %>%
+  summarise(KeywordsCorrected = paste(KeywordsCorrected, collapse = ";"))
+
+#Split Column "KeywordsCorrected" in row by the separator ";", remove leading white space to generate list
+X <- lapply(testmatrix$KeywordsCorrected, function(x){unlist(strsplit(x, split = ";"))})
+unlist(strsplit(testmatrix$KeywordsCorrected[1:2], split = ";"))
+
+countMat<- matrix(0, length(unique(unlist(strsplit(testmatrix$KeywordsCorrected, split = ";")))),
+                  length(unique(unlist(strsplit(testmatrix$KeywordsCorrected, split = ";")))))
+colnames(countMat) <- unique(unlist(strsplit(testmatrix$KeywordsCorrected, split = ";")))
+rownames(countMat) <- unique(unlist(strsplit(testmatrix$KeywordsCorrected, split = ";")))
+
+addCounts <- function(keywordString){
+  keywordsSep<-unlist(strsplit(keywordString, split = ";"))
+  countMat[keywordsSep,keywordsSep] <<- countMat[keywordsSep,keywordsSep]+1
+}
+
+n<- lapply(testmatrix$KeywordsCorrected, addCounts)
+rm(n)
+topWordCount <- countMat[TopKeywordsList$TopKeywords,TopKeywordsList$TopKeywords]
+fibreCounts <- countMat["FIBRE",TopKeywordsList$TopKeywords]
+
+# Plot the matix
+coul <- colorRampPalette(brewer.pal(8, "Oranges"))(8)
+heatmap(topWordCount, Colv = NA, Rowv = NA, revC = F, col = coul)
