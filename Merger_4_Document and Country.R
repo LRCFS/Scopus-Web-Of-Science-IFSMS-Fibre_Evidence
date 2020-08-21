@@ -164,25 +164,25 @@ summary(Table2Output)
 # To add years with no document
 DFfilled <- year %>%
   complete(Year = 1978:2020,
-           fill = list(Freq = 0)) %>%
+           fill = list(Total = 0)) %>%
   as.data.frame()
 DFfilled
-DFfilled[is.na(DFfilled)] <- 0
 
 # To caculate the AAGR and CAGR
 #write.csv(DFfilled,"Merger AAGR.csv")
 
 # GRAPH
 DocumentPerYear <-ggplot(DFfilled, aes(x =Year, y = Total)) +
-  geom_smooth(method = 'lm', se=FALSE, color="red", size=0.5)+
+  geom_smooth(method = lm, se=F, color="red", size=0.5)+
   geom_line(data =DFfilled, aes(x =Year, y = Total), color = "black")+ geom_point(data =DFfilled, aes(x =Year, y = Total), color = "black")+
-  ylim(0,40)+
+  ylim(-1,40)+
   labs(x="Year", y="Number of references")+
   theme_bw(base_family = "Arial", base_size = 12)+
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5),
         axis.title.x = element_text(colour="black", vjust=-2),
         axis.title.y = element_text(colour="black", vjust=3))
 show(DocumentPerYear)
+ggplotly(DocumentPerYear)
 ggsave("DocumentPerYear.png", DocumentPerYear, width = 7, height = 4, units = "in", dpi=500, path = "Results")
 
 #####__________________Top journal_________________#####
