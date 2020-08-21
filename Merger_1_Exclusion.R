@@ -470,6 +470,9 @@ CombinedDataset <- CombinedDataset %>%
   summarise(DE = sort(paste(DE, collapse= ";")))%>%
   ungroup()
 
+
+write.table(CombinedDataset, file = "ScopWos merge.txt", sep = "\t", row.names = F)
+
 #######################################################################
 #####                       EXCLUSION LIST                        #####
 #######################################################################
@@ -702,7 +705,7 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-#write.table(CombinedDataset3, file = "Merger_Dataset_Final.txt", sep = "\t", row.names = F)
+write.table(CombinedDataset3, file = "Merger_Dataset_Finalbis.txt", sep = "\t", row.names = F)
 
 #############################################################
 #####                 General information               #####
