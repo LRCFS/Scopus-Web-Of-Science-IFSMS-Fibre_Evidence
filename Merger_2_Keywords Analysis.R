@@ -354,7 +354,7 @@ ggsave("Keywordsperdocumentplot.png", Keywordsperdocumentplot, width = 7, height
 
 Keywordsperdocumentboxplot <-ggplot() +
   geom_boxplot(data =Keywordsperdocumentfinal, aes(x =Year, y = Frequency), outlier.colour= "red", outlier.shape = 8, color = "black", shape=1, size=0.5)+
-  labs(x="Year", y="Authors per documents")+
+  labs(x="Year", y="Keywords per documents")+
   theme_bw(base_family = "Arial", base_size = 12)+
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
 show(Keywordsperdocumentboxplot)
@@ -363,6 +363,18 @@ ggsave("Keywordsperdocumentboxplot.png", Keywordsperdocumentboxplot, width = 6, 
 p3 <- ggarrange(Keywordsperdocumentplot, Keywordsperdocumentboxplot,labels = c("A", "B"),ncol = 1, nrow = 2,legend = "none")
 show(p3)
 ggsave("Keywords perdocument combine.png", p3, width = 6, height = 6, units = "in", dpi=200, path = "Results")
+
+# OTHER GRAPH
+Keywordsperdocumentmix <-ggplot() +
+  geom_boxplot(data =Keywordsperdocumentfinal, aes(x =Year, y = Frequency), outlier.colour= "red", outlier.shape = 8, color = "black", shape=1, size=0.5)+
+  geom_point(data =Keywordsperdocumentfinal, aes(x =Year, y = Frequency), color = "black", shape=1, size=1, position= jitter)+
+  geom_point(data =means2, aes(x =Year, y = Frequency), color = "darkred", shape=17, size=2)+  geom_line(data = means2, aes(x =Year, y = Frequency, group=1), color = "darkred")+
+  geom_line(data = means2, aes(x =Year, y = Frequency, group=1), color = "darkred")+
+  labs(x="Year", y="Keywords per documents")+
+  theme_bw(base_family = "Arial", base_size = 12)+
+  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
+show(Keywordsperdocumentmix)
+ggsave("Keywordsperdocument mix.png",Keywordsperdocumentmix, width = 6, height = 4, units = "in", dpi=200, path = "Results")
 
 #############################################################
 #####               Keyword trend graph                 #####
@@ -411,7 +423,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
   scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
   scale_fill_manual(values=c("#08519C","#3182BD","#6BAED6","#9ECAE1","#C6DBEF","#EFF3FF"),na.value = "grey90")+
   #coord_fixed()+
-  theme_grey(base_size=14)+
+  theme_grey(base_size=16)+
   theme(legend.position="right",legend.direction="vertical",
         legend.title=element_text(colour=textcol),
         legend.margin=margin(grid::unit(0,"cm")),
@@ -427,7 +439,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p)
 ggplotly(p)
-ggsave("ScopWoS_KeywordTrend.png", p, width = 13, height = 20, units = "in", dpi=500, path = "Results")
+ggsave("ScopWoS_KeywordTrend_bis.png", p, width = 13, height = 20, units = "in", dpi=500, path = "Results")
 
 #####______________Graph for Techniques analysis only______________##########
 
@@ -555,6 +567,7 @@ Textileslist <-subset(MergeDataKeywordNarrowRangeGraph3,Rtitle %in% Textileslist
 
 # Total count of the keywords
 TextileslistCount <- aggregate(Textileslist$x, list(Textileslist$Rtitle), sum)
+sum(TextileslistCount$x)
 
 #### plot second graph
 # Create a new variable from incidence
