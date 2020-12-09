@@ -14,7 +14,7 @@ rm(list=ls())
 #############################################################
 #####                 File requirement                  #####
 #############################################################
-# The files to be imported are generated from Scopus and Web Of Science
+# The files to be imported are generated from Scopus and Web Of Science databases
 # The columns will need to contain:
 # Year; Title; Source.title; Authors; AuthorID; DE; DES; EID; SO; DT
 
@@ -34,9 +34,7 @@ library(gridExtra)
 #############################################################
 #####                      Function  1/4                #####
 #############################################################
-
 #### Function to search and replace ####
-
 # Include function to duplicate {Marc Schwartz (via MN) on http://r.789695.n4.nabble.com/replace-values-in-data-frame-td803416.html}
 gsr <- function(Source, Search, Replace) 
 { 
@@ -59,7 +57,6 @@ gsr <- function(Source, Search, Replace)
 #############################################################
 #####                      Function  2/3                #####
 #############################################################
-
 # function to replace accented characters with unaccented equivalents 
 # adapted from https://stackoverflow.com/questions/15253954/replace-multiple-letters-with-accents-with-gsub
 removeDiacritics <- function(string) {
@@ -73,10 +70,8 @@ removeDiacritics <- function(string) {
 #############################################################
 #####                      Function  3/4                #####
 #############################################################
-
 # Function, adapted from https://www.r-bloggers.com/merging-data-sets-based-on-partially-matched-data-elements/
-
-# Function to check for duplicate and partial match between database imports. The genreted list can then be used to make the appropriate changes to the lists
+# Function to check for duplicate and partial match between database imports. The generated list can then be used to make the appropriate changes to the lists
 
 #Data loaded in from downloaded files as:
 ##PercentageUsingTheNet
@@ -166,7 +161,8 @@ Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
 
-# For the purpose of the analysis, each records from 2020 are removed from the current dataset
+# For the purpose of each analysis, records from a year can be excluded
+# In this situation, each records from 2020 and more recent are removed from the current dataset
 Scopus <- Scopus[Scopus$PY != "2020" & Scopus$PY != "2021", ]
 WebofScience <- WebofScience[WebofScience$PY != "2020" & WebofScience$PY != "2021", ]
 
@@ -188,7 +184,6 @@ ScopusReducedDataset$PY <- as.numeric(ScopusReducedDataset$PY)
 
 ####  for rebuilding EID  ####
 #### If added need to be included later in merge #####
-
 # ScopusReducedDataset$EID <- sub("http.*.eid=", "", ScopusReducedDataset$url)
 # ScopusReducedDataset$EID <- sub("&.*", "", ScopusReducedDataset$EID)
 
@@ -205,8 +200,6 @@ WebOfScienceReducedDataset <- WebofScience %>%
 WebOfScienceReducedDataset$C1  <- as.character(gsub("\\.","\\",WebOfScienceReducedDataset$C1))
 # Removing each ";" in double in the DE column
 WebOfScienceReducedDataset$DE  <- as.character(gsub(";;",";",WebOfScienceReducedDataset$DE))
-# removing the extra "NA NA" in the AU column, replace by "" 
-#WebOfScienceReducedDataset$AU  <- as.character(gsub("NA NA","", WebOfScienceReducedDataset$AU))
 
 #####    Rename the Keywords lists
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="ID"] <- "IDW"
@@ -227,7 +220,7 @@ aggregate(matches$pass, by=list(matches$pass), FUN=length)
 PartialExport <- matches %>% filter(pass == "Partial")
 
 # The PartialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
-write.table(PartialExport, file = "PartialExport_December.txt", quote = F, sep="\t", row.names = F)
+#write.table(PartialExport, file = "PartialExport_December.txt", quote = F, sep="\t", row.names = F)
 
 # Correction to the title can be applied at this stage. This can be done in Notepad++, Excel etc.
 # The title generated in Web of Science will be used to correct the one in Scopus
@@ -376,6 +369,7 @@ SourceCorrection <- as.data.frame(SourceCorrection)
 WebOfScienceReducedDatasetCorrected$SOCorrected <- gsr(as.character(WebOfScienceReducedDatasetCorrected$SO), as.character(SourceCorrection$raw.x), as.character(SourceCorrection$raw.y))
 WebOfScienceReducedDatasetCorrected <- WebOfScienceReducedDatasetCorrected%>%
   select(PY,AU,DEW,IDW,C1W,DI,SOCorrected,DT,Authors,AuthorCorrected,TI)
+
 # rename SOCorrected column
 names(WebOfScienceReducedDatasetCorrected)[names(WebOfScienceReducedDatasetCorrected)=="SOCorrected"] <- "SO"
 
@@ -462,7 +456,7 @@ CombinedDataset <- CombinedDataset %>%
   summarise(DE = sort(paste(DE, collapse= ";")))%>%
   ungroup()
 
-
+# To export the Data before the exclusion process
 #write.table(CombinedDataset, file = "ScopWos merge_December.txt", sep = "\t", row.names = F)
 
 #######################################################################
