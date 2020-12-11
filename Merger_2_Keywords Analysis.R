@@ -4,7 +4,7 @@ rm(list=ls())
 #############################################################
 #####                     To read                       #####
 #############################################################
-# This R script is the second step after merging Scopus and Web of Sciences (BibTex format)
+# This R script is the second step after the merge Scopus and Web of Sciences (BibTex format)
 # This script allows a bibliometric analysis on the Keywords 
 # The choice of the keywords to analyse (Authors Keywords, Index Keywords, Both) is done in the previous script
 
@@ -174,8 +174,8 @@ ScopusReducedDataset <- Scopus %>%
 WebOfScienceReducedDataset <- WebofScience %>%
   select(PY,AU,TI,DE,ID,C1,DI,SO,DT)
 
-# read the export *.csv document from Merger, separation ",", and place it in data.frame "MergerOriginalData"
-MergerOriginalData <- read.csv("Merger_Dataset_Final.txt", sep="\t", header=TRUE)
+# read the export *.csv document from Merger, separation "\t", and place it in data.frame "MergerOriginalData"
+MergerOriginalData <- read.csv("Merger_Dataset_Final_December.txt", sep="\t", header=TRUE)
 
 
 #############################################################
@@ -199,7 +199,7 @@ Keyword <- KeywordList %>%
 # Most cited keywords before correction - Extract a list of keywords to apply corrections
 KeywordListCount <- aggregate(KeywordList$AIKeywords, by=list(Freq=KeywordList$AIKeywords), FUN=length)
 names(KeywordListCount) <- c("Keywords","Count")
-#write.csv(KeywordListCount,"Keywords to correct.csv")
+#write.csv(KeywordListCount,"Keywords to correct_December.csv")
 
 #Correction to the keywords can be applied at this stage. This can be done in Notepad++, Excel etc. The ultimate order of the list must be kept so it can be binded to the orignial data.
 #read the corrected list of keywords and combine it to the original list
@@ -212,7 +212,7 @@ MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$
 #####               Data analysis - Keywords            #####
 #############################################################
 #####________________References with keywords________________#####
-# This part allows to calculate the references with keywords provided, from Scopus, from Web of Science and both Scopus+WoS
+# This part allows to calculate the number of references with keywords provided, from Scopus, from Web of Science and both Scopus+WoS
 # Count the number of references with DES, DEW, IDS, IDW and AIK as well as their % to the total number of references
 Totalref <- data.frame(nrow(MergerOriginalData))
 CountDES <- data.frame(table(MergerOriginalData$AIKS, exclude = ""));CountDES
@@ -231,22 +231,16 @@ rownames(KeywordTable_1)[rownames(KeywordTable_1)=="1"] <- "Author keywords Scop
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="2"] <- "Author keywords WoS"
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="3"] <- "Index keywords Scopus"
 rownames(KeywordTable_1)[rownames(KeywordTable_1)=="4"] <- "Index keywords WoS"
-rownames(KeywordTable_1)[rownames(KeywordTable_1)=="5"] <- "Authors keywords Scopus+WoS"
-
-KeywordTable_1[1,2] <- (KeywordTable_1[1,1]/Totalref)*100
-KeywordTable_1[2,2] <- (KeywordTable_1[2,1]/Totalref)*100
-KeywordTable_1[3,2] <- (KeywordTable_1[3,1]/Totalref)*100
-KeywordTable_1[4,2] <- (KeywordTable_1[4,1]/Totalref)*100
-KeywordTable_1[5,2] <- (KeywordTable_1[5,1]/Totalref)*100
+rownames(KeywordTable_1)[rownames(KeywordTable_1)=="5"] <- "Authors keywords Scopus+WoS distinct"
 
 KeywordTable_1 <- rownames_to_column(KeywordTable_1)
-names(KeywordTable_1) <- c("Keywords", "Count", "%")
+names(KeywordTable_1) <- c("Keywords", "Count")
 
 #Export to text file
-#write.table(KeywordTable_1, file = "Merger_KeywordTable_1.csv", sep = ",", row.names = F)
+#write.table(KeywordTable_1, file = "Merger_KeywordTable_1_December.csv", sep = ",", row.names = F)
 
 #####__________________Average number of keywords per year_________________#####
-#Count to number of time the same year is repeated in the "ScopusKeywordList$Year" and save in a data.frame "Year" 
+#Count the number of time the same year is repeated in the "ScopusKeywordList$Year" and save in a data.frame "Year" 
 PublicationYear<- data.frame(table(MergerOriginalData$PY));PublicationYear
 names(PublicationYear) <- c("Year","Publications")
 
@@ -268,13 +262,14 @@ names(MergeDataKeywordYearCountBis) <- c("Year","Freq")
 # create a new data.frame of the number of document published each year
 Year <- MergerOriginalData %>%
   select(PY)
+
 #Count to number of time the same year is repeated in the "Year" and save in a data.frame "year" 
 year <- data.frame(table(Year$PY));year
 year$Var1 <- as.numeric(as.character(year$Var1))
 names(year) <- c("Year","Freq")
 #add in year the missing year
 DFfilledYear <- year %>%
-  complete(Year = 1978:2020,
+  complete(Year = 1967:2019,
            fill = list(Freq = 0)) %>%
   as.data.frame()
 year <- DFfilledYear
@@ -297,7 +292,7 @@ MeanAK2 <- round(MeanAK2, 2)
 KeywordsPerYear <- ggplot(FinalTableAKeywords, aes(x=Year, y=MeanAK))+
   geom_line()+ 
   geom_point()+
-  scale_x_continuous(breaks=c(1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
   scale_linetype_manual(values=c("solid"))+
   scale_color_manual(values=c("black"))+
   labs(x="Year", y="Average number of keywords")+
@@ -310,7 +305,7 @@ show(KeywordsPerYear)
 ggplotly(KeywordsPerYear)
 
 #To save the graph
-ggsave("Average KeywordsPerYear_ScopWoS.png", KeywordsPerYear, width = 7, height = 3, units = "in", dpi=200, path = "Results")
+#ggsave("Average KeywordsPerYear_ScopWoS_December.png", KeywordsPerYear, width = 7, height = 3, units = "in", dpi=200, path = "Results")
 
 #####__________________Keywords per document and per year _________________#####
 # Create a new dataframe with column Year, Title and Authors
@@ -350,7 +345,7 @@ Keywordsperdocumentplot <-ggplot() +
   theme_bw(base_family = "Arial", base_size = 12)+
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
 show(Keywordsperdocumentplot)
-ggsave("Keywordsperdocumentplot.png", Keywordsperdocumentplot, width = 7, height = 5, units = "in", dpi=200)
+#ggsave("Keywordsperdocumentplot_December.png", Keywordsperdocumentplot, width = 7, height = 5, units = "in", dpi=200)
 
 Keywordsperdocumentboxplot <-ggplot() +
   geom_boxplot(data =Keywordsperdocumentfinal, aes(x =Year, y = Frequency), outlier.colour= "red", outlier.shape = 8, color = "black", shape=1, size=0.5)+
@@ -358,11 +353,11 @@ Keywordsperdocumentboxplot <-ggplot() +
   theme_bw(base_family = "Arial", base_size = 12)+
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
 show(Keywordsperdocumentboxplot)
-ggsave("Keywordsperdocumentboxplot.png", Keywordsperdocumentboxplot, width = 6, height = 4, units = "in", dpi=200)
+#ggsave("Keywordsperdocumentboxplot_December.png", Keywordsperdocumentboxplot, width = 6, height = 4, units = "in", dpi=200)
 
 p3 <- ggarrange(Keywordsperdocumentplot, Keywordsperdocumentboxplot,labels = c("A", "B"),ncol = 1, nrow = 2,legend = "none")
 show(p3)
-ggsave("Keywords perdocument combine.png", p3, width = 6, height = 6, units = "in", dpi=200, path = "Results")
+#ggsave("Keywords perdocument combine_December.png", p3, width = 6, height = 6, units = "in", dpi=200, path = "Results")
 
 # OTHER GRAPH
 Keywordsperdocumentmix <-ggplot() +
@@ -374,7 +369,7 @@ Keywordsperdocumentmix <-ggplot() +
   theme_bw(base_family = "Arial", base_size = 12)+
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
 show(Keywordsperdocumentmix)
-ggsave("Keywordsperdocument mix.png",Keywordsperdocumentmix, width = 6, height = 4, units = "in", dpi=200, path = "Results")
+#ggsave("Keywordsperdocument mix_December.png",Keywordsperdocumentmix, width = 6, height = 4, units = "in", dpi=200, path = "Results")
 
 #############################################################
 #####               Keyword trend graph                 #####
@@ -420,7 +415,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
   #  labs(x="",y="",title="Keywords found in fibre publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
   scale_fill_manual(values=c("#08519C","#3182BD","#6BAED6","#9ECAE1","#C6DBEF","#EFF3FF"),na.value = "grey90")+
   #coord_fixed()+
   theme_grey(base_size=16)+
@@ -438,8 +433,8 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p)
-ggplotly(p)
-ggsave("ScopWoS_KeywordTrend_bis.png", p, width = 13, height = 20, units = "in", dpi=500, path = "Results")
+#ggplotly(p)
+ggsave("ScopWoS_KeywordTrend_December.png", p, width = 13, height = 20, units = "in", dpi=500, path = "Results")
 
 #####______________Graph for Techniques analysis only______________##########
 
@@ -518,7 +513,7 @@ p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
   #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0),labels = function(x) str_wrap(x, width = 30))+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2020))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2019))+
   scale_fill_manual(values=c("#BD0026", "#F03B20", "#FD8D3C", "#FECC5C","lightgoldenrod1"),na.value = "grey90")+
   coord_fixed()+
   theme_bw(base_size=8)+
@@ -536,8 +531,8 @@ p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p1)
-ggplotly(p1)
-ggsave("ScopWoS_Techniques Keyword Trend.png", p1,  width = 6, height = 6, units = "in", dpi=150, path = "Results")
+#ggplotly(p1)
+ggsave("ScopWoS_Techniques Keyword Trend_December.png", p1,  width = 6, height = 6, units = "in", dpi=150, path = "Results")
 
 #####______________Graph for Textile analysis only______________##########
 
@@ -595,10 +590,9 @@ textcol <- "black"
 p2 <- ggplot(GraphTemp1Ter,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=countfactor))+
   geom_tile(colour="white",size=0.2)+
   guides(fill=guide_legend(title="Count"))+
-  #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2020))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2019))+
   scale_fill_manual(values=c("#08519C","#3182BD","#6BAED6","#9ECAE1","#C6DBEF","#EFF3FF"),na.value = "grey90")+
   coord_fixed()+
   theme_bw(base_size=8)+
@@ -615,9 +609,10 @@ p2 <- ggplot(GraphTemp1Ter,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         panel.border=element_blank(),
         plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
         plot.title=element_text(colour=textcol,hjust=0,size=12))
+
 show(p2)
-ggplotly(p2)
-ggsave("SopWoS_Textile Keyword Trend.png", p2, width = 6, height = 6, units = "in", dpi=500, path = "Results")
+#ggplotly(p2)
+ggsave("SopWoS_Textile Keyword Trend_December.png", p2, width = 6, height = 6, units = "in", dpi=500, path = "Results")
 
 
 #####______________Graph for Transfer/Persistence analysis only______________##########
@@ -697,8 +692,8 @@ p3 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
         plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p3)
-ggplotly(p3)
-ggsave("SopWoS_Transfer Keyword Trend_04-06-20.png", p3, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+#ggplotly(p3)
+ggsave("SopWoS_Transfer Keyword Trend_December.png", p3, width = 8, height = 3, units = "in", dpi=150, path = "Results")
 
 
 #####______________Graph for Colour analysis only______________##########
@@ -756,7 +751,7 @@ p4 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
   #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2020))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2019))+
   scale_fill_manual(values=c("#9E9AC8","#6A51A3"),na.value = "grey90")+
   coord_fixed()+
   theme_bw(base_size=8)+
@@ -774,8 +769,8 @@ p4 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
         plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p4)
-ggplotly(p4)
-ggsave("SopWoS_Colour Keyword Trend.png", p4, width = 6, height = 6, units = "in", dpi=300, path = "Results")
+#ggplotly(p4)
+ggsave("SopWoS_Colour Keyword Trend_December.png", p4, width = 6, height = 6, units = "in", dpi=300, path = "Results")
 
 #####______________Graph for Bayesian analysis only______________##########
 
@@ -832,7 +827,7 @@ p5 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
   #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2020))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2019))+
   scale_fill_manual(values=c("#006D2C","#A1D99B"),na.value = "grey90")+
   coord_fixed()+
   theme_bw(base_size=8)+
@@ -850,7 +845,7 @@ p5 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
         plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p5)
-ggplotly(p5)
+#ggplotly(p5)
 ggsave("SopWoS_bayesian Keyword Trend.png", p5, width = 6, height = 6, units = "in", dpi=500, path = "Results")
 
 #####______________2D matrix______________##########
