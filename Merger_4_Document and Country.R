@@ -71,7 +71,7 @@ removeDiacritics <- function(string) {
 # set working directory
 
 # read the export *.csv document from Merger, separation ",", and place it in data.frame "MergerOriginalData"
-MergerOriginalData <- read.csv("Merger_Dataset_Final.txt", sep="\t", header=TRUE)
+MergerOriginalData <- read.csv("Merger_Dataset_Final_December.txt", sep="\t", header=TRUE)
 
 
 #############################################################
@@ -109,7 +109,7 @@ ArticlesCount <- aggregate(Articles$Document.Type, list(Articles$Year), FUN=leng
 names(ArticlesCount) <- c("Year","Articles")
 # Add missing years
 ArticlesCountExtended <- ArticlesCount %>%
-  complete(Year = 1978:2020, fill = list(Freq = 0)) %>%
+  complete(Year = 1967:2019, fill = list(Freq = 0)) %>%
   as.data.frame()
 ArticlesCountExtended[is.na(ArticlesCountExtended)] <- 0
 
@@ -118,7 +118,7 @@ ProceedingsCount <- aggregate(Proceedings$Document.Type, list(Proceedings$Year),
 names(ProceedingsCount) <- c("Year","Proceedings")
 # Add missing years
 ProceedingsCountExtended <- ProceedingsCount %>%
-  complete(Year = 1978:2020, fill = list(Freq = 0)) %>%
+  complete(Year = 1967:2019, fill = list(Freq = 0)) %>%
   as.data.frame()
 ProceedingsCountExtended[is.na(ProceedingsCountExtended)] <- 0
 
@@ -127,7 +127,7 @@ BookCount <- aggregate(Book$Document.Type, list(Book$Year), FUN=length)
 names(BookCount) <- c("Year","Books")
 # Add missing years
 BookCountExtended <- BookCount %>%
-  complete(Year = 1978:2020, fill = list(Freq = 0)) %>%
+  complete(Year = 1967:2019, fill = list(Freq = 0)) %>%
   as.data.frame()
 BookCountExtended[is.na(BookCountExtended)] <- 0
 
@@ -136,7 +136,7 @@ ConferenceCount <- aggregate(Conference$Document.Type, list(Conference$Year), FU
 names(ConferenceCount) <- c("Year","Conference Paper")
 # Add missing years
 ConferenceCountExtended <- ConferenceCount %>%
-  complete(Year = 1978:2020, fill = list(Freq = 0)) %>%
+  complete(Year = 1967:2019, fill = list(Freq = 0)) %>%
   as.data.frame()
 ConferenceCountExtended[is.na(ConferenceCountExtended)] <- 0
 
@@ -146,7 +146,7 @@ OtherCount <- aggregate(Other2$Document.Type, list(Other2$Year), FUN=length)
 names(OtherCount) <- c("Year","Others")
 # Add missing years
 OtherCountExtended <- OtherCount %>%
-  complete(Year = 1978:2020, fill = list(Freq = 0)) %>%
+  complete(Year = 1967:2019, fill = list(Freq = 0)) %>%
   as.data.frame()
 OtherCountExtended[is.na(OtherCountExtended)] <- 0
 
@@ -157,19 +157,19 @@ Table2Output <- Reduce(merge, list(year, ArticlesCountExtended,ConferenceCountEx
 summary(Table2Output)
 
 #Export to text file
-#write.table(Table2Output, file = "Document_Table.csv", sep = ",", row.names = F)
+#write.table(Table2Output, file = "Document_Table_December.csv", sep = ",", row.names = F)
 
 #####__________________Document per Year_________________#####
 
 # To add years with no document
 DFfilled <- year %>%
-  complete(Year = 1978:2020,
+  complete(Year = 1967:2019,
            fill = list(Total = 0)) %>%
   as.data.frame()
 DFfilled
 
 # To caculate the AAGR and CAGR
-#write.csv(DFfilled,"Merger AAGR.csv")
+#write.csv(DFfilled,"Merger AAGR_December.csv")
 
 # GRAPH
 DocumentPerYear <-ggplot(DFfilled, aes(x =Year, y = Total)) +
@@ -183,7 +183,7 @@ DocumentPerYear <-ggplot(DFfilled, aes(x =Year, y = Total)) +
         axis.title.y = element_text(colour="black", vjust=3))
 show(DocumentPerYear)
 ggplotly(DocumentPerYear)
-ggsave("DocumentPerYear.png", DocumentPerYear, width = 7, height = 4, units = "in", dpi=500, path = "Results")
+ggsave("DocumentPerYear_December.png", DocumentPerYear, width = 7, height = 4, units = "in", dpi=500, path = "Results")
 
 #####__________________Top journal_________________#####
 
@@ -194,7 +194,7 @@ TopJournal <- TopJournal[order(-TopJournal$Freq),]
 names(TopJournal) <- c("Title","Frequency")
 
 #Export to text file
-#write.table(TopJournal, file = "TopJournal_Table.csv", sep = ",", row.names = F)
+write.table(TopJournal, file = "TopJournal_Table_December.csv", sep = ",", row.names = F)
 
 #############################################################
 #####                    Countries                      #####
@@ -256,5 +256,4 @@ p <- ggplot(cntry.dat, aes(x=Country, y=Count, fill=Continent)) +
   theme(text = element_text(family = "Arial"))
 show(p)
 ggplotly(p)
-ggsave("Country_ScopWoS.png", p, width = 8, height = 6, units = "in", dpi=150, path = "Results")
-
+ggsave("Country_ScopWoS_December.png", p, width = 8, height = 6, units = "in", dpi=150, path = "Results")
