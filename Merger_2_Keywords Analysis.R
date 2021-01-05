@@ -292,7 +292,7 @@ MeanAK2 <- round(MeanAK2, 2)
 KeywordsPerYear <- ggplot(FinalTableAKeywords, aes(x=Year, y=MeanAK))+
   geom_line()+ 
   geom_point()+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
   scale_linetype_manual(values=c("solid"))+
   scale_color_manual(values=c("black"))+
   labs(x="Year", y="Average number of keywords")+
