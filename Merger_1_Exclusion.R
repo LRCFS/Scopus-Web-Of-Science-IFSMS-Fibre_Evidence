@@ -9,7 +9,7 @@ rm(list=ls())
 # The .txt/.csv exported at the end is the one which will be use for the Bibliometric analysis in the following R script:
 # Merger_2_Keywords Analysis.R
 # Merger_3_Authors Analysis.R
-# Merger_2_Document and Country.R
+# Merger_4_Document and Country.R
 
 #############################################################
 #####                 File requirement                  #####
@@ -161,11 +161,10 @@ Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
 
-# For the purpose of each analysis, records from a year can be excluded
+# For the purpose of each analysis, records from a year range can be excluded
 # In this situation, each records from 2020 and more recent are removed from the current dataset
-Scopus <- Scopus[Scopus$PY != "2020" & Scopus$PY != "2021", ]
-WebofScience <- WebofScience[WebofScience$PY != "2020" & WebofScience$PY != "2021", ]
-
+#Scopus <- Scopus[Scopus$PY != "2020" & Scopus$PY != "2021", ]
+#WebofScience <- WebofScience[WebofScience$PY != "2020" & WebofScience$PY != "2021", ]
 
 #############################################################
 #####     Comparison and merging of the two datasets    #####
@@ -205,6 +204,7 @@ WebOfScienceReducedDataset$DE  <- as.character(gsub(";;",";",WebOfScienceReduced
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="ID"] <- "IDW"
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="DE"] <- "DEW"
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="C1"] <- "C1W"
+
 # removing entries with no year
 WebOfScienceReducedDataset <- WebOfScienceReducedDataset[!is.na(WebOfScienceReducedDataset$PY),]
 WebOfScienceReducedDataset <- WebOfScienceReducedDataset %>%
@@ -358,7 +358,7 @@ aggregate(matches2$pass, by=list(matches2$pass), FUN=length)
 PartialExport2 <- matches2 %>% filter(pass == "Partial")
 
 # The PartialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
-write.table(PartialExport2, file = "PartialExport_Source_December.txt", quote = F, sep="\t", row.names = F)
+#write.table(PartialExport2, file = "PartialExport_Source_December.txt", quote = F, sep="\t", row.names = F)
 
 # Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
 # The Source generated in Scopus is use to correct the one in WoS
@@ -435,7 +435,7 @@ CombinedDataset <- rbind(TempScopusAffiliations,TempWebOfSAffiliations)
 DupeCombinedDataset <- CombinedDataset %>%
   find_duplicates(TI)
 
-# The Authors' keywords (i.e. DEW amd DES) between the two lists should be the same, however it is not the case and some correction will be needed.
+# The Authors' keywords (i.e. DEW and DES) between the two lists should be the same, however it is not the case and some correction will be needed.
 # The user can decide to use the original list of keywords given by the databases instead, adding "S" or "W" to "DE"
 # The merged list (i.e. DEW +DES) is more exhautive than the individual one as for some records as the keywords do not appear in both lists
 # It is best to remove  the white space present with the ";"
@@ -691,7 +691,7 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-write.table(CombinedDataset3, file = "Merger_Dataset_Final_December.txt", sep = "\t", row.names = F)
+#write.table(CombinedDataset3, file = "Merger_Dataset_Final_December.txt", sep = "\t", row.names = F)
 
 #############################################################
 #####                 General information               #####
@@ -750,7 +750,7 @@ Scopus$Document.TypeC <- gsr(Scopus$DT, DocumentCorrected$name, as.character(Doc
 # Count the number of time each document type appear
 DTScop <- data.frame(table(Scopus$Document.TypeC, exclude = ""))
 DTScop <- data.frame(table(Scopus$Document.TypeC, exclude = NA));DTScop
-names() <- c("Document Type", "Count")
+names(DTScop) <- c("Document Type", "Count")
 
 # For WoS
 # Change the name of the type of document
@@ -763,11 +763,11 @@ names(DTWoS) <- c("Document Type", "Count")
 
 #####______________Exportation______________##########
 # To export the first table (General Information)
-#write.table(GF, file = "General Information_ScopWoS_December.csv", quote = F, sep = "\t", row.names = F)
+#write.table(GF, file = "General Information_ScopWoS_December.csv", quote = F, sep = ",", row.names = F)
 
 #To export the second table (Document Type)
-#write.table(DTScop, file = "Document type_Scopus_December.csv", quote = F, sep = "\t", row.names = F)
-w#rite.table(DTWoS, file = "Document type_Wos_December.csv", quote = F, sep = "\t", row.names = F)
+#write.table(DTScop, file = "Document type_Scopus_December.csv", quote = F, sep = ",", row.names = F)
+#write.table(DTWoS, file = "Document type_Wos_December.csv", quote = F, sep = ",", row.names = F)
 
 
 ##################################################################################
@@ -775,78 +775,153 @@ w#rite.table(DTWoS, file = "Document type_Wos_December.csv", quote = F, sep = "\
 ##################################################################################
 # This section is to overview the differences between Scopus and Web of science in terms of number of articles
 # Creating 2 new dataset to not overwrite the data 
-WebOfScience2 <- WebOfScienceReducedDatasetCorrected
-Scopus2 <- ScopusReducedDatasetCorrected
+WebOfScience2 <- WebOfScienceReducedDatasetCorrected %>%
+  select(PY,AU,TI,DI,SO,DT)
+Scopus2 <- ScopusReducedDatasetCorrected %>%
+  select(PY,AU,TI,DI,SO,DT)
 
 # Label each row with the name of the database from where it came from 
 Scopus2$Coder <- "Scopus"
 WebOfScience2$Coder <- "WebOfScience"
 
-      # 1) Creating a list or document present in Web of Science but not in Scopus
-# Creating a list from Scopus Title
-ScopusTitleList <- Scopus2 %>%
+# remove duplicates based on title
+Scopus2 <- distinct(Scopus2, TI, .keep_all=T)
+WebOfScience2 <- distinct(WebOfScience2, TI, .keep_all=T)
+
+# remove duplicates based on DOI
+#each dataset must be split into a list of articles with DOI and a list of articles without DOI
+#dataset with DOI
+Scopus2DOI <- Scopus2 %>% na.omit(Scopus2$DI)
+WebOfScience2DOI <- WebOfScience2 %>% na.omit(WebOfScience2$DI)
+#Dataset without DOI
+Scopus2notDOI <- setdiff(Scopus2,Scopus2DOI)
+WebOfScience2notDOI <- setdiff(WebOfScience2,WebOfScience2DOI)
+#remove duplicated references based on DOI
+Scopus2DOIcorrected <- distinct(Scopus2DOI, DI, .keep_all=T)
+WebOfScience2DOIcorrected <- distinct(WebOfScience2DOI, DI, .keep_all=T)
+
+#combined the datset all together again
+Scopus3 <- rbind(Scopus2DOIcorrected, Scopus2notDOI)
+WebOfScience3 <- rbind(WebOfScience2DOIcorrected, WebOfScience2notDOI)
+
+
+  # 1) Creating a list or document present in Web of Science but not in Scopus
+# Creating a list from Scopus2DOI Title
+ScopusTitleList <- Scopus3 %>%
   select(TI)
 
 # List of records from Web of Science that are not in the Scopus database (Title based)
-WoSExclusive <- subset(WebOfScience2,!(TI %in% ScopusTitleList$TI))
+WoSExclusive <- subset(WebOfScience3,!(TI %in% ScopusTitleList$TI))
 # List of records from WoS that are in the Scopus database (Title based)
-WoSNotExclusive <- subset(WebOfScience2,TI %in% ScopusTitleList$TI)
+WoSNotExclusive <- subset(WebOfScience3,TI %in% ScopusTitleList$TI)
 
-### Check that WoSExclusive + WoSNotExclusive = WebOfScience2 ###
-X <- as.numeric(count(WoSExclusive)); X
-Y <- as.numeric(count(WoSNotExclusive)); Y
-Z <- as.numeric(count(WebOfScience2)); Z
-ifelse(X+Y == Z, "Correct", "Not correct")
+      # 2) Creating a list or document present in Scopus but not in WoS
+# Creating a list from Scopus Title
+WoSTitleList <- WebOfScience3 %>%
+  select(TI)
 
-      # 2) Calculating the % of record present in WoS but not in Scopus
+# List of records from Scopus that are not in the WoS database (TI based)
+ScopusExclusive <- subset(Scopus3,!(TI %in% WoSTitleList$TI))
+# List of records from Scopus that are in the WoS database (TI based)
+ScopusNotExclusive <- subset(Scopus3,TI %in% WoSTitleList$TI)
+
+
+    # 3) To generate a list of DOI with a partial match for external check, if WoSNotExclusive and ScopusNotExclusive are different
+
+# First check for duplicates in WosNotEclusive and ScopusNotExclusive
+#create new dataset to not overwrite data
+WoSnotexclu1 <- WoSNotExclusive
+#Convert row names into first column and delete it 
+WoSnotexclu1 <- tibble::rownames_to_column(WoSnotexclu1, "todelete")
+WoSnotexclu1$todelete <- NULL
+WoSnotexclu1 <- WoSnotexclu1 %>% distinct(TI)
+
+#find duplicates : note the row with "TRUE" in X (for example 554) and delete it in WoSnotexclu1
+X <- duplicated(WoSnotexclu1$TI)
+X <-data.frame(X)
+WoSnotexclu1 <- WoSnotexclu1[-c(554),]
+
+#create new dataset to not overwrite data
+Scopnotexclu1 <- ScopusNotExclusive
+#Convert row names into first column and delete it 
+Scopnotexclu1 <- tibble::rownames_to_column(Scopnotexclu1, "todelete")
+Scopnotexclu1$todelete <- NULL
+Scopnotexclu1 <- Scopnotexclu1 %>% distinct(TI)
+
+#find duplicates : note the row with "TRUE" in Y (for example 101) and delete it in v
+Y <- duplicated(Scopnotexclu1$TI)
+Y <-data.frame(Y)
+Scopnotexclu1 <- Scopnotexclu1[-c(101,114,151,200,435,479),]
+
+### Check that WoSnotexclu1 = Scopnotexclu1  ###
+Y <- as.numeric(count(WoSnotexclu1)); Y
+B <- as.numeric(count(Scopnotexclu1)); B
+ifelse(Y == B, "Correct", "Not correct")
+
+#Check for duplicates in WoSExclusive and ScopusExclusive
+#create new dataset to not overwrite data
+WoSexclu1 <- WoSExclusive
+#Convert row names into first column and delete it 
+WoSexclu1 <- tibble::rownames_to_column(WoSexclu1, "todelete")
+WoSexclu1$todelete <- NULL
+#find duplicates : note the row with "TRUE" in X (for example 554) and delete it in WoSnotexclu1
+X <- duplicated(WoSexclu1$TI)
+X <-data.frame(X)
+WoSnotexclu1 <- WoSnotexclu1[-c(2,3,4,5),]
+
+#create new dataset to not overwrite data
+Scopexclu1 <- ScopusExclusive
+#Convert row names into first column and delete it 
+Scopexclu1 <- tibble::rownames_to_column(Scopexclu1, "todelete")
+Scopexclu1$todelete <- NULL
+
+#find duplicates : note the row with "TRUE" in Y (for example 101) and delete it in v
+Y <- duplicated(Scopexclu1$TI)
+Y <-data.frame(Y)
+Scopnotexclu1 <- Scopnotexclu1[-c(24,94,237,265,292,714,718,903),]
+
+
+#Merge Scopusexclu1 and Wosexclu1 to check for duplicates based on the DOI
+ScopWosexclumerge <- rbind(Scopexclu1,WoSexclu1)
+
+ScopWosexclumergebis <- ScopWosexclumerge %>% distinct(DI, .keep_all = TRUE)
+#count the number of duplicates removed
+Numberofduplicates <- as.numeric(count(ScopWosexclumerge)) - as.numeric(count(ScopWosexclumergebis))
+
+#Now at ducplicates based on the title
+#first need two separate articles from scopus and from WoS in ScopWosexclumergebis to be able to use partialMatch function
+
+matches=partialMatch(WoSexclu1$TI,Scopexclu1$TI)
+
+aggregate(matches$pass, by=list(matches$pass), FUN=length)
+
+PartialExport <- matches %>% filter(pass == "Partial")
+
+# The PartialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
+# entry can be checked manually with Scopexclu1 and WoSexclu1
+#write.table(PartialExport, file = "PartialExport_test.txt", quote = F, sep="\t", row.names = F)
+
+
+
+# 2) Calculating the % of record present in WoS but not in Scopus
 # Total number of record in the excluded list
 NumberofexcludedDocument <- as.numeric(count(WoSExclusive)) # same thing as X above, just with another name
 
-# Number Total of record on WoS
-TotalWoS <- as.numeric(count(WebOfScience2)) # same thing as Z above, just with another name
 
-# % of record from WoS present in Scopus
-NumberofexcludedDocument/TotalWoS*100 
 
-      # 3) Creating a list or document present in Scopus but not in Interpol
-# Creating a list from Scopus Title
-WoSTitleList <- WebOfScience2 %>%
-  select(TI)
+Test <- ScopWosexclumerge %>%
+  group_by(PY,AU,TI,DE,ID,C1,SO,DT,Coder) %>%
+  slice(if(all(is.na(DI))) 1 else which(!is.na(DI))) %>%
+  distinct()
 
-# List of records from Scopus that are not in the Interpol database (TI based)
-ScopusExclusive <- subset(Scopus2,!(TI %in% WoSTitleList$TI))
-# List of records from Scopus that are in the Interpol database (TI based)
-ScopusNotExclusive <- subset(Scopus2,TI %in% WoSTitleList$TI)
+Test <- ScopWosexclumerge %>%
+  group_by(.,DI) %>%
+  slice(if(all(is.na(DI))) 1 else which(!is.na(DI))) %>%
+  distinct()
 
-### Check that ScopusExclusive + ScopusNotExclusive = Scopus2 ###
-A <- as.numeric(count(ScopusExclusive)); A
-B <- as.numeric(count(ScopusNotExclusive)); B
-C <- as.numeric(count(Scopus2)); C
-ifelse(A+B == C, "Correct", "Not correct")
 
-      # 4) Calculating the % of record present in Scopus but not in Interpol
-# Total number of record in the excluded list
-ScopusNumberofexcludedDocument <- as.numeric(count(ScopusExclusive)) # same thing as A above, just with another name
 
-# Number Total of record on Scopus
-TotalScopus <- as.numeric(count(Scopus2)) # same thing as C above, just with another name
 
-# % of record from Scopus present in Interpol
-ScopusNumberofexcludedDocument/TotalScopus*100
 
-### Check that WoSNotExclusive = ScopusNotExclusive  ###
-Y <- as.numeric(count(WoSNotExclusive)); Y
-B <- as.numeric(count(ScopusNotExclusive)); B
-ifelse(Y == B, "Correct", "Not correct")
 
-# there is 3 differences between Y and B
-# ADVANCING THE FORENSIC ANALYSIS OF DYED FIBERS BY TIME-OF-FLIGHT MASS SPECTROMETRY is in double in Scopus because one is a conference paper, the other one is an article
-# APPLICATION OF DYE ANALYSIS IN FORENSIC FIBRE AND TEXTILE EXAMINATION: CASE EXAMPLES is in double in WoS for the same reason as above
-# FORENSIC SCIENCE, APPLICATIONS OF RAMAN SPECTROSCOPY TO FIBER ANALYSIS is in double in Scopus because they don't have the same IDS (one entry don't have one)
-# these file must be deleted manually, the code to remove these will be add at the begining
-Scopus2 <- arrange(Scopus2, TI)
-WebOfScience2 <- arrange(WebOfScience2, TI)
-# to delete them
-#Scopus2 <-Scopus2[-125,] #for the first one
-#WebOfScience2 <-WebOfScience2[-112,] #for the second one
-#Scopus2 <-Scopus2[-666,] #for the third one
+ScopWosexclumergebis <- n_distinct(na.omit(ScopWosexclumerge))
