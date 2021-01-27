@@ -772,6 +772,8 @@ names(DTWoS) <- c("Document Type", "Count")
 ##################################################################################
 #####              Comparison Scopus/Web Of Science all year                 #####
 ##################################################################################
+
+#####______________creation of dataset______________##########
 # This section is to overview the differences between Scopus and Web of science in terms of number of articles
 # Creating 2 new dataset to not overwrite the data 
 WebOfScience2 <- WebOfScienceReducedDatasetCorrected %>%
@@ -783,9 +785,9 @@ Scopus2 <- ScopusReducedDatasetCorrected %>%
 Scopus2$Coder <- "Scopus"
 WebOfScience2$Coder <- "WebOfScience"
 
-# remove duplicates based on title
-Scopus2 <- distinct(Scopus2, TI, .keep_all=T)
-WebOfScience2 <- distinct(WebOfScience2, TI, .keep_all=T)
+# remove duplicates based on title and year (some entries have the same title but not published the same year)
+Scopus2 <- distinct(Scopus2, TI, PY, .keep_all=T)
+WebOfScience2 <- distinct(WebOfScience2, TI, PY, .keep_all=T)
 
 # remove duplicates based on DOI
 #each dataset must be split into a list of articles with DOI and a list of articles without DOI
@@ -802,7 +804,6 @@ WebOfScience2DOIcorrected <- distinct(WebOfScience2DOI, DI, .keep_all=T)
 #combined the datset all together again
 Scopus3 <- rbind(Scopus2DOIcorrected, Scopus2notDOI)
 WebOfScience3 <- rbind(WebOfScience2DOIcorrected, WebOfScience2notDOI)
-
 
   # 1) Creating a list or document present in Web of Science but not in Scopus
 # Creating a list from Scopus2DOI Title
@@ -825,161 +826,82 @@ ScopusExclusive <- subset(Scopus3,!(TI %in% WoSTitleList$TI))
 ScopusNotExclusive <- subset(Scopus3,TI %in% WoSTitleList$TI)
 
     # 3) compare WosNotExclusive and ScopusNotExclusive to look for possible duplicates
-Notexclusivemerge <- rbind(WoSNotExclusive,ScopusNotExclusive)
-# remove duplicates based on title
+# some articles in scopus have the same title but one will be a conference paper, the other one an article.
+# Also, some articles in scopus have the same title, but not published in the same journal
+# if we are looking for duplicates based on title, these "not real" duplicates (as explain above) will be removed
+# Therefore, theses needs to be removed from the not exclusive dataset and place in the exclusive one
+
+#first, let's combine "ScopusNotExclusive" and "WoSNotExclusive"
+Notexclusivemerge <- rbind(ScopusNotExclusive, WoSNotExclusive)
+# remove duplicates based on title in "Notexclusivemerge"
+# duplicated ref with coder "Webofscience" will be removed, as well the "not" real duplicates
 Notexclusivemerge2 <- distinct(Notexclusivemerge, TI, .keep_all=T)
-#ScopusNotExclusive and WosnotExclusive are supposed to be the same dataset
-#Check that Notexclusivemerge/2 = Notexclusivemerge2
-countNotexclusivemerge <- as.numeric(count(Notexclusivemerge));countNotexclusivemerge
-countNotexclusivemerge2 <- as.numeric(count(Notexclusivemerge2));countNotexclusivemerge2
-ifelse(countNotexclusivemerge/2 == countNotexclusivemerge2, "Correct", "Not correct")
+# to find the "not" real duplicates in Scopusadd them into the exclusive dataset
+Test <-setdiff(ScopusNotExclusive, Notexclusivemerge2)
+#add them into the exclusive dataset
+ScopusExclusive <- rbind(Test,ScopusExclusive)
+#remove them from the NotExlusive dataset
+ScopusNotExclusive <- setdiff(ScopusNotExclusive,Test)
+#If the issue is also observed with WoS references, the same protocol as above will have to be followed to identify these "not real" duplictates
+
 
     # 4) compare WosExclusive and ScopusExclusive to look for possible duplicates
 exclusivemerge <- rbind(WoSExclusive,ScopusExclusive)
-# remove duplicates based on title
-exclusivemerge2 <- distinct(exclusivemerge, TI, .keep_all=T)
+# remove duplicates based on title and year
+exclusivemerge2 <- distinct(exclusivemerge, TI,PY, .keep_all=T)
+
 #dataset with DOI
 exclusivemergeDOI <- exclusivemerge2 %>% na.omit(exclusivemerge2$DI)
 #Dataset without DOI
 exclusivemergenotDOI <- setdiff(exclusivemerge2,exclusivemergeDOI)
-# remove duplicateses based on DOI
+
+# remove duplicates based on DOI
 exclusivemerge3 <- distinct(exclusivemergeDOI,DI, .keep_all=T) #ref removed are the one from Scopus as the exclusivemerge2 is ordered with ref from WOS first and then Scopus 
 #combined the datset all together again
 exclusivemergecorrected <- rbind(exclusivemerge3, exclusivemergenotDOI)
 
-    # 5) recreate exclusive and non-exclusive dataset for Scopus and for Web of Science after correction
+    # 5) recreate exclusive and not exclusivedataset for Scopus and for Web of Science after correction
 Scopusexclusivefinal <- exclusivemergecorrected[exclusivemergecorrected$Coder == "Scopus", ]
 # the duplicates found in exclusivemerge must be identified and added to the non-exclusive list
-ForScopusnotExclusive <- setdiff(exclusivemergeDOI, exclusivemerge3) #ref removed based on the DOI (they are all coming from Scopus)
-#add references from ForScopusnotExclusive to ScopusNotexclusive
-ScopusNotexclusivefinal <- rbind(ScopusNotExclusive, ForScopusnotExclusive)
+DuplicatesScopus <- setdiff(exclusivemergeDOI, exclusivemerge3) #ref removed based on the DOI (they are all coming from Scopus)
+#add references from DuplicatesScopus to ScopusNotexclusive
+ScopusNotexclusivefinal <- rbind(ScopusNotExclusive, DuplicatesScopus)
 
 # it is a little bit more complicated to identify the references for Web Of Science as they were not removed from exclusivemerge3
-ForWoSexclusivefinal <- exclusivemerge3[exclusivemerge3$Coder == "WebOfScience", ]
-ForWoSexclusivefinal2 <- exclusivemergenotDOI[exclusivemergenotDOI$Coder == "WebOfScience", ]
+ForWoSexclusivefinal <- exclusivemerge3[exclusivemerge3$Coder == "WebOfScience", ] #ref with DOI
+ForWoSexclusivefinal2 <- exclusivemergenotDOI[exclusivemergenotDOI$Coder == "WebOfScience", ] #ref without DOI
 
-# Creating a new list of DOI based on ForScopusnotExclusive
-DOIlist <- ForScopusnotExclusive$DI
+# Creating a new list of DOI based on "DuplicatesScopus"
+DOIlist <- DuplicatesScopus$DI
 DOI.list <- paste(DOIlist, collapse =  '|')
-DOIlist <- as.data.frame(DOI.list)
+DOI.list <- gsub("[(]", "[(]", DOI.list) #[] are needed because DOI.list is a string
+DOI.list <- gsub("[)]", "[)]", DOI.list)
 
-# Remove from "WoSexclusivefinal" every references with a DOI from "DOIlist" and place it in a new list "ForWoSnotExclusive"
-ForWoSnotExclusive <- ForWoSexclusivefinal %>%
-  filter(!grepl(DOI.list, ForWoSexclusivefinal$DI))
-WoSnotExclusiveFinal <- rbind(ForWoSnotExclusive, ForWoSexclusivefinal2)
+# Remove from "ForWoSexclusivefinal" every references with a DOI from "DOIlist" and place it in a new list "ForWoSnotExclusive"
+WosExclusiveFinal <- ForWoSexclusivefinal %>%
+  filter(!grepl(DOI.list, ForWoSexclusivefinal$DI,))
+DuplicatesWoS <- setdiff(ForWoSexclusivefinal, WosExclusiveFinal) #to verify that the references were removed
+WoSExclusiveFinal <- rbind(WosExclusiveFinal, ForWoSexclusivefinal2)
 
-Test <- setdiff(ForWoSexclusivefinal, WoSnotExclusiveFinal)
+# Creating the dataset WoSnotExclusiveFinal
+WoSnotExclusiveFinal <- rbind(WoSNotExclusive, DuplicatesWoS)
 
+#Note : DuplicatesScopus and DuplicatesWoS are the same except for the value in the column "Coder"
 
+### Verification
+#Check that WoSnotExclusiveFinal = ScopusNotexclusivefinal
+countWoSnotExclusiveFinal <- as.numeric(count(WoSnotExclusiveFinal));countWoSnotExclusiveFinal
+countScopusNotexclusivefinal <- as.numeric(count(ScopusNotexclusivefinal));countScopusNotexclusivefinal
+ifelse(countWoSnotExclusiveFinal == countScopusNotexclusivefinal, "Correct", "Not correct")
 
-
-
-
-
-
-
-
-
-
-
-
-
-    # 3) To generate a list of DOI with a partial match for external check, if WoSNotExclusive and ScopusNotExclusive are different
-
-# First check for duplicates in WosNotEclusive and ScopusNotExclusive
-#create new dataset to not overwrite data
-WoSnotexclu1 <- WoSNotExclusive
-#Convert row names into first column and delete it 
-WoSnotexclu1 <- tibble::rownames_to_column(WoSnotexclu1, "todelete")
-WoSnotexclu1$todelete <- NULL
-WoSnotexclu1 <- WoSnotexclu1 %>% distinct(TI)
-
-#find duplicates : note the row with "TRUE" in X (for example 554) and delete it in WoSnotexclu1
-X <- duplicated(WoSnotexclu1$TI)
-X <-data.frame(X)
-WoSnotexclu1 <- WoSnotexclu1[-c(554),]
-
-#create new dataset to not overwrite data
-Scopnotexclu1 <- ScopusNotExclusive
-#Convert row names into first column and delete it 
-Scopnotexclu1 <- tibble::rownames_to_column(Scopnotexclu1, "todelete")
-Scopnotexclu1$todelete <- NULL
-Scopnotexclu1 <- Scopnotexclu1 %>% distinct(TI)
-
-#find duplicates : note the row with "TRUE" in Y (for example 101) and delete it in v
-Y <- duplicated(Scopnotexclu1$TI)
-Y <-data.frame(Y)
-Scopnotexclu1 <- Scopnotexclu1[-c(101,114,151,200,435,479),]
-
-### Check that WoSnotexclu1 = Scopnotexclu1  ###
-Y <- as.numeric(count(WoSnotexclu1)); Y
-B <- as.numeric(count(Scopnotexclu1)); B
-ifelse(Y == B, "Correct", "Not correct")
-
-#Check for duplicates in WoSExclusive and ScopusExclusive
-#create new dataset to not overwrite data
-WoSexclu1 <- WoSExclusive
-#Convert row names into first column and delete it 
-WoSexclu1 <- tibble::rownames_to_column(WoSexclu1, "todelete")
-WoSexclu1$todelete <- NULL
-#find duplicates : note the row with "TRUE" in X (for example 554) and delete it in WoSnotexclu1
-X <- duplicated(WoSexclu1$TI)
-X <-data.frame(X)
-WoSnotexclu1 <- WoSnotexclu1[-c(2,3,4,5),]
-
-#create new dataset to not overwrite data
-Scopexclu1 <- ScopusExclusive
-#Convert row names into first column and delete it 
-Scopexclu1 <- tibble::rownames_to_column(Scopexclu1, "todelete")
-Scopexclu1$todelete <- NULL
-
-#find duplicates : note the row with "TRUE" in Y (for example 101) and delete it in v
-Y <- duplicated(Scopexclu1$TI)
-Y <-data.frame(Y)
-Scopnotexclu1 <- Scopnotexclu1[-c(24,94,237,265,292,714,718,903),]
-
-
-#Merge Scopusexclu1 and Wosexclu1 to check for duplicates based on the DOI
-ScopWosexclumerge <- rbind(Scopexclu1,WoSexclu1)
-
-ScopWosexclumergebis <- ScopWosexclumerge %>% distinct(DI, .keep_all = TRUE)
-#count the number of duplicates removed
-Numberofduplicates <- as.numeric(count(ScopWosexclumerge)) - as.numeric(count(ScopWosexclumergebis))
-
-#Now at ducplicates based on the title
-#first need two separate articles from scopus and from WoS in ScopWosexclumergebis to be able to use partialMatch function
-
-matches=partialMatch(WoSexclu1$TI,Scopexclu1$TI)
-
-aggregate(matches$pass, by=list(matches$pass), FUN=length)
-
-PartialExport <- matches %>% filter(pass == "Partial")
-
-# The PartialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
-# entry can be checked manually with Scopexclu1 and WoSexclu1
-#write.table(PartialExport, file = "PartialExport_test.txt", quote = F, sep="\t", row.names = F)
-
-
-
-# 2) Calculating the % of record present in WoS but not in Scopus
-# Total number of record in the excluded list
-NumberofexcludedDocument <- as.numeric(count(WoSExclusive)) # same thing as X above, just with another name
-
-
-
-Test <- ScopWosexclumerge %>%
-  group_by(PY,AU,TI,DE,ID,C1,SO,DT,Coder) %>%
-  slice(if(all(is.na(DI))) 1 else which(!is.na(DI))) %>%
-  distinct()
-
-Test <- ScopWosexclumerge %>%
-  group_by(.,DI) %>%
-  slice(if(all(is.na(DI))) 1 else which(!is.na(DI))) %>%
-  distinct()
-
-
-
-
-
-
-ScopWosexclumergebis <- n_distinct(na.omit(ScopWosexclumerge))
+#####______________Analysis______________##########
+# Count the number of references in each data.frame
+countWoSExclusiveFinal <- as.numeric(count(WoSExclusiveFinal));countWoSExclusiveFinal
+countScopusexclusivefinal <- as.numeric(count(Scopusexclusivefinal));countScopusexclusivefinal
+Total <- (countWoSnotExclusiveFinal+countWoSExclusiveFinal+countScopusexclusivefinal);Total
+#pourcentage of article in WoS only
+X <- ((countWoSExclusiveFinal/Total) * 100); X
+#pourcentage of article in Scop only
+Y <- ((countScopusexclusivefinal/Total) * 100); Y
+# pourcentage of articles shared with both databases
+Z <- ((countWoSnotExclusiveFinal/Total) * 100); Z
