@@ -161,11 +161,6 @@ Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
 
-# For the purpose of each analysis, records from a year range can be excluded
-# In this situation, each records from 2020 and more recent are removed from the current dataset
-#Scopus <- Scopus[Scopus$PY != "2020" & Scopus$PY != "2021", ]
-#WebofScience <- WebofScience[WebofScience$PY != "2020" & WebofScience$PY != "2021", ]
-
 #############################################################
 #####     Comparison and merging of the two datasets    #####
 #############################################################
@@ -176,7 +171,10 @@ WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
 #####             For the results from Scopus           #####
 # Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI, url, $SO, $DT, $
 ScopusReducedDataset <- Scopus %>%
-  select(PY,AU,TI,DE,ID,C1,DI,url,SO,DT)
+  select(PY,AU,TI,DE,ID,C1,DI,SO,DT)
+# Label each row with the name of the database from where it came from 
+ScopusReducedDataset$Coder <- "Scopus"
+
 # transform the years into numeric
 ScopusReducedDataset$PY <- as.numeric(ScopusReducedDataset$PY)
 
@@ -195,6 +193,8 @@ names(ScopusReducedDataset)[names(ScopusReducedDataset)=="C1"] <- "C1S"
 # Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI
 WebOfScienceReducedDataset <- WebofScience %>%
   select(PY,AU,TI,DE,ID,C1,DI,SO,DT)
+# Label each row with the name of the database from where it came from 
+WebOfScienceReducedDataset$Coder <- "WebOfScience"
 # removing the extra "." in the affiliation after the country
 WebOfScienceReducedDataset$C1  <- as.character(gsub("\\.","\\",WebOfScienceReducedDataset$C1))
 # Removing each ";" in double in the DE column
@@ -205,28 +205,22 @@ names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="ID"] <- "I
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="DE"] <- "DEW"
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="C1"] <- "C1W"
 
-# removing entries with no year
-WebOfScienceReducedDataset <- WebOfScienceReducedDataset[!is.na(WebOfScienceReducedDataset$PY),]
-WebOfScienceReducedDataset <- WebOfScienceReducedDataset %>%
-  distinct()
-
 #####_________Search for match by title between the two datasets_________##########
 # To generate a list of titles with a partial match for external check
 
-matches=partialMatch(WebOfScienceReducedDataset$TI,ScopusReducedDataset$TI)
+#matches=partialMatch(WebOfScienceReducedDataset$TI,ScopusReducedDataset$TI)
 
-aggregate(matches$pass, by=list(matches$pass), FUN=length)
+#aggregate(matches$pass, by=list(matches$pass), FUN=length)
 
-PartialExport <- matches %>% filter(pass == "Partial")
+#PartialExport <- matches %>% filter(pass == "Partial")
 
 # The PartialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
-write.table(PartialExport, file = "PartialExport_December.txt", quote = F, sep="\t", row.names = F)
+#write.table(PartialExport, file = "PartialExport_December.txt", quote = F, sep="\t", row.names = F)
 
 # Correction to the title can be applied at this stage. This can be done in Notepad++, Excel etc.
 # The title generated in Web of Science will be used to correct the one in Scopus
 # Note this does not mean all the title from Web of Science are correct !!!
-# Missed duplicate or partial can be added as well. This is the case here with one extra correction added
-# "Chang KH, Yew CH, Abdullah AFL. Study on..." changed to "Study on the behaviors of gunshot..."
+# Missed duplicate or partial can be added as well
 # Applying the title correction does not necessary mean there will not be further partial match is the function is rerun on the new (corrected) Scopus dataframe. 
 TitleCorrection <- read.csv("PartialTitleCorrected_December.txt", sep = "\t", header = TRUE)
 TitleCorrection <- as.data.frame(TitleCorrection)
@@ -237,12 +231,11 @@ ScopusReducedDataset$TICorrected <- gsr(as.character(ScopusReducedDataset$TI),as
 ##### to generate a correction list of authors
 ##### The recombined list should be the same length as the original minus any duplicates. Duplicates must be checked.
 
-
       # 1) SCOPUS
 
 # Split Column "AU" with the separator ";" and place it in AuthorListScopusExtended
 AuthorListScopus <- ScopusReducedDataset %>%
-  select(PY,TICorrected,AU,DES,IDS,C1S,DI,SO,DT)
+  select(PY,TICorrected,AU,DES,IDS,C1S,DI,SO,DT,Coder)
 # rename TICorrected column
 names(AuthorListScopus)[names(AuthorListScopus)=="TICorrected"] <- "TI"
 
@@ -256,14 +249,14 @@ AuthorListScopusExtended <- AuthorListScopus %>%
 #write.table(AuthorListScopusExtended, "Authors to correct Scopus_December.txt", sep = "\t")
 
 # read the corrected list of "Authors" and combine it to the original list.
-# Correction from both Scopus and Web of Science - see line 332 to export the authors names from Web of Science)
+# Correction from both Scopus and Web of Science - see line XXX to export the authors names from Web of Science)
 AuthorCorrected <- read.csv("Authors Name Corrected_December.txt", sep="\t", header=TRUE)
 AuthorListScopusExtended$AuthorsCor <- gsr(AuthorListScopusExtended$Authors,AuthorCorrected$name, as.character(AuthorCorrected$Name.corrected))
 
 # generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
 # The corrected list should be the same lenght as the original version. Duplicates will be removed and they will need to be checked individually.
 ScopusReducedDatasetCorrected <- AuthorListScopusExtended %>%
-  group_by(PY,TI,AU,DES,IDS,C1S,DI,SO,DT) %>%
+  group_by(PY,TI,AU,DES,IDS,C1S,DI,SO,DT,Coder) %>%
   summarise(Authors = paste(Authors, collapse = ";"), AuthorCorrected = paste(AuthorsCor, collapse = ";")) %>%
   ungroup()
 
@@ -271,49 +264,42 @@ ScopusReducedDatasetCorrected <- AuthorListScopusExtended %>%
 DupeScopus <- ScopusReducedDatasetCorrected %>%
   find_duplicates(PY,TI,AU)
 
-# in this case found that 1 distinct records have different affiliation, 2 records don't have the same keywords (IDS), the last one have different affiliation and Source
-# correcting the one with the keywords
+# correcting records that are identical except keywords (this can be IDS, DES, IDW or DEW)
 ScopusReducedDatasetCorrected <- ScopusReducedDatasetCorrected %>%
   mutate(IDS = strsplit(as.character(IDS), ";", ))%>%
   unnest(IDS) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(PY,AU,TI,DES,C1S,DI,SO,DT,Authors,AuthorCorrected) %>%
+  group_by(PY,AU,TI,DES,C1S,DI,SO,DT,Authors,AuthorCorrected,Coder) %>%
   summarise(IDS = sort(paste(IDS, collapse= ";")))%>%
   ungroup()
 
+# Duplicate check on the output
 DupeScopus2 <- ScopusReducedDatasetCorrected %>%
   find_duplicates(PY,TI,AU)
 
-# correcting the one which have different affiliations
+# correcting records that are identical except affiliation
 ScopusReducedDatasetCorrected <- ScopusReducedDatasetCorrected %>%
   mutate(C1S = strsplit(as.character(C1S), ","))%>%
   unnest(C1S) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(PY,AU,TI,DES,IDS,DI,SO,DT,Authors,AuthorCorrected) %>%
+  group_by(PY,AU,TI,DES,IDS,DI,SO,DT,Authors,AuthorCorrected,Coder) %>%
   summarise(C1S = sort(paste(C1S, collapse= ",")))%>%
   ungroup()
 
+# Duplicate check on the output
 DupeScopus3 <- ScopusReducedDatasetCorrected %>%
   find_duplicates(PY,TI,AU)
-
-# still have an issue with 2 of them, just delete the row (the reference with keyword was chosen for one, the source from Europe for the second one)
-# order by authors name
-ScopusReducedDatasetCorrected <- arrange(ScopusReducedDatasetCorrected, AU)
-# row to delete is 556 and 1168
-ScopusReducedDatasetCorrected <-ScopusReducedDatasetCorrected[-556,]
-ScopusReducedDatasetCorrected <-ScopusReducedDatasetCorrected[-1168,]
-
-DupeScopus4 <- ScopusReducedDatasetCorrected %>%
-  find_duplicates(PY,TI,AU)
-
+# Duplicate check on the output:
+DupeScopustest <- ScopusReducedDatasetCorrected %>%
+  find_duplicates(DI)
 
       # 2) WEB OF SCIENCE
 
 # Split Column "AU" with the separator ";" and place it in AuthorListWebOfScienceExtended
 AuthorListWebOfScience <- WebOfScienceReducedDataset %>%
-  select(PY,TI,AU,DEW,IDW,C1W,DI,SO,DT)
+  select(PY,TI,AU,DEW,IDW,C1W,DI,SO,DT,Coder)
 
 # Split Column "Authors" in row by the separator ";", remove leading white space to generate list
 AuthorListWebOfScienceExtended <- AuthorListWebOfScience %>% 
@@ -330,7 +316,7 @@ AuthorListWebOfScienceExtended$AuthorsCor <- gsr(AuthorListWebOfScienceExtended$
 
 # generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
 WebOfScienceReducedDatasetCorrected <- AuthorListWebOfScienceExtended %>%
-  group_by(PY,TI,AU,DEW,IDW,C1W,DI,SO,DT) %>%
+  group_by(PY,TI,AU,DEW,IDW,C1W,DI,SO,DT,Coder) %>%
   summarise(Authors = paste(Authors, collapse = ";"), AuthorCorrected = paste(AuthorsCor, collapse = ";")) %>%
   ungroup()
 
@@ -348,13 +334,13 @@ WebOfScienceReducedDatasetCorrected$DT <- gsub("PROCEEDINGS PAPER","PROCEEDINGS"
 
 
 #####_________Search for match by Source between the two datasets_________##########
-##### to generate a list of titles with a partial match for external check
+##### to generate a list of sources with a partial match for external check
 
-matches2=partialMatch(WebOfScienceReducedDatasetCorrected$SO,ScopusReducedDatasetCorrected$SO)
+#matches2=partialMatch(WebOfScienceReducedDatasetCorrected$SO,ScopusReducedDatasetCorrected$SO)
 
-aggregate(matches2$pass, by=list(matches2$pass), FUN=length)
+#aggregate(matches2$pass, by=list(matches2$pass), FUN=length)
 
-PartialExport2 <- matches2 %>% filter(pass == "Partial")
+#PartialExport2 <- matches2 %>% filter(pass == "Partial")
 
 # The PartialExport can be written to a table and further processed manually using fo example Notepad++, Excel, etc.
 #write.table(PartialExport2, file = "PartialExport_Source_December.txt", quote = F, sep="\t", row.names = F)
@@ -367,7 +353,7 @@ SourceCorrection <- as.data.frame(SourceCorrection)
 
 WebOfScienceReducedDatasetCorrected$SOCorrected <- gsr(as.character(WebOfScienceReducedDatasetCorrected$SO), as.character(SourceCorrection$raw.x), as.character(SourceCorrection$raw.y))
 WebOfScienceReducedDatasetCorrected <- WebOfScienceReducedDatasetCorrected%>%
-  select(PY,AU,DEW,IDW,C1W,DI,SOCorrected,DT,Authors,AuthorCorrected,TI)
+  select(PY,AU,DEW,IDW,C1W,DI,SOCorrected,DT,Authors,AuthorCorrected,TI,Coder)
 
 # rename SOCorrected column
 names(WebOfScienceReducedDatasetCorrected)[names(WebOfScienceReducedDatasetCorrected)=="SOCorrected"] <- "SO"
@@ -382,11 +368,11 @@ DatabaseOutputTemp <- bind_rows(WebOfScienceReducedDatasetCorrected, ScopusReduc
 DatabaseOutputTemp <- as.data.frame(DatabaseOutputTemp)
 
 DatabaseOutput <- DatabaseOutputTemp %>%
-  select(TI,PY,AuthorCorrected,DEW,IDW,DES,IDS,C1W,C1S,DI,SO,DT)
+  select(TI,PY,AuthorCorrected,DEW,IDW,DES,IDS,C1W,C1S,DI,SO,DT,Coder)
 
 # To summarise by removing duplicate, grouping by Title and year. 
 CombinedDataset <- DatabaseOutput %>%
-  group_by(TI, PY) %>% summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse="; ")), 
+  dplyr::group_by(TI, PY) %>% dplyr::summarise(AU = rem_dup_word(paste(AuthorCorrected[!is.na(AuthorCorrected)], collapse="; ")), 
                                 DOI = rem_dup_word(paste(DI[!is.na(DI)], collapse=", ")),
                                 DEW = paste(DEW[!is.na(DEW)], collapse=";"), 
                                 IDW = paste(IDW[!is.na(IDW)], collapse=";"), 
@@ -394,8 +380,9 @@ CombinedDataset <- DatabaseOutput %>%
                                 IDS = paste(IDS[!is.na(IDS)], collapse=";"),
                                 C1W = paste(C1W[!is.na(C1W)], collapse=","),
                                 C1S = paste(C1S[!is.na(C1S)], collapse=","),
-                                DT = rem_dup_word(paste(DT[!is.na(DT)], collapse=", ")),
-                                SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", "))) %>% ungroup()
+                                Coder = paste(Coder[!is.na(Coder)], collapse=","),
+                                DTT = rem_dup_word(paste(DT[!is.na(DT)], collapse=", ")),
+                                SOO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", "))) %>% ungroup()
 
 # In the Authors column, because the number of author is sometimes different between Scopus and Web of Science, a correction must be done
 CombinedDataset <- CombinedDataset %>%
@@ -403,7 +390,7 @@ CombinedDataset <- CombinedDataset %>%
   unnest(AU) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(TI,PY,DEW,IDW,DES,IDS,C1W,C1S,DOI,SO,DT) %>%
+  group_by(TI,PY,DEW,IDW,DES,IDS,C1W,C1S,DOI,SO,DT,Coder) %>%
   summarise(AU = sort(paste(AU, collapse= ";")))%>%
   ungroup()
 CombinedDataset$AU[CombinedDataset$AU==""]<-NA
@@ -413,7 +400,6 @@ CombinedDataset$AU[CombinedDataset$AU==""]<-NA
 SourceCorrection2 <- read.csv("SourceCorrected2.txt", sep = "\t", header = TRUE)
 SourceCorrection2 <- as.data.frame(SourceCorrection2)
 CombinedDataset$SOCorrected <- gsr(as.character(CombinedDataset$SO), as.character(SourceCorrection2$raw.x), as.character(SourceCorrection2$raw.y))
-
 
 # Filling Affiliations columns empty string with NA
  CombinedDataset$C1S[CombinedDataset$C1S==""]<-NA
@@ -431,6 +417,7 @@ CombinedDataset <- rbind(TempScopusAffiliations,TempWebOfSAffiliations)
 
 
 # Check for duplicate in the combined datasets
+# if dupliactes in this year does not have the same year, they can't be considered as duplicates
 DupeCombinedDataset <- CombinedDataset %>%
   find_duplicates(TI)
 
@@ -441,7 +428,7 @@ DupeCombinedDataset <- CombinedDataset %>%
 CombinedDataset <- transform(CombinedDataset, DE=paste(DEW, DES, sep="; "))
 CombinedDataset$DE  <- as.character(gsub("; ",";",CombinedDataset$DE))
 CombinedDataset <- CombinedDataset %>%
-  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,C1,DT,SOCorrected,C1,DE,DOI)
+  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,C1,DT,SOCorrected,C1,DE,DOI,Coder)
 names(CombinedDataset)[names(CombinedDataset)=="SOCorrected"] <- "SO"
 
 # In the DE column, because the order of the author's keyword is sometimes different between Scopus and Web of Science, a correction has been done
@@ -451,9 +438,16 @@ CombinedDataset <- CombinedDataset %>%
   unnest(DE) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(TI,PY,AU,DEW,IDW,DES,IDS,C1W,C1,C1S,DOI,SO,DT) %>%
+  group_by(TI,PY,AU,DEW,IDW,DES,IDS,C1W,C1,C1S,DOI,SO,DT,Coder) %>%
   summarise(DE = sort(paste(DE, collapse= ";")))%>%
   ungroup()
+
+# Issues with source
+# The number of differences between Web of Science and Scopus when it comes to source are too numberous to be corrected as above.
+# It can happen that two references are the same but have different sources and will be count as one.
+# Therefore, when it comes to combine Web Of Science and Scopus, 3 references can be count as one when it is actually 2 distinct references
+# For example, in this dataset, the article or He Y "MICROEXTRACTION AND ITS APPLICATION TO FORENSIC TOXICOLOGY ANALYSIS" from 	LC-GC EUROPE or LC-GC NORTH AMERICA
+# In that situation, references that have "scopus,Scopus", "WebOfScience,WebOfScience","WebOfScience,Scopus,Scopus" or "WebOfScience,WebOfScience,Scopus" must be counted as errors
 
 # To export the Data before the exclusion process
 #write.table(CombinedDataset, file = "ScopWos merge_December.txt", sep = "\t", row.names = F)
@@ -774,134 +768,46 @@ names(DTWoS) <- c("Document Type", "Count")
 ##################################################################################
 
 #####______________creation of dataset______________##########
-# This section is to overview the differences between Scopus and Web of science in terms of number of articles
-# Creating 2 new dataset to not overwrite the data 
-WebOfScience2 <- WebOfScienceReducedDatasetCorrected %>%
-  select(PY,AU,TI,DI,SO,DT)
-Scopus2 <- ScopusReducedDatasetCorrected %>%
-  select(PY,AU,TI,DI,SO,DT)
-
-# Label each row with the name of the database from where it came from 
-Scopus2$Coder <- "Scopus"
-WebOfScience2$Coder <- "WebOfScience"
-
-# remove duplicates based on title and year (some entries have the same title but not published the same year)
-Scopus2 <- distinct(Scopus2, TI, PY, .keep_all=T)
-WebOfScience2 <- distinct(WebOfScience2, TI, PY, .keep_all=T)
-
-# remove duplicates based on DOI
-#each dataset must be split into a list of articles with DOI and a list of articles without DOI
-#dataset with DOI
-Scopus2DOI <- Scopus2 %>% na.omit(Scopus2$DI)
-WebOfScience2DOI <- WebOfScience2 %>% na.omit(WebOfScience2$DI)
-#Dataset without DOI
-Scopus2notDOI <- setdiff(Scopus2,Scopus2DOI)
-WebOfScience2notDOI <- setdiff(WebOfScience2,WebOfScience2DOI)
-#remove duplicated references based on DOI
-Scopus2DOIcorrected <- distinct(Scopus2DOI, DI, .keep_all=T)
-WebOfScience2DOIcorrected <- distinct(WebOfScience2DOI, DI, .keep_all=T)
-
-#combined the datset all together again
-Scopus3 <- rbind(Scopus2DOIcorrected, Scopus2notDOI)
-WebOfScience3 <- rbind(WebOfScience2DOIcorrected, WebOfScience2notDOI)
-
-  # 1) Creating a list or document present in Web of Science but not in Scopus
-# Creating a list from Scopus2DOI Title
-ScopusTitleList <- Scopus3 %>%
-  select(TI)
-
-# List of records from Web of Science that are not in the Scopus database (Title based)
-WoSExclusive <- subset(WebOfScience3,!(TI %in% ScopusTitleList$TI))
-# List of records from WoS that are in the Scopus database (Title based)
-WoSNotExclusive <- subset(WebOfScience3,TI %in% ScopusTitleList$TI)
-
-    # 2) Creating a list or documents present in Scopus but not in WoS
-# Creating a list from Scopus Title
-WoSTitleList <- WebOfScience3 %>%
-  select(TI)
-
-# List of records from Scopus that are not in the WoS database (TI based)
-ScopusExclusive <- subset(Scopus3,!(TI %in% WoSTitleList$TI))
-# List of records from Scopus that are in the WoS database (TI based)
-ScopusNotExclusive <- subset(Scopus3,TI %in% WoSTitleList$TI)
-
-    # 3) compare WosNotExclusive and ScopusNotExclusive to look for possible duplicates
-# some articles in scopus have the same title but one will be a conference paper, the other one an article.
-# Also, some articles in scopus have the same title, but not published in the same journal
-# if we are looking for duplicates based on title, these "not real" duplicates (as explain above) will be removed
-# Therefore, theses needs to be removed from the not exclusive dataset and place in the exclusive one
-
-#first, let's combine "ScopusNotExclusive" and "WoSNotExclusive"
-Notexclusivemerge <- rbind(ScopusNotExclusive, WoSNotExclusive)
-# remove duplicates based on title in "Notexclusivemerge"
-# duplicated ref with coder "Webofscience" will be removed, as well the "not" real duplicates
-Notexclusivemerge2 <- distinct(Notexclusivemerge, TI, .keep_all=T)
-# to find the "not" real duplicates in Scopusadd them into the exclusive dataset
-Test <-setdiff(ScopusNotExclusive, Notexclusivemerge2)
-#add them into the exclusive dataset
-ScopusExclusive <- rbind(Test,ScopusExclusive)
-#remove them from the NotExlusive dataset
-ScopusNotExclusive <- setdiff(ScopusNotExclusive,Test)
-#If the issue is also observed with WoS references, the same protocol as above will have to be followed to identify these "not real" duplictates
-
-
-    # 4) compare WosExclusive and ScopusExclusive to look for possible duplicates
-exclusivemerge <- rbind(WoSExclusive,ScopusExclusive)
-# remove duplicates based on title and year
-exclusivemerge2 <- distinct(exclusivemerge, TI,PY, .keep_all=T)
-
-#dataset with DOI
-exclusivemergeDOI <- exclusivemerge2 %>% na.omit(exclusivemerge2$DI)
-#Dataset without DOI
-exclusivemergenotDOI <- setdiff(exclusivemerge2,exclusivemergeDOI)
-
-# remove duplicates based on DOI
-exclusivemerge3 <- distinct(exclusivemergeDOI,DI, .keep_all=T) #ref removed are the one from Scopus as the exclusivemerge2 is ordered with ref from WOS first and then Scopus 
-#combined the datset all together again
-exclusivemergecorrected <- rbind(exclusivemerge3, exclusivemergenotDOI)
-
-    # 5) recreate exclusive and not exclusivedataset for Scopus and for Web of Science after correction
-Scopusexclusivefinal <- exclusivemergecorrected[exclusivemergecorrected$Coder == "Scopus", ]
-# the duplicates found in exclusivemerge must be identified and added to the non-exclusive list
-DuplicatesScopus <- setdiff(exclusivemergeDOI, exclusivemerge3) #ref removed based on the DOI (they are all coming from Scopus)
-#add references from DuplicatesScopus to ScopusNotexclusive
-ScopusNotexclusivefinal <- rbind(ScopusNotExclusive, DuplicatesScopus)
-
-# it is a little bit more complicated to identify the references for Web Of Science as they were not removed from exclusivemerge3
-ForWoSexclusivefinal <- exclusivemerge3[exclusivemerge3$Coder == "WebOfScience", ] #ref with DOI
-ForWoSexclusivefinal2 <- exclusivemergenotDOI[exclusivemergenotDOI$Coder == "WebOfScience", ] #ref without DOI
-
-# Creating a new list of DOI based on "DuplicatesScopus"
-DOIlist <- DuplicatesScopus$DI
-DOI.list <- paste(DOIlist, collapse =  '|')
-DOI.list <- gsub("[(]", "[(]", DOI.list) #[] are needed because DOI.list is a string
-DOI.list <- gsub("[)]", "[)]", DOI.list)
-
-# Remove from "ForWoSexclusivefinal" every references with a DOI from "DOIlist" and place it in a new list "ForWoSnotExclusive"
-WosExclusiveFinal <- ForWoSexclusivefinal %>%
-  filter(!grepl(DOI.list, ForWoSexclusivefinal$DI,))
-DuplicatesWoS <- setdiff(ForWoSexclusivefinal, WosExclusiveFinal) #to verify that the references were removed
-WoSExclusiveFinal <- rbind(WosExclusiveFinal, ForWoSexclusivefinal2)
-
-# Creating the dataset WoSnotExclusiveFinal
-WoSnotExclusiveFinal <- rbind(WoSNotExclusive, DuplicatesWoS)
-
-#Note : DuplicatesScopus and DuplicatesWoS are the same except for the value in the column "Coder"
-
-### Verification
-#Check that WoSnotExclusiveFinal = ScopusNotexclusivefinal
-countWoSnotExclusiveFinal <- as.numeric(count(WoSnotExclusiveFinal));countWoSnotExclusiveFinal
-countScopusNotexclusivefinal <- as.numeric(count(ScopusNotexclusivefinal));countScopusNotexclusivefinal
-ifelse(countWoSnotExclusiveFinal == countScopusNotexclusivefinal, "Correct", "Not correct")
+# In the previous dataset, the column Coder can be used to calculate the pourcentage of articles both present in Scopus and in WoS
+#before of after the exclusion process (CombinedDataset or CombinedDataset3)
+#Scopus not exclusive = Web of science not exclusive
+ScopWosnotexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience,Scopus", ]
+Scopusexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus", ]
+WoSexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience", ]
+# To calculate the pourcentage of possibles errors
+forErrors <- rbind(ScopWosnotexclusive,Scopusexclusive,WoSexclusive)
+errorpourcentage <- setdiff(CombinedDataset,forErrors)
 
 #####______________Analysis______________##########
 # Count the number of references in each data.frame
-countWoSExclusiveFinal <- as.numeric(count(WoSExclusiveFinal));countWoSExclusiveFinal
-countScopusexclusivefinal <- as.numeric(count(Scopusexclusivefinal));countScopusexclusivefinal
-Total <- (countWoSnotExclusiveFinal+countWoSExclusiveFinal+countScopusexclusivefinal);Total
+countWoSexclusive <- as.numeric(count(WoSexclusive));countWoSexclusive
+countScopusexclusive <- as.numeric(count(Scopusexclusive));countScopusexclusive
+countScopWosnotexclusive <- as.numeric(count(ScopWosnotexclusive));countScopWosnotexclusive
+countError <- as.numeric(count(errorpourcentage));countError
+
+Total <- (countWoSexclusive+countScopusexclusive+countScopWosnotexclusive+countError);Total
 #pourcentage of article in WoS only
-X <- ((countWoSExclusiveFinal/Total) * 100); X
+X <- ((countWoSexclusive/Total) * 100); X
 #pourcentage of article in Scop only
-Y <- ((countScopusexclusivefinal/Total) * 100); Y
+Y <- ((countScopusexclusive/Total) * 100); Y
 # pourcentage of articles shared with both databases
-Z <- ((countWoSnotExclusiveFinal/Total) * 100); Z
+Z <- ((countScopWosnotexclusive/Total) * 100); Z
+# pourcentage of pssible errors
+W <- ((countError/Total) * 100); W
+
+#####______________Table______________##########
+X <- data.frame(X)
+names(X) <- c("Percentage")
+Table <- X
+rownames(Table)[rownames(Table)=="1"] <- "Exclusive to Web Of Science"
+
+Table[2,1] <- Y
+rownames(Table)[rownames(Table)=="2"] <- "Exclusive to Scopus"
+
+Table[3,1] <- Z
+rownames(Table)[rownames(Table)=="3"] <- "Shared by both databases"
+
+Table[4,1] <- W
+rownames(Table)[rownames(Table)=="4"] <- "Error"
+
+#write.table(Table, file = "Comparison Scop-WoS_January21.csv", quote = F, sep = ",", row.names = F)
