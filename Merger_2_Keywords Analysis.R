@@ -27,7 +27,9 @@ library(plotly)
 library(corrplot)
 library(reshape2)
 library(extrafont)
+#extrafont::font_import()
 library(ggpubr)
+library(gridExtra)
 
 #############################################################
 #####                      Function  1/4                #####
@@ -55,7 +57,7 @@ gsr <- function(Source, Search, Replace)
 }
 
 #############################################################
-#####                      Function  2/3                #####
+#####                      Function  2/4                #####
 #############################################################
 
 # function to replace accented characters with unaccented equivalents 
@@ -167,7 +169,7 @@ WebofScience<-convert2df(Wos,dbsource = "isi",format = "bibtex")
 #####             For the results from Scopus           #####
 # Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI, url, $SO, $DT, $
 ScopusReducedDataset <- Scopus %>%
-  select(PY,AU,TI,DE,ID,C1,DI,url,SO,DT)
+  select(PY,AU,TI,DE,ID,C1,DI,SO,DT)
 
 ####        For the results from Web of Science        #####
 # Select column label $PY, $TI,  $SO, $AU, $DE, $ID, $C1, $DI
@@ -248,6 +250,7 @@ names(PublicationYear) <- c("Year","Publications")
 MergeDataKeywordListTemp1 <- MergeDataKeywordList  %>%
   select(PY,TI,KeywordsCorrected)
 names(MergeDataKeywordListTemp1) <- c("Year","Title","KeywordsCorrected")
+
 MergeDataKeywordListTemp2 <- MergeDataKeywordListTemp1[complete.cases(MergeDataKeywordListTemp1), ]
 sum(is.na(MergeDataKeywordListTemp2$KeywordsCorrected))
 
@@ -305,7 +308,7 @@ show(KeywordsPerYear)
 ggplotly(KeywordsPerYear)
 
 #To save the graph
-#ggsave("Average KeywordsPerYear_ScopWoS_December.png", KeywordsPerYear, width = 7, height = 3, units = "in", dpi=200, path = "Results")
+ggsave("Average KeywordsPerYear_ScopWoS_December.png", KeywordsPerYear, width = 7, height = 3, units = "in", dpi=200, path = "Results")
 
 #####__________________Keywords per document and per year _________________#####
 # Create a new dataframe with column Year, Title and Authors
@@ -469,11 +472,11 @@ techniqueslist <- techniqueslist %>%
   unnest(techniques.list) %>%
   mutate_if(is.character, str_trim)
 
+#total count of the keywords
+techniqueListCount <- aggregate(TechniqueList$x, list(TechniqueList$Rtitle), sum)
+
 # Select from "MergeDataKeywordNarrowRangeGraph2" every keywords from "techniques.list" and place it in a new list "TechniqueList"
 TechniqueList <-subset(MergeDataKeywordNarrowRangeGraph2,Rtitle %in% techniqueslist$techniques.list)
-
-# Total count of the keywords
-TechniqueListCount <- aggregate(TechniqueList$x, list(TechniqueList$Rtitle), sum)
 
 # Rename some of the techniques that are too long
 # read the corrected list of techniques and combine it to TechniqueList
@@ -644,6 +647,8 @@ Transferlist <- Transferlist %>%
 # Select from "ScopusKeywordNarrowRangeGraph3" every keywords from "Transfer.list" and place it in a new list "TechniqueList"
 Transferlist <-subset(MergeDataKeywordNarrowRangeGraph4,Rtitle %in% Transferlist$Transfer.list)
 
+# Total count of the keywords
+TransferlistCount <- aggregate(Transferlist$x, list(Transferlist$Rtitle), sum)
 
 #### plot second graph
 # Create a new variable from incidence
@@ -919,7 +924,7 @@ ggplotly(ggplotmatrix)
 #write.table(melted_matrice, file = "Matrix_table sup5.csv", sep = ",", row.names = F)
 
 
-######################### test count (Harry's code) #########################
+######################### test count  #########################
 testmatrix <- MergeDataKeywordList %>%
   select(TI,KeywordsCorrected)
 testmatrix <- testmatrix %>% group_by(TI) %>%

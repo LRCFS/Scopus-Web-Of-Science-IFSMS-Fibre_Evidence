@@ -30,6 +30,7 @@ library(bibliometrix)
 library(tidyverse)
 library(plotly)
 library(gridExtra)
+library(extrafont)
 
 #############################################################
 #####                      Function  1/4                #####
@@ -160,6 +161,10 @@ Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
 
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
+
+# Removing every year after 2019
+Scopus <- filter(Scopus, PY<2020)
+WebofScience <- filter(WebofScience, PY<2020)
 
 #############################################################
 #####     Comparison and merging of the two datasets    #####
@@ -358,6 +363,9 @@ WebOfScienceReducedDatasetCorrected <- WebOfScienceReducedDatasetCorrected%>%
 # rename SOCorrected column
 names(WebOfScienceReducedDatasetCorrected)[names(WebOfScienceReducedDatasetCorrected)=="SOCorrected"] <- "SO"
 
+#export corrected dataset to use in Merger_4_Document and Country
+write.csv(ScopusReducedDatasetCorrected, "ScopusReducedDatasetCorrected.csv")
+write.csv(WebOfScienceReducedDatasetCorrected, "WebOfScienceReducedDatasetCorrected.csv")
 
 ########################################################
 #####        To combine both dataset into one      #####
@@ -381,8 +389,8 @@ CombinedDataset <- DatabaseOutput %>%
                                 C1W = paste(C1W[!is.na(C1W)], collapse=","),
                                 C1S = paste(C1S[!is.na(C1S)], collapse=","),
                                 Coder = paste(Coder[!is.na(Coder)], collapse=","),
-                                DTT = rem_dup_word(paste(DT[!is.na(DT)], collapse=", ")),
-                                SOO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", "))) %>% ungroup()
+                                DT = rem_dup_word(paste(DT[!is.na(DT)], collapse=", ")),
+                                SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", "))) %>% ungroup()
 
 # In the Authors column, because the number of author is sometimes different between Scopus and Web of Science, a correction must be done
 CombinedDataset <- CombinedDataset %>%
@@ -450,7 +458,7 @@ CombinedDataset <- CombinedDataset %>%
 # In that situation, references that have "scopus,Scopus", "WebOfScience,WebOfScience","WebOfScience,Scopus,Scopus" or "WebOfScience,WebOfScience,Scopus" must be counted as errors
 
 # To export the Data before the exclusion process
-#write.table(CombinedDataset, file = "ScopWos merge_December.txt", sep = "\t", row.names = F)
+write.table(CombinedDataset, file = "ScopWos merge_December.txt", sep = "\t", row.names = F)
 
 #######################################################################
 #####                       EXCLUSION LIST                        #####
@@ -684,7 +692,7 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-#write.table(CombinedDataset3, file = "Merger_Dataset_Final_December.txt", sep = "\t", row.names = F)
+write.table(CombinedDataset3, file = "Merger_Dataset_Final_December.txt", sep = "\t", row.names = F)
 
 #############################################################
 #####                 General information               #####
@@ -756,11 +764,11 @@ names(DTWoS) <- c("Document Type", "Count")
 
 #####______________Exportation______________##########
 # To export the first table (General Information)
-#write.table(GF, file = "General Information_ScopWoS_December.csv", quote = F, sep = ",", row.names = F)
+write.table(GF, file = "General Information_ScopWoS_December.csv", quote = F, sep = ",", row.names = T)
 
 #To export the second table (Document Type)
-#write.table(DTScop, file = "Document type_Scopus_December.csv", quote = F, sep = ",", row.names = F)
-#write.table(DTWoS, file = "Document type_Wos_December.csv", quote = F, sep = ",", row.names = F)
+write.table(DTScop, file = "Document type_Scopus_December.csv", quote = F, sep = ",", row.names = F)
+write.table(DTWoS, file = "Document type_Wos_December.csv", quote = F, sep = ",", row.names = F)
 
 
 ##################################################################################
@@ -810,4 +818,84 @@ rownames(Table)[rownames(Table)=="3"] <- "Shared by both databases"
 Table[4,1] <- W
 rownames(Table)[rownames(Table)=="4"] <- "Error"
 
-#write.table(Table, file = "Comparison Scop-WoS_January21.csv", quote = F, sep = ",", row.names = F)
+write.table(Table, file = "Comparison Scop-WoS_January21.csv", quote = F, sep = ",", row.names = F)
+
+##################################################################################
+#####                 Scopus/Web of Science/ IFSMS report                    #####
+##################################################################################
+# to not overwrite data
+ScopusCorrected <- ScopusReducedDatasetCorrected
+WoSCorrected <- WebOfScienceReducedDatasetCorrected
+WoSCorrected <- subset(WoSCorrected, !PY ==2020)
+# upload the dataset from the IFSMS report
+IFMS <- read.csv("Interpol Reports_2001-2019.csv", sep=",", header=TRUE)
+IFMS <- subset(IFMS, !Year ==2020)
+
+# create a new data.frame of the number of document published each year
+documentScopus <- ScopusCorrected %>%
+  select(PY,TI,DT, Coder)
+documentWoS <- WoSCorrected %>%
+  select(PY,TI,DT, Coder)
+documentIFSMS <- IFMS %>%
+  select(Year,Title,Document.Type, Coder)
+
+# Change the column name
+names(documentIFSMS) <- c("PY", "TI", "DT")
+
+#Count to number of time the same year is repeated in the "document$Year" and save in a data.frame "Year" 
+yearScopus <- data.frame(table(documentScopus$PY));yearScopus
+yearScopus$Var1 <- as.numeric(as.character(yearScopus$Var1))
+names(yearScopus) <- c("Year","Total")
+yearScopus$Coder <- "Scopus"
+
+yearWoS <- data.frame(table(documentWoS$PY));yearWoS
+yearWoS$Var1 <- as.numeric(as.character(yearWoS$Var1))
+names(yearWoS) <- c("Year","Total")
+yearWoS$Coder <- "WebOfScience"
+
+
+yearIFSMS <- data.frame(table(documentIFSMS$PY));yearIFSMS
+yearIFSMS$Var1 <- as.numeric(as.character(yearIFSMS$Var1))
+names(yearIFSMS) <- c("Year","Total")
+yearIFSMS$Coder <- "IFSMS"
+
+yearScopus <- yearScopus %>%
+  complete(Year = 1956:2019,
+           fill = list(Total = 0, Coder = "Scopus")) %>%
+  as.data.frame()
+yearScopus
+
+yearWoS <- yearWoS %>%
+  complete(Year = 1956:2019,
+           fill = list(Total = 0, Coder = "WebOfScience")) %>%
+  as.data.frame()
+yearWoS
+
+yearIFSMS <- yearIFSMS %>%
+  complete(Year = 1956:2019,
+           fill = list(Total = 0,  Coder = "IFSMS")) %>%
+  as.data.frame()
+yearIFSMS
+
+#to plot
+toplot <- data.frame(rbind(yearScopus,yearWoS,yearIFSMS))
+toplot1 <- filter(toplot, Year %in% c(1999:2019))
+toplot2 <- filter(toplot, Year %in% c(1979:1999))
+toplot3 <- filter(toplot, Year %in% c(1959:1979))
+
+# GRAPH
+plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
+  geom_line(aes(linetype=Coder), size=0.8)+
+  scale_linetype_manual(values=c("solid","solid", "dashed"))+
+  scale_color_manual(values=c("black", "darkblue", "grey50"))+
+  xlab('Year') +
+  ylab('Documents') +
+  scale_x_continuous(breaks=c(1955,1960,1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
+  theme_classic(base_family = "Arial", base_size = 20)+
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        legend.background = element_rect(fill="white",size=1, linetype="solid", colour="grey80"))
+plot
+ggsave("ScopWoSIFSMS_DocTrend_January.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results")
+
+ 

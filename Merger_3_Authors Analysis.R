@@ -282,8 +282,7 @@ ForAuthorsplot <- as.data.frame(rbind(DFfilledauthors, DFfilledMultipleauthors, 
 
 #  GRAPH
 Authorsplot <- ggplot(ForAuthorsplot, aes(x=Year, y=Freq, color=Coder))+
-  geom_line(aes(linetype=Coder, color=Coder))+ 
-  geom_point(aes(color=Coder))+
+  geom_line(aes(linetype=Coder, color=Coder), size =1)+ 
   scale_linetype_manual(values=c("solid","solid", "dashed"))+
   scale_color_manual(values=c("black", "darkblue", "grey50"))+
   labs(x="Year", y="Number of authors")+
@@ -295,7 +294,26 @@ Authorsplot <- ggplot(ForAuthorsplot, aes(x=Year, y=Freq, color=Coder))+
 show(Authorsplot)
 #ggsave("Authors-document-year.png", Authorsplot, width = 7, height = 5, units = "in", dpi=200, path = "Results")
 
-# Calculate the average number of authors
+#graph with just the total
+Meanauthors <- mean(YearTableOutput$Ratio)
+
+TotalAuthorsplot <- ggplot(YearTableOutput, aes(x=Year, y=Ratio))+
+  geom_line()+ 
+  geom_point()+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
+  scale_linetype_manual(values=c("solid"))+
+  scale_color_manual(values=c("black"))+
+  labs(x="Year", y="Average number of authors")+
+  theme_classic(base_family = "Arial", base_size = 12)+
+  theme(legend.title = element_blank(),
+        legend.position = "bottom",
+        legend.background = element_rect(fill="grey95",size=1, linetype="solid", colour="grey80"))+
+  geom_hline(yintercept=Meanauthors, linetype="dashed", color = "blue", size=0.5)
+show(TotalAuthorsplot)
+ggplotly(TotalAuthorsplot)
+ggsave("Average authorPerYear_ScopWoS_january.png", TotalAuthorsplot, width = 7, height = 3, units = "in", dpi=200, path = "Results")
+
+# Calculate the average number of authors (all type of authors)
 means <- aggregate(Freq ~ Coder, ForAuthorsplot, mean)
 means$Freq <- round(means$Freq,2)
 sd1 <- aggregate(Freq ~ Coder, ForAuthorsplot, sd)

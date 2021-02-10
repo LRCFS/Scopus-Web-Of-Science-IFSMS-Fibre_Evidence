@@ -73,14 +73,13 @@ removeDiacritics <- function(string) {
 # read the export *.csv document from Merger, separation ",", and place it in data.frame "MergerOriginalData"
 MergerOriginalData <- read.csv("Merger_Dataset_Final_December.txt", sep="\t", header=TRUE)
 
-
 #############################################################
 #####                Document analysis                  #####
 #############################################################
 #####__________________ Document Table ____________________#####
 # create a new data.frame of the number of document published each year
 document <- MergerOriginalData %>%
-  select(PY,TI,AU,C1,DT)
+  select(PY,TI,AU,C1,DT, Coder)
 # Change the column name
 names(document) <- c("Year", "Title", "Authors", "Affiliation", "Document.Type")
 
@@ -101,7 +100,7 @@ names(document)[names(document)=="Document.TypeC"] <- "Document.Type"
 
 # To export data relative to document
 DT <- data.frame(table(document$Document.Type, exclude = ""));DT
-write.table(DT, file = "Document type_ScopWoS.csv", quote = F, sep = "\t", row.names = F)
+write.table(DT, file = "Document type_ScopWoS_December.csv", quote = F, sep = "\t", row.names = F)
 
 # List of "Articles and their first "Year" of appearance
 Articles <- filter(document, Document.Type=="ARTICLE")
@@ -125,6 +124,7 @@ ProceedingsCountExtended[is.na(ProceedingsCountExtended)] <- 0
 Book <- filter(document, Document.Type=="BOOK CHAPTER" | Document.Type=="EDITORIAL MATERIAL; BOOK CHAPTER BOOK CHAPTER" )
 BookCount <- aggregate(Book$Document.Type, list(Book$Year), FUN=length)
 names(BookCount) <- c("Year","Books")
+
 # Add missing years
 BookCountExtended <- BookCount %>%
   complete(Year = 1967:2019, fill = list(Freq = 0)) %>%
@@ -160,7 +160,6 @@ summary(Table2Output)
 #write.table(Table2Output, file = "Document_Table_December.csv", sep = ",", row.names = F)
 
 #####__________________Document per Year_________________#####
-
 # To add years with no document
 DFfilled <- year %>%
   complete(Year = 1967:2019,
@@ -214,12 +213,14 @@ splt.lst <- sapply(aff.lst, strsplit, split = ",", USE.NAMES = FALSE)
 # extract fields which match a known city making sure that diacritics aren't a problem...
 city.lst <- lapply(splt.lst, function(x)x[which(removeDiacritics(x) %in% toupper(world.cities$name))]) # toupper as affiliations in capital
 # ... or country
-# cntry.lst <- lapply(splt.lst, function(x)x[which(removeDiacritics(x) %in% toupper(world.cities$country.etc))]) # toupper as affiliations in capital
+#cntry.lst <- lapply(splt.lst, function(x)x[which(removeDiacritics(x) %in% toupper(world.cities$country.etc))]) # toupper as affiliations in capital
 # this version only returns unique instances of countries per publication
 cntry.lst <- lapply(splt.lst, function(x)unique(x[which(x %in%  toupper(world.cities$country.etc))]))  # toupper as affiliations in capital
+TEST<- data.frame(Country = removeDiacritics(unlist(cntry.lst)), stringsAsFactors = T)
+
 
 ## generate plot of papers per country
-threshold <- 5
+threshold <- 1
 cntry.dat <- data.frame(Country = removeDiacritics(unlist(cntry.lst)), stringsAsFactors = FALSE)
 
 # define continent for each country
@@ -230,8 +231,9 @@ cntry.dat$Continent <- countrycode(sourcevar = cntry.dat[, "Country"],
 # get countries under threshold
 other.dat <- cntry.dat %>% 
   group_by(Country, Continent) %>% 
-  summarise(Count = n()) %>% 
+  dplyr::summarise(Count = n()) %>% 
   filter(Count <= threshold)
+
 # aggregate counts as 'Others'
 other.dat <- data.frame(Country = "Others", Continent = "Other", Count = sum(other.dat$Count))
 
@@ -257,3 +259,29 @@ p <- ggplot(cntry.dat, aes(x=Country, y=Count, fill=Continent)) +
 show(p)
 ggplotly(p)
 ggsave("Country_ScopWoS_December.png", p, width = 8, height = 6, units = "in", dpi=150, path = "Results")
+
+#other plot
+library(plotly)
+cntry.dat$q <- with(df, cut(pop, quantile(pop)))
+levels(df$q) <- paste(c("1st", "2nd", "3rd", "4th", "5th"), "Quantile")
+df$q <- as.ordered(df$q)
+
+g <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showland = TRUE,
+  landcolor = toRGB("gray85"),
+  subunitwidth = 1,
+  countrywidth = 1,
+  subunitcolor = toRGB("white"),
+  countrycolor = toRGB("white")
+)
+
+fig <- plot_geo(df, locationmode = 'USA-states', sizes = c(1, 250))
+fig <- fig %>% add_markers(
+  x = ~lon, y = ~lat, size = ~pop, color = ~q, hoverinfo = "text",
+  text = ~paste(df$name, "<br />", df$pop/1e6, " million")
+)
+fig <- fig %>% layout(title = '2014 US city populations<br>(Click legend to toggle)', geo = g)
+
+fig
