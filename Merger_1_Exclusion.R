@@ -858,28 +858,103 @@ rownames(Table)[rownames(Table)=="2"] <- "Exclusive to Scopus"
 Table[3,1] <- Z
 rownames(Table)[rownames(Table)=="3"] <- "Shared by both databases"
 
-Table[4,1] <- W
-rownames(Table)[rownames(Table)=="4"] <- "Error"
-
 write.table(Table, file = "Result_Comparison Scop-WoS_2021.csv", quote = F, sep = ",", row.names = F)
+
 
 ##################################################################################
 #####                 Scopus/Web of Science/ IFSMS report                    #####
 ##################################################################################
+#####______________Document exclusive to IFSMS ______________##########
+
+# read the export *.csv document from Interpol, separation ",", and place it in data.frame "InterpolFibre"
+InterpolFibre2004 <- read.csv("IFSS2004-Fibres.csv", sep=",", header=TRUE)
+InterpolFibre2007 <- read.csv("IFSS2007-Fibres.csv", sep=",", header=TRUE)
+InterpolFibre2010 <- read.csv("IFSS2010-Fibres.csv", sep=",", header=TRUE)
+InterpolFibre2013 <- read.csv("IFSS2013-Fibres.csv", sep=",", header=TRUE)
+InterpolFibre2016 <- read.csv("IFSS2016-Fibres.csv", sep=",", header=TRUE)
+InterpolFibre2019 <- read.csv("IFSS2019-Fibres.csv", sep=",", header=TRUE) 
+# Rename some of the columns to remove special characters or encoding
+colnames(InterpolFibre2004)[colnames(InterpolFibre2004)=="Author.s..ID"] <- "AuthorID"
+colnames(InterpolFibre2007)[colnames(InterpolFibre2007)=="Author.s..ID"] <- "AuthorID"
+colnames(InterpolFibre2010)[colnames(InterpolFibre2010)=="Author.s..ID"] <- "AuthorID"
+colnames(InterpolFibre2013)[colnames(InterpolFibre2013)=="Author.s..ID"] <- "AuthorID"
+colnames(InterpolFibre2016)[colnames(InterpolFibre2016)=="Author.s..ID"] <- "AuthorID"
+colnames(InterpolFibre2019)[colnames(InterpolFibre2019)=="Author.s..ID"] <- "AuthorID"
+
+#Assign a Coder to each report 
+InterpolFibre2004$Coder <- "2004 report"
+InterpolFibre2007$Coder <- "2007 report"
+InterpolFibre2010$Coder <- "2010 report"
+InterpolFibre2013$Coder <- "2013 report"
+InterpolFibre2016$Coder <- "2016 report"
+InterpolFibre2019$Coder <- "2019 report"
+
+InterpolFibre2004 <- InterpolFibre2004 %>%
+  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
+InterpolFibre2007 <- InterpolFibre2007 %>%
+  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
+InterpolFibre2010 <- InterpolFibre2010 %>%
+  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
+InterpolFibre2013 <- InterpolFibre2013 %>%
+  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
+InterpolFibre2016 <- InterpolFibre2016 %>%
+  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
+InterpolFibre2019 <- InterpolFibre2019 %>%
+  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link,Coder)
+
+InterpolFibre <- rbind(InterpolFibre2004,InterpolFibre2007, InterpolFibre2010, InterpolFibre2013, InterpolFibre2016, InterpolFibre2019)
+
+# Duplicate in Interpol report : http://www.textileworld.com is listed twice in the IFSMS 2013 report
+InterpolFibre <- InterpolFibre[-268,] #to remove one of the duplicate
+
+# Data from ScopWos and WoS : CombinedDataset3
+MergeScopWos <- CombinedDataset3 %>%
+  select(AU, TI, PY, SO, DT, C1, Coder)
+
+# Label each row with the database it came from 
+MergeScopWos$Coder2 <- "ScopWos"
+MergeScopWos$Coder <- "ScopWos"
+InterpolFibre$Coder2 <- "Interpol"
+InterpolFibre$Title <- toupper(InterpolFibre$Title)
+
+# 1) Creating a list or document present in Interpol but not in ScopWos
+# Creating a list from ScopWos Title
+ScopWosTitleList <- MergeScopWos %>%
+  select(TI)
+
+# List of records from Interpol that are in the ScopWos database (Title based)
+InterpolNotExclusive <- subset(InterpolFibre,Title %in% ScopWosTitleList$TI)
+
+# List of records from Interpol that are not in the ScopWos database (Title based)
+InterpolExclusive <- setdiff(InterpolFibre,InterpolNotExclusive)
+
+
+# 2) Calculating the % of record present in Interpol but not in ScopWos
+# Total number of record in the excluded list
+NumberofexcludedDocument <- as.numeric(count(InterpolExclusive)) # same thing as X above, just gave it another name
+
+# Number Total of record on Interpol
+TotalInterpol <- as.numeric(count(InterpolFibre)) # same thing as Z above, just gave it another name
+
+# % of record from Interpol present in ScopWos
+NumberofexcludedDocument/TotalInterpol*100 
+
+#####______________Graph______________##########
 # to not overwrite data
 ScopusCorrected <- ScopusReducedDatasetCorrected
 WoSCorrected <- WebOfScienceReducedDatasetCorrected
 WoSCorrected <- subset(WoSCorrected, !PY ==2020)
-# upload the dataset from the IFSMS report
-IFMS <- read.csv("Interpol Reports_2001-2019.csv", sep=",", header=TRUE)
-IFMS <- subset(IFMS, !Year ==2020)
+IFSMS <- InterpolFibre %>%
+  select(Year,Title,Document.Type, Coder2)
+IFSMS <- subset(IFSMS, !Year ==2020)
+colnames(IFSMS)[4] <- "Coder"
 
 # create a new data.frame of the number of document published each year
 documentScopus <- ScopusCorrected %>%
   select(PY,TI,DT, Coder)
 documentWoS <- WoSCorrected %>%
   select(PY,TI,DT, Coder)
-documentIFSMS <- IFMS %>%
+documentIFSMS <- IFSMS %>%
   select(Year,Title,Document.Type, Coder)
 
 # Change the column name
@@ -939,4 +1014,4 @@ plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
         legend.position = "bottom",
         legend.background = element_rect(fill="white",size=1, linetype="solid", colour="grey80"))
 plot
-ggsave("ScopWoSIFSMS_DocTrend.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results-2021")
+ggsave("Result_ScopWoSIFSMS_DocTrend.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results-2021")
