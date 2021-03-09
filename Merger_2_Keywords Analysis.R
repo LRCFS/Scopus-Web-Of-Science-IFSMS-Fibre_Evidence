@@ -215,6 +215,7 @@ MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$
 #############################################################
 #####               Data analysis - Keywords            #####
 #############################################################
+
 #####________________References with keywords________________#####
 # This part allows to calculate the number of references with keywords provided, from Scopus, from Web of Science and both Scopus+WoS
 # Count the number of references with DES, DEW, IDS, IDW and AIK as well as their % to the total number of references
@@ -242,6 +243,21 @@ names(KeywordTable_1) <- c("Keywords", "Count")
 
 #Export to text file
 #write.table(KeywordTable_1, file = "Result_Keyword Table_ScopWoS.csv", sep = ",", row.names = F)
+
+# references with no AIK
+RefNoAIK <- filter(MergerOriginalData, AIK=="")
+ScopWosnotexclusive <- RefNoAIK[RefNoAIK$Coder == "Scopus,WebOfScience"|RefNoAIK$Coder == "WebOfScience,Scopus", ]
+Scopusexclusive <- RefNoAIK[RefNoAIK$Coder == "Scopus", ]
+WoSexclusive <- RefNoAIK[RefNoAIK$Coder == "WebOfScience", ]
+
+# Count 
+countWoSexclusive <- as.numeric(count(WoSexclusive));countWoSexclusive
+countScopusexclusive <- as.numeric(count(Scopusexclusive));countScopusexclusive
+countScopWosnotexclusive <- as.numeric(count(ScopWosnotexclusive));countScopWosnotexclusive
+Total <- (countWoSexclusive+countScopusexclusive+countScopWosnotexclusive);Total
+
+# Type of document mostly without AIK
+CountDT <- data.frame(table(RefNoAIK$DT, exclude = ""));CountDT
 
 #####__________________Average number of keywords per year_________________#####
 #Count the number of time the same year is repeated in the "ScopusKeywordList$Year" and save in a data.frame "Year" 
@@ -300,7 +316,7 @@ KeywordsPerYear <- ggplot(FinalTableAKeywords, aes(x=Year, y=MeanAK))+
   scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
   scale_linetype_manual(values=c("solid"))+
   scale_color_manual(values=c("black"))+
-  labs(x="Year", y="Average number of keywords")+
+  labs(x="Year", y="Average number of keywords \n per document")+
   theme_classic(base_family = "Arial", base_size = 12)+
   theme(legend.title = element_blank(),
         legend.position = "bottom",
@@ -310,7 +326,7 @@ show(KeywordsPerYear)
 ggplotly(KeywordsPerYear)
 
 #To save the graph
-ggsave("Average Keywords per year_ScopWoS.png", KeywordsPerYear, width = 7, height = 3, units = "in", dpi=200, path = "Results-2021")
+ggsave("Average Keywords per year_ScopWoS.png", KeywordsPerYear, width = 8, height = 3.5, units = "in", dpi=300, path = "Results-2021")
 
 #####__________________Keywords per document and per year _________________#####
 # Create a new dataframe with column Year, Title and Authors

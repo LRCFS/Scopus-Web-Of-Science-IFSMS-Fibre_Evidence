@@ -364,6 +364,7 @@ names(WebOfScienceReducedDatasetCorrected)[names(WebOfScienceReducedDatasetCorre
 #####        To combine both dataset into one      #####
 ########################################################
 
+#####_________first Step_________##########
 # Combining the two dataset
 DatabaseOutputTemp <- bind_rows(ScopusReducedDatasetCorrected, WebOfScienceReducedDatasetCorrected)
 DatabaseOutputTemp <- as.data.frame(DatabaseOutputTemp)
@@ -383,45 +384,71 @@ CombinedDataset <- DatabaseOutput %>%
                                 C1S = paste(C1S[!is.na(C1S)], collapse=","),
                                 Coder = paste(Coder[!is.na(Coder)], collapse=","),
                                 DT = rem_dup_word(paste(DT[!is.na(DT)], collapse=";")),
-                                SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=", "))) %>% ungroup()
+                                SO = rem_dup_word(paste(SO[!is.na(SO)], collapse=";"))) %>% ungroup()
 
+#####_________Second step : correction on false duplicates_________##########
 # Issues with some references in the Coder column. Some references will have :
 # "Scopus,Scopus" -> this mean that 2 references are identify as duplicates in Scopus and need to be check manually
 # "WebOfScience,WebOfScience" -> this mean that 2 references are identify as duplicates in Web of Science and need to be check manually
-# "WebOfScience,WebOfScience,Scopus" -> this mean that 3 references are identify as one unique ref and need to be check manually
-# "WebOfScience,Scopus,Scopus" -> this mean that 3 references are identify as one unique ref and need to be check manually
+# "Scopus,WebOfScience,WebOfScience" -> this mean that 3 references are identify as one unique ref and need to be check manually
+# "Scopus,Scopus,WebOfScience" -> this mean that 3 references are identify as one unique ref and need to be check manually
 # As a example in this dataset, THE EVIDENTIAL VALUE OF BLACK COTTON FIBRES published in 2001 in present in Web of Science (ARTICLE) and in Scopus (ARTICLE and CONFERENCE PAPER)
 # Only the document ARTICLE in Scopus and Web of Science are duplicates, the CONFERENCE PAPER in Scopus is an exclusive reference
 # This is due to a missing entry in the DI column (DOI) for the CONFERENCE PAPER in Scopus which is therefore considered as the same as the ARTICLE
 # This can be fixed manually by including again in the CombinedDataset the references
 WebOfScienceReducedDatasetCorrected <- WebOfScienceReducedDatasetCorrected[order(WebOfScienceReducedDatasetCorrected$TI),]
-CombinedDataset <- bind_rows(WebOfScienceReducedDatasetCorrected[112,],CombinedDataset)
+WebOfScienceReducedDatasetCorrected <- WebOfScienceReducedDatasetCorrected %>%
+  select(PY,TI,Authors,AuthorCorrected,DI,DEW,IDW,C1W,SO,DT,Coder)
 
 ScopusReducedDatasetCorrected <- ScopusReducedDatasetCorrected[order(ScopusReducedDatasetCorrected$TI),]
-CombinedDataset <- bind_rows(ScopusReducedDatasetCorrected[889,],CombinedDataset)
-CombinedDataset <- bind_rows(ScopusReducedDatasetCorrected[1308,],CombinedDataset)
-CombinedDataset <- bind_rows(ScopusReducedDatasetCorrected[852,],CombinedDataset) # false duplicate found in DupeScopus3
+ScopusReducedDatasetCorrected <- ScopusReducedDatasetCorrected %>%
+  select(PY,TI,Authors,AuthorCorrected,DI,DES,IDS,C1S,SO,DT,Coder)
 
-#change DT and SO to be correct
-CombinedDataset <- CombinedDataset[order(CombinedDataset$TI),]
-CombinedDataset[1464,8]  <- as.character(gsub("CONFERENCE PAPER;ARTICLE;ARTICLE","ARTICLE",CombinedDataset[1464,8]))
-CombinedDataset[993,7]  <- as.character(gsub("LC-GC EUROPE LC-GC NORTH AMERICA","LC-GC EUROPE",CombinedDataset[993,7]))
-CombinedDataset[993,8]  <- as.character(gsub("ARTICLE;ARTICLE;EDITORIAL MATERIAL","EDITORIAL MATERIAL",CombinedDataset[993,8]))
+#write.table(WebOfScienceReducedDatasetCorrected, file = "WebOfScienceReducedDatasetCorrected.txt", quote = F, sep="\t", row.names = F)
+#write.table(ScopusReducedDatasetCorrected, file = "ScopusReducedDatasetCorrected.txt", quote = F, sep="\t", row.names = F)
 
-# Change Coder
-CombinedDataset$Coder <- as.character(gsub("Scopus,WebOfScience,WebOfScience","WebOfScience,Scopus",CombinedDataset$Coder))
-CombinedDataset$Coder <- as.character(gsub("Scopus,Scopus,WebOfScience","WebOfScience,Scopus",CombinedDataset$Coder))
-CombinedDataset$Coder <- as.character(gsub("Scopus,Scopus","Scopus",CombinedDataset$Coder))
+# Delete previous entries with "Scopus,Scopus", "WebOfScience,WebOfScience", "Scopus,WebOfScience,WebOfScience" or "Scopus,Scopus,WebOfScience"
+CombinedDataset<-CombinedDataset[!(CombinedDataset$Coder=="Scopus,Scopus" |
+                                     CombinedDataset$Coder=="WebOfScience,WebOfScience" |
+                                     CombinedDataset$Coder=="Scopus,WebOfScience,WebOfScience" |
+                                     CombinedDataset$Coder=="Scopus,Scopus,WebOfScience"),]
+# Add entries again
+RecreatedEntries <- read.csv("Entries recreated.txt", sep = "\t", header = TRUE)
+RecreatedEntries <- RecreatedEntries %>%
+  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,Coder,DT,SO)
 
-# last correction on the Document Type
-#split column DT based on ";"
+CombinedDataset <- rbind(RecreatedEntries,CombinedDataset)
+
+#####_________Correction on DT_________##########
+# Differences may remain between Web of Science and Scopus (i.e. "Article" in Scopus and "Review" in WoS)
+# when two references are found both in Scopus and in WoS, the document type provided by Scopus is used
+# split column DT based on ";"
 CombinedDataset2 <- CombinedDataset %>%
-  separate(DT, c("DT", "DT2"), ";")
+  separate(DT, c("DT", "DT2"), ";") 
+# the column DT correspond to the DT from Scopus when the coder is "Scopus" and "Scopus,WebOfScience",
+# the column DT correspond to the DT from WoS when the coder is "WebOfScience",
+# the column DT2 correspond to the DT from WoS when the coder is "Scopus,WebOfScience"
 
+# Remove DT2 
 CombinedDataset <- CombinedDataset2 %>%
   select(PY,TI,AU,DOI,DEW,DES,IDW,IDS,C1W,C1S,SO,DT,Coder)
 
-# In the Authors column, because the number of author is sometimes different between Scopus and Web of Science, a correction must be done
+#####_________Correction on SO_________##########
+# in the column SO, So provided by Scopus and So provided by WoS are join by ";" when two references are found in both database
+# In that situation, So provided by Scopus is used
+#split column SO based on ";"
+CombinedDataset3 <- CombinedDataset %>%
+  separate(SO, c("SO", "SO2"), ";")
+# the column SO correspond to the SO from Scopus when the coder is "Scopus" and "Scopus,WebOfScience",
+# the column SO correspond to the SO from WoS when the coder is "WebOfScience",
+# the column SO2 correspond to the SO from WoS when the coder is "Scopus,WebOfScience"
+
+# Remove SO2 
+CombinedDataset <- CombinedDataset3 %>%
+  select(PY,TI,AU,DOI,DEW,DES,IDW,IDS,C1W,C1S,SO,DT,Coder)
+
+#####_________Correction on AU_________##########
+# In the Authors column, because the number of authors is sometimes different between Scopus and Web of Science, a correction must be done
 CombinedDataset <- CombinedDataset %>%
   mutate(AU = strsplit(as.character(AU), ";"))%>%
   unnest(AU) %>%
@@ -432,13 +459,8 @@ CombinedDataset <- CombinedDataset %>%
   ungroup()
 CombinedDataset$AU[CombinedDataset$AU==""]<-NA
 
-# Add some correction to SO
-# This error is particular to the dataset and need to be checked
-SourceCorrection2 <- read.csv("SourceCorrected_2.txt", sep = "\t", header = TRUE)
-SourceCorrection2 <- as.data.frame(SourceCorrection2)
-CombinedDataset$SOCorrected <- gsr(as.character(CombinedDataset$SO), as.character(SourceCorrection2$raw.x), as.character(SourceCorrection2$raw.y))
 
-# Correction on Affiliation
+#####_________Correction on Affiliation_________##########
 # Filling Affiliations columns empty string with NA
 CombinedDataset$C1S[CombinedDataset$C1S==""]<-NA
 CombinedDataset$C1W[CombinedDataset$C1W==""]<-NA
@@ -456,6 +478,7 @@ CombinedDataset <- rbind(TempScopusAffiliations,TempWebOfSAffiliations)
 DupeCombinedDataset <- CombinedDataset %>%
   find_duplicates(TI) # if duplicates in DupeCombinedDataset does not have the same year, they are not duplicates
 
+#####_________Correction on Authors' keywords_________##########
 # The Authors' keywords (i.e. DEW and DES) between the two lists should be the same, however it is not the case and some correction will be needed.
 # The user can decide to use the original list of keywords given by the databases instead, adding "S" or "W" to "DE"
 # The merged list (i.e. DEW +DES) is more exhautive than the individual one as for some records as the keywords do not appear in both lists
@@ -463,8 +486,7 @@ DupeCombinedDataset <- CombinedDataset %>%
 CombinedDataset <- transform(CombinedDataset, DE=paste(DEW, DES, sep="; "))
 CombinedDataset$DE  <- as.character(gsub("; ",";",CombinedDataset$DE))
 CombinedDataset <- CombinedDataset %>%
-  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,C1,DT,SOCorrected,C1,DE,DOI,Coder)
-names(CombinedDataset)[names(CombinedDataset)=="SOCorrected"] <- "SO"
+  select(TI,PY,AU,DOI,DEW,IDW,DES,IDS,C1W,C1S,C1,DT,SO,C1,DE,DOI,Coder)
 
 # In the DE column, because the order of the author's keyword is sometimes different between Scopus and Web of Science, a correction has been done
 # It has been chosen to remove each keywords that were duplicated in the column DE
@@ -617,7 +639,7 @@ removeKeywords.list <- paste(c("GUNSHOT RESIDUE", "GSR", "GUNSHOT","FIREAMRS",
                                "DRUG",
                                "DOCUMENT",
                                "AXONAL", "HISTOLOGY",
-                               "OPTICAL FIBRE", "OPTICAL FIBER"), collapse = '|')
+                               "OPTICAL FIBRE", "OPTICAL FIBER", "MEMBRANE"), collapse = '|')
 removeKeywordslist <- as.data.frame(removeKeywords.list)
 
 # Creating a new list of document which don't have any of the keywords from removeKeywords.list
@@ -814,7 +836,7 @@ countScopusexclusive <- as.numeric(count(Scopusexclusive));countScopusexclusive
 countScopWosnotexclusive <- as.numeric(count(ScopWosnotexclusive));countScopWosnotexclusive
 #countError <- as.numeric(count(errorpourcentage));countError
 
-Total <- (countWoSexclusive+countScopusexclusive+countScopWosnotexclusive+countError);Total
+Total <- (countWoSexclusive+countScopusexclusive+countScopWosnotexclusive);Total
 #pourcentage of article in WoS only
 X <- ((countWoSexclusive/Total) * 100); X
 #pourcentage of article in Scop only
@@ -917,5 +939,4 @@ plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
         legend.position = "bottom",
         legend.background = element_rect(fill="white",size=1, linetype="solid", colour="grey80"))
 plot
-ggsave("ScopWoSIFSMS_DocTrend_January.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results-2021")
- 
+ggsave("ScopWoSIFSMS_DocTrend.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results-2021")
