@@ -177,7 +177,7 @@ WebOfScienceReducedDataset <- WebofScience %>%
   select(PY,AU,TI,DE,ID,C1,DI,SO,DT)
 
 # read the export *.csv document from Merger, separation "\t", and place it in data.frame "MergerOriginalData"
-MergerOriginalData <- read.csv("Merger_Dataset_Final_December.txt", sep="\t", header=TRUE)
+MergerOriginalData <- read.csv("Result_Merger_Dataset.txt", sep="\t", header=TRUE)
 
 
 #############################################################
@@ -199,16 +199,18 @@ Keyword <- KeywordList %>%
   distinct()
 
 # Most cited keywords before correction - Extract a list of keywords to apply corrections
-KeywordListCount <- aggregate(KeywordList$AIKeywords, by=list(Freq=KeywordList$AIKeywords), FUN=length)
+KeywordListCount <- aggregate(KeywordList$AIKeywords, by=list(Freq=KeywordList$AIKeywords), FUN=length) #first row could have the number of null entries for the column AIKeywords
 names(KeywordListCount) <- c("Keywords","Count")
-#write.csv(KeywordListCount,"Keywords to correct_December.csv")
+
+# to correct keywords
+#write.csv(KeywordListCount,"Result_Keywords to correct.csv")
 
 #Correction to the keywords can be applied at this stage. This can be done in Notepad++, Excel etc. The ultimate order of the list must be kept so it can be binded to the orignial data.
 #read the corrected list of keywords and combine it to the original list
-KeywordsCorrected <- read.csv("Merger_AKeywords_Corrected.txt", sep="\t", header=TRUE)
+# The list of corrected Keywords from Sobreira et al. was added to correction of the top 100 keywords from KeywordListCount
+KeywordsCorrected <- read.csv("KeywordsCorrection_Sobreira and Fibre.txt", sep="\t", header=TRUE)
 KeywordsCorrected <- as.data.frame(KeywordsCorrected)
 MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$AIKeywords),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$KeywordsCorrected))
-
 
 #############################################################
 #####               Data analysis - Keywords            #####
@@ -239,7 +241,7 @@ KeywordTable_1 <- rownames_to_column(KeywordTable_1)
 names(KeywordTable_1) <- c("Keywords", "Count")
 
 #Export to text file
-#write.table(KeywordTable_1, file = "Merger_KeywordTable_1_December.csv", sep = ",", row.names = F)
+#write.table(KeywordTable_1, file = "Result_Keyword Table_ScopWoS.csv", sep = ",", row.names = F)
 
 #####__________________Average number of keywords per year_________________#####
 #Count the number of time the same year is repeated in the "ScopusKeywordList$Year" and save in a data.frame "Year" 
@@ -308,7 +310,7 @@ show(KeywordsPerYear)
 ggplotly(KeywordsPerYear)
 
 #To save the graph
-ggsave("Average KeywordsPerYear_ScopWoS_December.png", KeywordsPerYear, width = 7, height = 3, units = "in", dpi=200, path = "Results")
+ggsave("Average Keywords per year_ScopWoS.png", KeywordsPerYear, width = 7, height = 3, units = "in", dpi=200, path = "Results-2021")
 
 #####__________________Keywords per document and per year _________________#####
 # Create a new dataframe with column Year, Title and Authors
@@ -348,19 +350,19 @@ Keywordsperdocumentplot <-ggplot() +
   theme_bw(base_family = "Arial", base_size = 12)+
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
 show(Keywordsperdocumentplot)
-#ggsave("Keywordsperdocumentplot_December.png", Keywordsperdocumentplot, width = 7, height = 5, units = "in", dpi=200)
+ggsave("Keywords per document plot_ScopWoS.png", Keywordsperdocumentplot, width = 7, height = 5, units = "in", dpi=200, path = "Results-2021")
 
-Keywordsperdocumentboxplot <-ggplot() +
+Keywordsperdocumentboxplot <- ggplot() +
   geom_boxplot(data =Keywordsperdocumentfinal, aes(x =Year, y = Frequency), outlier.colour= "red", outlier.shape = 8, color = "black", shape=1, size=0.5)+
   labs(x="Year", y="Keywords per documents")+
   theme_bw(base_family = "Arial", base_size = 12)+
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
 show(Keywordsperdocumentboxplot)
-#ggsave("Keywordsperdocumentboxplot_December.png", Keywordsperdocumentboxplot, width = 6, height = 4, units = "in", dpi=200)
+ggsave("Keywords per document boxplot_ScopWoS.png", Keywordsperdocumentboxplot, width = 6, height = 4, units = "in", dpi=200, path = "Results-2021")
 
 p3 <- ggarrange(Keywordsperdocumentplot, Keywordsperdocumentboxplot,labels = c("A", "B"),ncol = 1, nrow = 2,legend = "none")
 show(p3)
-#ggsave("Keywords perdocument combine_December.png", p3, width = 6, height = 6, units = "in", dpi=200, path = "Results")
+ggsave("Keywords per document combined_ScopWoS.png", p3, width = 6, height = 6, units = "in", dpi=200, path = "Results-2021")
 
 # OTHER GRAPH
 Keywordsperdocumentmix <-ggplot() +
@@ -372,7 +374,7 @@ Keywordsperdocumentmix <-ggplot() +
   theme_bw(base_family = "Arial", base_size = 12)+
   theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
 show(Keywordsperdocumentmix)
-#ggsave("Keywordsperdocument mix_December.png",Keywordsperdocumentmix, width = 6, height = 4, units = "in", dpi=200, path = "Results")
+ggsave("Keywords per document mix_ScopWoS.png",Keywordsperdocumentmix, width = 6, height = 4, units = "in", dpi=200, path = "Results-2021")
 
 #############################################################
 #####               Keyword trend graph                 #####
@@ -437,7 +439,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p)
 #ggplotly(p)
-ggsave("ScopWoS_KeywordTrend_December.png", p, width = 13, height = 20, units = "in", dpi=500, path = "Results")
+ggsave("KeywordTrend_ScopWoS.png", p, width = 13, height = 20, units = "in", dpi=500, path = "Results-2021")
 
 #####______________Graph for Techniques analysis only______________##########
 
@@ -479,8 +481,8 @@ techniqueListCount <- aggregate(TechniqueList$x, list(TechniqueList$Rtitle), sum
 TechniqueList <-subset(MergeDataKeywordNarrowRangeGraph2,Rtitle %in% techniqueslist$techniques.list)
 
 # Rename some of the techniques that are too long
-# read the corrected list of techniques and combine it to TechniqueList
-TechniqueCorrected <- read.csv("Technique Name Corrected_ScopWoS.txt", sep="\t", header=TRUE)
+# read the list of techniques'abreviations and combine it to TechniqueList
+TechniqueCorrected <- read.csv("Techniques's abreviations_ScopWoS.txt", sep="\t", header=TRUE)
 TechniqueList$Rtitle2 <- gsr(TechniqueList$Rtitle,TechniqueCorrected$name, as.character(TechniqueCorrected$Name.Corrected))
 TechniqueList <- TechniqueList %>% select("Year", "Rtitle2", "x")
 names(TechniqueList) <- c("Year", "Rtitle", "x")
@@ -535,7 +537,7 @@ p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p1)
 #ggplotly(p1)
-ggsave("ScopWoS_Techniques Keyword Trend_December.png", p1,  width = 6, height = 6, units = "in", dpi=150, path = "Results")
+ggsave("Techniques Keyword Trend_ScopWoS.png", p1,  width = 6, height = 6, units = "in", dpi=150, path = "Results-2021")
 
 #####______________Graph for Textile analysis only______________##########
 
@@ -615,7 +617,7 @@ p2 <- ggplot(GraphTemp1Ter,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fi
 
 show(p2)
 #ggplotly(p2)
-ggsave("SopWoS_Textile Keyword Trend_December.png", p2, width = 6, height = 6, units = "in", dpi=500, path = "Results")
+ggsave("Textile Keyword Trend_SopWoS.png", p2, width = 6, height = 6, units = "in", dpi=500, path = "Results-2021")
 
 
 #####______________Graph for Transfer/Persistence analysis only______________##########
@@ -635,7 +637,7 @@ Transfer.list <- paste(c("TRANSFER",
                          "INTERPRETATION OF FIBRE TRANSFER", "PRIMARY TRANSFER SIMULATION", "RELEVANCE OF TRANSFER",
                          "RELEVANCE OF TRANSFER MATERIALS", "SCENT TRANSFER UNIT (STU-100)", "TRANSFER SIMULATION	",
                          "TRANSFER UNIT (STU-100)",
-                         "PERSITENCE","TRANSFER PERSISTENCE", "FIBRE PERSISTENCE"), collapse = ';')
+                         "	PERSISTENCE","TRANSFER PERSISTENCE", "FIBRE PERSISTENCE"), collapse = ';')
 Transferlist <- as.data.frame(Transfer.list)
 
 #Split Column "Transfer.list" in row by the separator ";", remove leading white space to generate list
@@ -698,7 +700,7 @@ p3 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p3)
 #ggplotly(p3)
-ggsave("SopWoS_Transfer Keyword Trend_December.png", p3, width = 8, height = 3, units = "in", dpi=150, path = "Results")
+ggsave("Transfer Keyword Trend_December_SopWoS.png", p3, width = 8, height = 3, units = "in", dpi=150, path = "Results-2021")
 
 
 #####______________Graph for Colour analysis only______________##########
@@ -775,7 +777,7 @@ p4 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p4)
 #ggplotly(p4)
-ggsave("SopWoS_Colour Keyword Trend_December.png", p4, width = 6, height = 6, units = "in", dpi=300, path = "Results")
+ggsave("Colour Keyword Trend_December_SopWoS.png", p4, width = 6, height = 6, units = "in", dpi=300, path = "Results-2021")
 
 #####______________Graph for Bayesian analysis only______________##########
 
@@ -851,7 +853,7 @@ p5 <- ggplot(GraphTemp1Transfer,aes(x=Year,y=reorder(KeywordsCorrected,graphorde
         plot.title=element_text(colour=textcol,hjust=0,size=12))
 show(p5)
 #ggplotly(p5)
-ggsave("SopWoS_bayesian Keyword Trend.png", p5, width = 6, height = 6, units = "in", dpi=500, path = "Results")
+ggsave("bayesian Keyword Trend_SopWoS.png", p5, width = 6, height = 6, units = "in", dpi=500, path = "Results-2021")
 
 #####______________2D matrix______________##########
 # create a list with the keywords with a frequency >5

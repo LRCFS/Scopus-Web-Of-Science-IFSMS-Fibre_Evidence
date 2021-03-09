@@ -712,7 +712,7 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-write.table(CombinedDataset3, file = "Export_Merger_Dataset.txt", sep = "\t", row.names = F)
+write.table(CombinedDataset3, file = "Result_Merger_Dataset.txt", sep = "\t", row.names = F)
 
 #############################################################
 #####                 General information               #####
@@ -784,11 +784,11 @@ names(DTWoS) <- c("Document Type", "Count")
 
 #####______________Exportation______________##########
 # To export the first table (General Information)
-write.table(GF, file = "General Information_ScopWoS_December.csv", quote = F, sep = ",", row.names = T)
+write.table(GF, file = "Result_General Information_ScopWoS.csv", quote = F, sep = ",", row.names = T)
 
 #To export the second table (Document Type)
-write.table(DTScop, file = "Document type_Scopus_December.csv", quote = F, sep = ",", row.names = F)
-write.table(DTWoS, file = "Document type_Wos_December.csv", quote = F, sep = ",", row.names = F)
+DocumentTypeScopWoS <- bind_rows(DTScop, DTWoS)
+write.table(DocumentTypeScopWoS, file = "Result_Document type_ScopWoS.csv", quote = F, sep = ",", row.names = F)
 
 
 ##################################################################################
@@ -799,12 +799,12 @@ write.table(DTWoS, file = "Document type_Wos_December.csv", quote = F, sep = ","
 # In the previous dataset, the column Coder can be used to calculate the pourcentage of articles both present in Scopus and in WoS
 #before of after the exclusion process (CombinedDataset or CombinedDataset3)
 #Scopus not exclusive = Web of science not exclusive
-ScopWosnotexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience,Scopus", ]
+ScopWosnotexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus,WebOfScience"|CombinedDataset$Coder == "WebOfScience,Scopus", ]
 Scopusexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus", ]
 WoSexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience", ]
 # To calculate the pourcentage of possibles errors
-forErrors <- rbind(ScopWosnotexclusive,Scopusexclusive,WoSexclusive)
-errorpourcentage <- setdiff(CombinedDataset,forErrors)
+#forErrors <- rbind(ScopWosnotexclusive,Scopusexclusive,WoSexclusive)
+#errorpourcentage <- setdiff(CombinedDataset,forErrors)
 
 
 #####______________Analysis______________##########
@@ -812,7 +812,7 @@ errorpourcentage <- setdiff(CombinedDataset,forErrors)
 countWoSexclusive <- as.numeric(count(WoSexclusive));countWoSexclusive
 countScopusexclusive <- as.numeric(count(Scopusexclusive));countScopusexclusive
 countScopWosnotexclusive <- as.numeric(count(ScopWosnotexclusive));countScopWosnotexclusive
-countError <- as.numeric(count(errorpourcentage));countError
+#countError <- as.numeric(count(errorpourcentage));countError
 
 Total <- (countWoSexclusive+countScopusexclusive+countScopWosnotexclusive+countError);Total
 #pourcentage of article in WoS only
@@ -822,7 +822,7 @@ Y <- ((countScopusexclusive/Total) * 100); Y
 # pourcentage of articles shared with both databases
 Z <- ((countScopWosnotexclusive/Total) * 100); Z
 # pourcentage of pssible errors
-W <- ((countError/Total) * 100); W
+#W <- ((countError/Total) * 100); W
 
 #####______________Table______________##########
 X <- data.frame(X)
@@ -839,7 +839,7 @@ rownames(Table)[rownames(Table)=="3"] <- "Shared by both databases"
 Table[4,1] <- W
 rownames(Table)[rownames(Table)=="4"] <- "Error"
 
-write.table(Table, file = "Comparison Scop-WoS_January21.csv", quote = F, sep = ",", row.names = F)
+write.table(Table, file = "Result_Comparison Scop-WoS_2021.csv", quote = F, sep = ",", row.names = F)
 
 ##################################################################################
 #####                 Scopus/Web of Science/ IFSMS report                    #####
@@ -917,5 +917,5 @@ plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
         legend.position = "bottom",
         legend.background = element_rect(fill="white",size=1, linetype="solid", colour="grey80"))
 plot
-ggsave("ScopWoSIFSMS_DocTrend_January.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results")
-
+ggsave("ScopWoSIFSMS_DocTrend_January.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results-2021")
+ 
