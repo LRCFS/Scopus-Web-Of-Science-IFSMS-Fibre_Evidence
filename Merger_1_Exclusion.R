@@ -821,12 +821,12 @@ write.table(DocumentTypeScopWoS, file = "Result_Document type_ScopWoS.csv", quot
 # In the previous dataset, the column Coder can be used to calculate the pourcentage of articles both present in Scopus and in WoS
 #before of after the exclusion process (CombinedDataset or CombinedDataset3)
 #Scopus not exclusive = Web of science not exclusive
-ScopWosnotexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus,WebOfScience"|CombinedDataset$Coder == "WebOfScience,Scopus", ]
-Scopusexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus", ]
-WoSexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience", ]
+ScopWosnotexclusive <- CombinedDataset3[CombinedDataset3$Coder == "Scopus,WebOfScience"|CombinedDataset3$Coder == "WebOfScience,Scopus", ]
+Scopusexclusive <- CombinedDataset3[CombinedDataset3$Coder == "Scopus", ]
+WoSexclusive <- CombinedDataset3[CombinedDataset3$Coder == "WebOfScience", ]
 # To calculate the pourcentage of possibles errors
 #forErrors <- rbind(ScopWosnotexclusive,Scopusexclusive,WoSexclusive)
-#errorpourcentage <- setdiff(CombinedDataset,forErrors)
+#errorpourcentage <- setdiff(CombinedDataset3,forErrors)
 
 
 #####______________Analysis______________##########
@@ -834,7 +834,6 @@ WoSexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience", ]
 countWoSexclusive <- as.numeric(count(WoSexclusive));countWoSexclusive
 countScopusexclusive <- as.numeric(count(Scopusexclusive));countScopusexclusive
 countScopWosnotexclusive <- as.numeric(count(ScopWosnotexclusive));countScopWosnotexclusive
-#countError <- as.numeric(count(errorpourcentage));countError
 
 Total <- (countWoSexclusive+countScopusexclusive+countScopWosnotexclusive);Total
 #pourcentage of article in WoS only
@@ -843,8 +842,7 @@ X <- ((countWoSexclusive/Total) * 100); X
 Y <- ((countScopusexclusive/Total) * 100); Y
 # pourcentage of articles shared with both databases
 Z <- ((countScopWosnotexclusive/Total) * 100); Z
-# pourcentage of pssible errors
-#W <- ((countError/Total) * 100); W
+
 
 #####______________Table______________##########
 X <- data.frame(X)
@@ -864,6 +862,7 @@ write.table(Table, file = "Result_Comparison Scop-WoS_2021.csv", quote = F, sep 
 ##################################################################################
 #####                 Scopus/Web of Science/ IFSMS report                    #####
 ##################################################################################
+
 #####______________Document exclusive to IFSMS ______________##########
 
 # read the export *.csv document from Interpol, separation ",", and place it in data.frame "InterpolFibre"
@@ -938,6 +937,19 @@ TotalInterpol <- as.numeric(count(InterpolFibre)) # same thing as Z above, just 
 
 # % of record from Interpol present in ScopWos
 NumberofexcludedDocument/TotalInterpol*100 
+
+# In InterpolNotExclusive, how many are exclusive to WoS ?
+# Creating a list from IFSMS Title
+IFSMSTitleList <- InterpolNotExclusive %>%
+  select(Title)
+# List of records from InterpolNotExclusive that are in the WoSexclusive (Title based)
+TEST <- subset(WoSexclusive,TI %in% IFSMSTitleList$Title)
+
+# List of records from InterpolNotExclusive that are in the Scopusexclusive (Title based)
+TEST2 <- subset(Scopusexclusive,TI %in% IFSMSTitleList$Title)
+
+# List of records from InterpolNotExclusive that are in the Scopusexclusive (Title based)
+TEST3 <- subset(ScopWosnotexclusive,TI %in% IFSMSTitleList$Title)
 
 #####______________Graph______________##########
 # to not overwrite data
