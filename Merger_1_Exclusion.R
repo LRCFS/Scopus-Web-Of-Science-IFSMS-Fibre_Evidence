@@ -804,6 +804,17 @@ DTWoS <- data.frame(table(WebofScience$Document.TypeC, exclude = ""))
 DTWoS <- data.frame(table(WebofScience$Document.TypeC, exclude = NA));DTWoS
 names(DTWoS) <- c("Document Type", "Count")
 
+# For Combined dataset
+# Count the number of time each document type appear
+DTcombined <- data.frame(table(CombinedDataset$DT, exclude = ""))
+DTcombined <- data.frame(table(CombinedDataset$DT, exclude = NA));DTcombined
+names(DTcombined) <- c("Document Type", "Count")
+
+#after filtering
+DTcombinedexlusion <- data.frame(table(CombinedDataset3$DT, exclude = ""))
+DTcombinedexlusion <- data.frame(table(CombinedDataset3$DT, exclude = NA));DTcombinedexlusion
+names(DTcombinedexlusion) <- c("Document Type", "Count")
+
 #####______________Exportation______________##########
 # To export the first table (General Information)
 write.table(GF, file = "Result_General Information_ScopWoS.csv", quote = F, sep = ",", row.names = T)
@@ -811,6 +822,10 @@ write.table(GF, file = "Result_General Information_ScopWoS.csv", quote = F, sep 
 #To export the second table (Document Type)
 DocumentTypeScopWoS <- bind_rows(DTScop, DTWoS)
 write.table(DocumentTypeScopWoS, file = "Result_Document type_ScopWoS.csv", quote = F, sep = ",", row.names = F)
+
+#To export table from combined dataset
+write.table(DTcombined, file = "Result_Document type_ScopWoS combined.csv", quote = F, sep = ",", row.names = F)
+write.table(DTcombinedexlusion, file = "Result_Document type_ScopWoS exclusion.csv", quote = F, sep = ",", row.names = F)
 
 
 ##################################################################################
@@ -821,9 +836,14 @@ write.table(DocumentTypeScopWoS, file = "Result_Document type_ScopWoS.csv", quot
 # In the previous dataset, the column Coder can be used to calculate the pourcentage of articles both present in Scopus and in WoS
 #before of after the exclusion process (CombinedDataset or CombinedDataset3)
 #Scopus not exclusive = Web of science not exclusive
-ScopWosnotexclusive <- CombinedDataset3[CombinedDataset3$Coder == "Scopus,WebOfScience"|CombinedDataset3$Coder == "WebOfScience,Scopus", ]
-Scopusexclusive <- CombinedDataset3[CombinedDataset3$Coder == "Scopus", ]
-WoSexclusive <- CombinedDataset3[CombinedDataset3$Coder == "WebOfScience", ]
+ScopWosnotexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus,WebOfScience"|CombinedDataset$Coder == "WebOfScience,Scopus", ]
+DTScopWosnotexclusive <- data.frame(table(ScopWosnotexclusive$DT, exclude = NA));DTScopWosnotexclusive
+names(DTScopWosnotexclusive) <- c("Document Type", "Count")
+JournalScopWosnotexclusive <- data.frame(table(ScopWosnotexclusive$SO, exclude = NA));JournalScopWosnotexclusive
+names(JournalScopWosnotexclusive) <- c("Journal", "Count")
+
+Scopusexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus", ]
+WoSexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience", ]
 # To calculate the pourcentage of possibles errors
 #forErrors <- rbind(ScopWosnotexclusive,Scopusexclusive,WoSexclusive)
 #errorpourcentage <- setdiff(CombinedDataset3,forErrors)
@@ -1027,3 +1047,4 @@ plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
         legend.background = element_rect(fill="white",size=1, linetype="solid", colour="grey80"))
 plot
 ggsave("Result_ScopWoSIFSMS_DocTrend.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results-2021")
+
