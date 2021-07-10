@@ -12,8 +12,8 @@
 #####                  Global variable                  #####
 #############################################################
 
-Wos.path = 'InputData/Wos/Dec2020/'    #Web of Science folder
-Sco.path = 'InputData/Scopus/Dec2020/' #Scopus folder
+Wos.path = 'InputData/Wos/Jul2021/'    #Web of Science folder
+Sco.path = 'InputData/Scopus/Jul2021/' #Scopus folder
 
 #############################################################
 #####         Data loading Individual citation list     #####
@@ -112,6 +112,7 @@ ScopusReducedDatasetTIAUcor <- ScopusReducedDatasetTIcorExtended %>%
   summarise(AU = paste(AuthorsCor, collapse = ";")) %>%
   ungroup()
 
+
 ##################################
 ##### Affiliation correction ##### 
 ##################################
@@ -141,17 +142,35 @@ ScopusReducedDatasetTIAUC1Scor$C1S[ScopusReducedDatasetTIAUC1Scor$C1S==""] <- NA
 
 # correcting identical records with different keywords lists (either missing or complementary); removing duplicates
 # list may not be the same length as the original one
-# 
+
 ScopusReducedDatasetTIAUC1SIDScor <- ScopusReducedDatasetTIAUC1Scor %>%
   mutate(IDS = strsplit(as.character(IDS), ";", ))%>%
   unnest(IDS)%>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(PY,TI,AU,DES,C1S,DI,SO,DT,Coder)%>%
-  summarise(IDS = paste(IDS[!is.na(IDS)], collapse= ";"))
+  group_by(PY,TI,AU,DES,DI,SO,DT,C1S,Coder)%>%
+  summarise(IDS = paste(IDS[!is.na(IDS)], collapse= ";"))%>%
+  ungroup()
 
 ScopusReducedDatasetTIAUC1SIDScor$IDS[ScopusReducedDatasetTIAUC1SIDScor$IDS==""] <- NA
 
+####################################
+##### document type correction ##### 
+####################################
+
+# load correction list
+DocumentCorrected <- read.csv("CorrectionLists/DocumentCorrection.txt", sep = "\t", header = TRUE)
+DocumentCorrected <- as.data.frame(DocumentCorrected)
+ScopusReducedDatasetTIAUC1SIDScor$DTCorrected <- gsr(as.character(ScopusReducedDatasetTIAUC1SIDScor$DT),as.character(DocumentCorrected$name),as.character(DocumentCorrected$Name.Corrected))
+
+# summarise the corrected information
+ScopusReducedDatasetTIAUC1SIDSDTcor <- ScopusReducedDatasetTIAUC1SIDScor %>%
+  select(PY,TI,AU,DES,IDS,DI,SO,C1S,Coder,DTCorrected)
+
+# rename DTCorrected column
+names(ScopusReducedDatasetTIAUC1SIDSDTcor)[names(ScopusReducedDatasetTIAUC1SIDSDTcor)=="DTCorrected"] <- "DT"
+
+rm(ScopusReducedDatasetTIAUC1SIDScor)
 rm(ScopusReducedDatasetTIAUC1Scor)
 rm(ScopusReducedDatasetTIAUcorExtended)
 rm(ScopusReducedDatasetTIAUcor)
@@ -207,25 +226,9 @@ WebOfScienceReducedDatasetAUCor <- WebOfScienceReducedDatasetExtended %>%
 DupeWebOfScience <- WebOfScienceReducedDatasetAUCor %>%
   find_duplicates(PY,TI)
 
-
-####################################
-##### document type correction ##### 
-####################################
-
-# As Web of Science and Scopus don't have the same way to define the name of the document types, some corrections are needed
-# It has been chosen to use the Document Type from Scopus to correct the one on Web Of Science
-
-WebOfScienceReducedDatasetAUCor$DT <- gsub("ARTICLE; BOOK CHAPTER","BOOK CHAPTER",WebOfScienceReducedDatasetAUCor$DT)
-WebOfScienceReducedDatasetAUCor$DT <- gsub("ARTICLE; PROCEEDINGS PAPER","CONFERENCE PAPER",WebOfScienceReducedDatasetAUCor$DT)
-WebOfScienceReducedDatasetAUCor$DT <- gsub("PROCEEDINGS PAPER","CONFERENCE PAPER",WebOfScienceReducedDatasetAUCor$DT)
-WebOfScienceReducedDatasetAUCor$DT <- gsub("PROCEEDINGS","CONFERENCE PAPER",WebOfScienceReducedDatasetAUCor$DT)
-WebOfScienceReducedDatasetAUCor$DT <- gsub("EDITORIAL MATERIAL; BOOK CHAPTER","BOOK CHAPTER",WebOfScienceReducedDatasetAUCor$DT)
-
-
 #############################
 ##### source correction ##### 
 #############################
-
 
 # Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
 # The Source generated in Scopus is use to correct the one in WoS
@@ -240,18 +243,31 @@ WebOfScienceReducedDatasetAUDTSOCor <- WebOfScienceReducedDatasetAUCor %>%
 # rename SOCorrected column
 names(WebOfScienceReducedDatasetAUDTSOCor)[names(WebOfScienceReducedDatasetAUDTSOCor)=="SOCorrected"] <- "SO"
 
+####################################
+##### document type correction ##### 
+####################################
+
+# load correction list
+WebOfScienceReducedDatasetAUDTSOCor$DTCorrected <- gsr(as.character(WebOfScienceReducedDatasetAUDTSOCor$DT),as.character(DocumentCorrected$name),as.character(DocumentCorrected$Name.Corrected))
+
+# summarise the corrected information
+WebOfScienceReducedDatasetAUDTSODTcor <- WebOfScienceReducedDatasetAUDTSOCor %>%
+  select(PY,TI,AU,DEW,IDW,C1W,DI,SO,Coder,DTCorrected)
+
+# rename DTCorrected column
+names(WebOfScienceReducedDatasetAUDTSODTcor)[names(WebOfScienceReducedDatasetAUDTSODTcor)=="DTCorrected"] <- "DT"
+
+
+rm(WebOfScienceReducedDatasetAUDTSOCor)
 rm(WebOfScienceReducedDatasetAUCor)
 rm(WebOfScienceReducedDatasetExtended)
-
-
 
 ########################################################
 #####        To combine both datasets into one    #####
 ########################################################
 
-#####_________first Step_________##########
 # Combining the two dataset
-DatabaseOutputTemp <- bind_rows(ScopusReducedDatasetTIAUC1SIDScor, WebOfScienceReducedDatasetAUDTSOCor)
+DatabaseOutputTemp <- bind_rows(ScopusReducedDatasetTIAUC1SIDSDTcor, WebOfScienceReducedDatasetAUDTSODTcor)
 DatabaseOutputTemp <- as.data.frame(DatabaseOutputTemp)
 
 
@@ -273,6 +289,25 @@ CombinedDataset <- DatabaseOutputTemp %>%
                                 DT = paste(unique(DT), collapse=";"),
                                 SO = paste(unique(SO), collapse=";")
                                 ) %>% ungroup()
+
+####################################
+##### document type correction ##### 
+####################################
+# Some references duplicated in WOS and Scopus have different DT.
+# The choice made here is to keep the DT from scopus and remove the one from WOS
+# split column DT in to DTScopus and DTWoS based on ";"
+CombinedDatasetExtended <- CombinedDataset %>%
+  separate(DT, c("DTScopus", "DTWoS"), ";")
+
+# summarise the corrected information
+CombinedDataset <- CombinedDatasetExtended %>%
+  select(PY,TI,AU,DEW,IDW,DES,IDS,DTScopus,C1W,C1S,SO,Coder,DOI)
+
+# rename DTCorrected column
+names(CombinedDataset)[names(CombinedDataset)=="DTScopus"] <- "DT"
+
+
+rm(CombinedDatasetExtended)
 
 
 #######################################################################
@@ -541,29 +576,29 @@ write.table(MergerOriginalData, file = paste0(Results.dir,"Result_Merger_Dataset
 # #############################################################
 # # This section is to generate a table with general information about the dataset
 # 
-# #####______________Number of document______________##########
+ #####______________Number of document______________##########
 # # From Scopus
 # NDScop <- data.frame(nrow(Scopus))
 # names(NDScop) <- c("Number")
 # GF <- NDScop
 # rownames(GF)[rownames(GF)=="1"] <- "Number of document from Scopus"
-# 
+ 
 # #from WoS
 # NDWoS <- data.frame(nrow(WebofScience))
 # GF[2,1] <- NDWoS
 # rownames(GF)[rownames(GF)=="1"] <- "Number of document from Web of Science"
-# 
+ 
 # # From Merge before exclusion
 # ND <- data.frame(nrow(CombinedDataset))
 # GF[3,1] <- ND
 # rownames(GF)[rownames(GF)=="1"] <- "Total of document before exclusion"
-# 
+ 
 # # From Merge after exclusion
 # NDex <- data.frame(nrow(CombinedDataset3))
 # GF[4,1] <- NDex
-# 
-# rownames(GF)[rownames(GF)=="1"] <- "Total of document after exclusion"
-# 
+ 
+#rownames(GF)[rownames(GF)=="1"] <- "Total of document after exclusion"
+ 
 # #####______________Keywords and Journal______________##########
 # #after exclusion
 # #Number of different Journals (NDS) 
