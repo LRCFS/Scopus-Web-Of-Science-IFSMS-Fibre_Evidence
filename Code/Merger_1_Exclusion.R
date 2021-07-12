@@ -25,11 +25,8 @@ extension <- ".bib"
 Wos <- Sys.glob(paste(Wos.path, "*", extension, sep = ""))
 Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
 
-# specify the type of file we want to import (.csv)
-files <- list.files(path = "C:/Users/2395804/OneDrive - University of Dundee/Desktop/Scopus Search Project/InputData/IFSMS/",pattern="*.csv") ; files
-
-# create a list of dataframe where each dataframe correspond to a single .csv file
-data_list <- lapply(files, read.csv, header = TRUE,  sep = ",", encoding = "UTF-8")
+# specify the type of file we want to import (.csv) for IFSMS
+files <- list.files(path = ifsms.path,pattern="*.csv") ; files
 
 #############################################################
 #####                    Data loading                   #####
@@ -41,15 +38,16 @@ data_list <- lapply(files, read.csv, header = TRUE,  sep = ",", encoding = "UTF-
 
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
-IFSMS <- convert2df(ifsms,dbsource = "dimensions",format = "csv")
+IFSMS <- do.call("rbind", lapply(paste0("C:/Users/2395804/PhD R code/Scopus-Web-Of-Science-Merger_Thesis_VG/InputData/IFSMS/",
+                                            files), read.csv, header = TRUE, stringsAsFactors = FALSE))
 
 # Removing every year after 2019
 Scopus <- filter(Scopus, PY<2020)
 WebofScience <- filter(WebofScience, PY<2020)
 
-#############################################################
-#####     Comparison and merging of the two datasets    #####
-#############################################################
+##############################################
+#####     Merging of the two datasets    #####
+##############################################
 #####    Each dataset are imported separately using common column labels.
 #####    To keep the original data, the columns are remained ending with "S" for Scopus
 #####                                                                and "W" for Web of Science
@@ -162,6 +160,23 @@ ScopusReducedDatasetTIAUC1SIDScor <- ScopusReducedDatasetTIAUC1Scor %>%
 
 ScopusReducedDatasetTIAUC1SIDScor$IDS[ScopusReducedDatasetTIAUC1SIDScor$IDS==""] <- NA
 
+#############################
+##### source correction ##### 
+#############################
+
+# Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
+# The Source generated in Scopus is use to correct the one in WoS
+# The \& symbol present in the source from Web of science must be corrected as well
+CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", header = TRUE)
+CorrectionSource <- as.data.frame(CorrectionSource)
+
+ScopusReducedDatasetTIAUC1SIDScor$SOCorrected <- gsr(as.character(ScopusReducedDatasetTIAUC1SIDScor$SO), as.character(CorrectionSource$raw.x), as.character(CorrectionSource$raw.y))
+ScopusReducedDatasetTIAUC1SIDSSOCor <- ScopusReducedDatasetTIAUC1SIDScor %>%
+  select(PY,TI,AU,DES,IDS,C1S,DI,SOCorrected,DT,Coder)
+
+# rename SOCorrected column
+names(ScopusReducedDatasetTIAUC1SIDSSOCor)[names(ScopusReducedDatasetTIAUC1SIDSSOCor)=="SOCorrected"] <- "SO"
+
 ####################################
 ##### document type correction ##### 
 ####################################
@@ -169,15 +184,16 @@ ScopusReducedDatasetTIAUC1SIDScor$IDS[ScopusReducedDatasetTIAUC1SIDScor$IDS==""]
 # load correction list
 DocumentCorrected <- read.csv("CorrectionLists/DocumentCorrection.txt", sep = "\t", header = TRUE)
 DocumentCorrected <- as.data.frame(DocumentCorrected)
-ScopusReducedDatasetTIAUC1SIDScor$DTCorrected <- gsr(as.character(ScopusReducedDatasetTIAUC1SIDScor$DT),as.character(DocumentCorrected$name),as.character(DocumentCorrected$Name.Corrected))
+ScopusReducedDatasetTIAUC1SIDSSOCor$DTCorrected <- gsr(as.character(ScopusReducedDatasetTIAUC1SIDSSOCor$DT),as.character(DocumentCorrected$name),as.character(DocumentCorrected$Name.Corrected))
 
 # summarise the corrected information
-ScopusReducedDatasetTIAUC1SIDSDTcor <- ScopusReducedDatasetTIAUC1SIDScor %>%
+ScopusReducedDatasetTIAUC1SIDSSODTcor <- ScopusReducedDatasetTIAUC1SIDSSOCor %>%
   select(PY,TI,AU,DES,IDS,DI,SO,C1S,Coder,DTCorrected)
 
 # rename DTCorrected column
-names(ScopusReducedDatasetTIAUC1SIDSDTcor)[names(ScopusReducedDatasetTIAUC1SIDSDTcor)=="DTCorrected"] <- "DT"
+names(ScopusReducedDatasetTIAUC1SIDSSODTcor)[names(ScopusReducedDatasetTIAUC1SIDSSODTcor)=="DTCorrected"] <- "DT"
 
+rm(ScopusReducedDatasetTIAUC1SIDSSOCor)
 rm(ScopusReducedDatasetTIAUC1SIDScor)
 rm(ScopusReducedDatasetTIAUC1Scor)
 rm(ScopusReducedDatasetTIAUcorExtended)
@@ -241,41 +257,56 @@ DupeWebOfScience <- WebOfScienceReducedDatasetAUCor %>%
 # Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
 # The Source generated in Scopus is use to correct the one in WoS
 # The \& symbol present in the source from Web of science must be corrected as well
-CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", header = TRUE)
-CorrectionSource <- as.data.frame(CorrectionSource)
+#CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", header = TRUE)
+#CorrectionSource <- as.data.frame(CorrectionSource)
 
 WebOfScienceReducedDatasetAUCor$SOCorrected <- gsr(as.character(WebOfScienceReducedDatasetAUCor$SO), as.character(CorrectionSource$raw.x), as.character(CorrectionSource$raw.y))
-WebOfScienceReducedDatasetAUDTSOCor <- WebOfScienceReducedDatasetAUCor %>%
+WebOfScienceReducedDatasetAUSOCor <- WebOfScienceReducedDatasetAUCor %>%
   select(PY,AU,DEW,IDW,C1W,DI,SOCorrected,DT,TI,Coder)
 
 # rename SOCorrected column
-names(WebOfScienceReducedDatasetAUDTSOCor)[names(WebOfScienceReducedDatasetAUDTSOCor)=="SOCorrected"] <- "SO"
+names(WebOfScienceReducedDatasetAUSOCor)[names(WebOfScienceReducedDatasetAUSOCor)=="SOCorrected"] <- "SO"
 
 ####################################
 ##### document type correction ##### 
 ####################################
 
 # load correction list
-WebOfScienceReducedDatasetAUDTSOCor$DTCorrected <- gsr(as.character(WebOfScienceReducedDatasetAUDTSOCor$DT),as.character(DocumentCorrected$name),as.character(DocumentCorrected$Name.Corrected))
+WebOfScienceReducedDatasetAUSOCor$DTCorrected <- gsr(as.character(WebOfScienceReducedDatasetAUSOCor$DT),as.character(DocumentCorrected$name),as.character(DocumentCorrected$Name.Corrected))
 
 # summarise the corrected information
-WebOfScienceReducedDatasetAUDTSODTcor <- WebOfScienceReducedDatasetAUDTSOCor %>%
+WebOfScienceReducedDatasetAUSODTcor <- WebOfScienceReducedDatasetAUSOCor %>%
   select(PY,TI,AU,DEW,IDW,C1W,DI,SO,Coder,DTCorrected)
 
 # rename DTCorrected column
-names(WebOfScienceReducedDatasetAUDTSODTcor)[names(WebOfScienceReducedDatasetAUDTSODTcor)=="DTCorrected"] <- "DT"
+names(WebOfScienceReducedDatasetAUSODTcor)[names(WebOfScienceReducedDatasetAUSODTcor)=="DTCorrected"] <- "DT"
 
 
-rm(WebOfScienceReducedDatasetAUDTSOCor)
+rm(WebOfScienceReducedDatasetAUSOCor)
 rm(WebOfScienceReducedDatasetAUCor)
 rm(WebOfScienceReducedDatasetExtended)
 
-########################################################
-#####        To combine both datasets into one    #####
-########################################################
+
+###############################
+#####       IFSMS         #####
+###############################
+# Rename some of the columns to remove special characters or encoding
+colnames(IFSMS)[colnames(IFSMS)=="Author.s..ID"] <- "AuthorID"
+
+# select the column of interest
+IFSMS <- IFSMS %>%
+  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
+
+# Duplicate in Interpol report : http://www.textileworld.com is listed twice in the IFSMS 2013 report
+IFSMS <- IFSMS[-268,] #to remove one of the duplicate
+
+
+#################################################################
+#####        To combine Scopus and WOS datasets into one    #####
+#################################################################
 
 # Combining the two dataset
-DatabaseOutputTemp <- bind_rows(ScopusReducedDatasetTIAUC1SIDSDTcor, WebOfScienceReducedDatasetAUDTSODTcor)
+DatabaseOutputTemp <- bind_rows(ScopusReducedDatasetTIAUC1SIDSSODTcor, WebOfScienceReducedDatasetAUSODTcor)
 DatabaseOutputTemp <- as.data.frame(DatabaseOutputTemp)
 
 
