@@ -14,6 +14,7 @@
 
 Wos.path = 'InputData/Wos/Jul2021/'    #Web of Science folder
 Sco.path = 'InputData/Scopus/Jul2021/' #Scopus folder
+ifsms.path = 'InputData/IFSMS/' #IFSMS folder
 
 #############################################################
 #####         Data loading Individual citation list     #####
@@ -23,6 +24,12 @@ Sco.path = 'InputData/Scopus/Jul2021/' #Scopus folder
 extension <- ".bib"
 Wos <- Sys.glob(paste(Wos.path, "*", extension, sep = ""))
 Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
+
+# specify the type of file we want to import (.csv)
+files <- list.files(path = "C:/Users/2395804/OneDrive - University of Dundee/Desktop/Scopus Search Project/InputData/IFSMS/",pattern="*.csv") ; files
+
+# create a list of dataframe where each dataframe correspond to a single .csv file
+data_list <- lapply(files, read.csv, header = TRUE,  sep = ",", encoding = "UTF-8")
 
 #############################################################
 #####                    Data loading                   #####
@@ -34,6 +41,7 @@ Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
 
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
+IFSMS <- convert2df(ifsms,dbsource = "dimensions",format = "csv")
 
 # Removing every year after 2019
 Scopus <- filter(Scopus, PY<2020)
@@ -308,8 +316,6 @@ names(CombinedDataset)[names(CombinedDataset)=="DTScopus"] <- "DT"
 
 
 rm(CombinedDatasetExtended)
-
-
 #######################################################################
 #####                       EXCLUSION LIST                        #####
 #######################################################################
