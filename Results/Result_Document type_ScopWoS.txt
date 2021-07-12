@@ -50,3 +50,21 @@ NA	NA
 "CONFERENCE MATERIAL"	21
 "NOTE"	3
 "REVIEW"	12
+NA	NA
+""	13
+"Article"	185
+"Book"	19
+"Catalogue"	1
+"Communication"	3
+"Conference Material"	8
+"Journal"	1
+"Letter"	1
+"Magazine"	5
+"Manual"	3
+"Note"	1
+"Poster"	1
+"Proceedings papers"	82
+"Report"	9
+"Review"	8
+"Thesis"	3
+"Webpage"	74
