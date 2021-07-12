@@ -300,6 +300,21 @@ IFSMS <- IFSMS %>%
 # Duplicate in Interpol report : http://www.textileworld.com is listed twice in the IFSMS 2013 report
 IFSMS <- IFSMS[-268,] #to remove one of the duplicate
 
+####################################
+##### document type correction ##### 
+####################################
+
+# load correction list
+DocumentCorrectedIFSMS <- read.csv("CorrectionLists/DocumentCorrectionIFSMS.txt", sep = "\t", header = TRUE)
+DocumentCorrectedIFSMS <- as.data.frame(DocumentCorrectedIFSMS)
+IFSMS$DTCorrected <- gsr(as.character(IFSMS$Document.Type),as.character(DocumentCorrectedIFSMS$name),as.character(DocumentCorrectedIFSMS$Name.Corrected))
+
+# summarise the corrected information
+IFSMS <- IFSMS %>%
+  select(Authors, Title, Year, Source.title, DOI, DTCorrected, Link, Coder)
+
+# rename DTCorrected column
+names(IFSMS)[names(IFSMS)=="DTCorrected"] <- "Document.Type"
 
 #################################################################
 #####        To combine Scopus and WOS datasets into one    #####
