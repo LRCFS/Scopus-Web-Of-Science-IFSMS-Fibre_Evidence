@@ -1,0 +1,7 @@
+name	Name.Corrected
+Article in Press	Article
+Article series	Article
+Book Chapter	Book
+Website	Webpage
+Proceedings	Proceedings papers
+Conference Paper	Conference Material

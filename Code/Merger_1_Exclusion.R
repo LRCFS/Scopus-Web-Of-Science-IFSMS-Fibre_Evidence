@@ -12,8 +12,9 @@
 #####                  Global variable                  #####
 #############################################################
 
-Wos.path = 'InputData/Wos/Dec2020/'    #Web of Science folder
-Sco.path = 'InputData/Scopus/Dec2020/' #Scopus folder
+Wos.path = 'InputData/Wos/Jul2021/'    #Web of Science folder
+Sco.path = 'InputData/Scopus/Jul2021/' #Scopus folder
+ifsms.path = 'InputData/IFSMS/' #IFSMS folder
 
 #############################################################
 #####         Data loading Individual citation list     #####
@@ -23,6 +24,9 @@ Sco.path = 'InputData/Scopus/Dec2020/' #Scopus folder
 extension <- ".bib"
 Wos <- Sys.glob(paste(Wos.path, "*", extension, sep = ""))
 Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
+
+# specify the type of file we want to import (.csv) for IFSMS
+files <- list.files(path = ifsms.path,pattern="*.csv") ; files
 
 #############################################################
 #####                    Data loading                   #####
@@ -34,14 +38,16 @@ Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
 
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
+IFSMS <- do.call("rbind", lapply(paste0("C:/Users/2395804/PhD R code/Scopus-Web-Of-Science-Merger_Thesis_VG/InputData/IFSMS/",
+                                            files), read.csv, header = TRUE, stringsAsFactors = FALSE))
 
 # Removing every year after 2019
 Scopus <- filter(Scopus, PY<2020)
 WebofScience <- filter(WebofScience, PY<2020)
 
-#############################################################
-#####     Comparison and merging of the two datasets    #####
-#############################################################
+##############################################
+#####     Merging of the two datasets    #####
+##############################################
 #####    Each dataset are imported separately using common column labels.
 #####    To keep the original data, the columns are remained ending with "S" for Scopus
 #####                                                                and "W" for Web of Science
@@ -112,6 +118,7 @@ ScopusReducedDatasetTIAUcor <- ScopusReducedDatasetTIcorExtended %>%
   summarise(AU = paste(AuthorsCor, collapse = ";")) %>%
   ungroup()
 
+
 ##################################
 ##### Affiliation correction ##### 
 ##################################
@@ -141,17 +148,53 @@ ScopusReducedDatasetTIAUC1Scor$C1S[ScopusReducedDatasetTIAUC1Scor$C1S==""] <- NA
 
 # correcting identical records with different keywords lists (either missing or complementary); removing duplicates
 # list may not be the same length as the original one
-# 
+
 ScopusReducedDatasetTIAUC1SIDScor <- ScopusReducedDatasetTIAUC1Scor %>%
   mutate(IDS = strsplit(as.character(IDS), ";", ))%>%
   unnest(IDS)%>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(PY,TI,AU,DES,C1S,DI,SO,DT,Coder)%>%
-  summarise(IDS = paste(IDS[!is.na(IDS)], collapse= ";"))
+  group_by(PY,TI,AU,DES,DI,SO,DT,C1S,Coder)%>%
+  summarise(IDS = paste(IDS[!is.na(IDS)], collapse= ";"))%>%
+  ungroup()
 
 ScopusReducedDatasetTIAUC1SIDScor$IDS[ScopusReducedDatasetTIAUC1SIDScor$IDS==""] <- NA
 
+#############################
+##### source correction ##### 
+#############################
+
+# Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
+# The Source generated in Scopus is use to correct the one in WoS
+# The \& symbol present in the source from Web of science must be corrected as well
+CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", header = TRUE)
+CorrectionSource <- as.data.frame(CorrectionSource)
+
+ScopusReducedDatasetTIAUC1SIDScor$SOCorrected <- gsr(as.character(ScopusReducedDatasetTIAUC1SIDScor$SO), as.character(CorrectionSource$raw.x), as.character(CorrectionSource$raw.y))
+ScopusReducedDatasetTIAUC1SIDSSOCor <- ScopusReducedDatasetTIAUC1SIDScor %>%
+  select(PY,TI,AU,DES,IDS,C1S,DI,SOCorrected,DT,Coder)
+
+# rename SOCorrected column
+names(ScopusReducedDatasetTIAUC1SIDSSOCor)[names(ScopusReducedDatasetTIAUC1SIDSSOCor)=="SOCorrected"] <- "SO"
+
+####################################
+##### document type correction ##### 
+####################################
+
+# load correction list
+DocumentCorrected <- read.csv("CorrectionLists/DocumentCorrection.txt", sep = "\t", header = TRUE)
+DocumentCorrected <- as.data.frame(DocumentCorrected)
+ScopusReducedDatasetTIAUC1SIDSSOCor$DTCorrected <- gsr(as.character(ScopusReducedDatasetTIAUC1SIDSSOCor$DT),as.character(DocumentCorrected$name),as.character(DocumentCorrected$Name.Corrected))
+
+# summarise the corrected information
+ScopusReducedDatasetTIAUC1SIDSSODTcor <- ScopusReducedDatasetTIAUC1SIDSSOCor %>%
+  select(PY,TI,AU,DES,IDS,DI,SO,C1S,Coder,DTCorrected)
+
+# rename DTCorrected column
+names(ScopusReducedDatasetTIAUC1SIDSSODTcor)[names(ScopusReducedDatasetTIAUC1SIDSSODTcor)=="DTCorrected"] <- "DT"
+
+rm(ScopusReducedDatasetTIAUC1SIDSSOCor)
+rm(ScopusReducedDatasetTIAUC1SIDScor)
 rm(ScopusReducedDatasetTIAUC1Scor)
 rm(ScopusReducedDatasetTIAUcorExtended)
 rm(ScopusReducedDatasetTIAUcor)
@@ -207,51 +250,78 @@ WebOfScienceReducedDatasetAUCor <- WebOfScienceReducedDatasetExtended %>%
 DupeWebOfScience <- WebOfScienceReducedDatasetAUCor %>%
   find_duplicates(PY,TI)
 
+#############################
+##### source correction ##### 
+#############################
+
+# Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
+# The Source generated in Scopus is use to correct the one in WoS
+# The \& symbol present in the source from Web of science must be corrected as well
+#CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", header = TRUE)
+#CorrectionSource <- as.data.frame(CorrectionSource)
+
+WebOfScienceReducedDatasetAUCor$SOCorrected <- gsr(as.character(WebOfScienceReducedDatasetAUCor$SO), as.character(CorrectionSource$raw.x), as.character(CorrectionSource$raw.y))
+WebOfScienceReducedDatasetAUSOCor <- WebOfScienceReducedDatasetAUCor %>%
+  select(PY,AU,DEW,IDW,C1W,DI,SOCorrected,DT,TI,Coder)
+
+# rename SOCorrected column
+names(WebOfScienceReducedDatasetAUSOCor)[names(WebOfScienceReducedDatasetAUSOCor)=="SOCorrected"] <- "SO"
 
 ####################################
 ##### document type correction ##### 
 ####################################
 
-# As Web of Science and Scopus don't have the same way to define the name of the document types, some corrections are needed
-# It has been chosen to use the Document Type from Scopus to correct the one on Web Of Science
+# load correction list
+WebOfScienceReducedDatasetAUSOCor$DTCorrected <- gsr(as.character(WebOfScienceReducedDatasetAUSOCor$DT),as.character(DocumentCorrected$name),as.character(DocumentCorrected$Name.Corrected))
 
-WebOfScienceReducedDatasetAUCor$DT <- gsub("ARTICLE; BOOK CHAPTER","BOOK CHAPTER",WebOfScienceReducedDatasetAUCor$DT)
-WebOfScienceReducedDatasetAUCor$DT <- gsub("ARTICLE; PROCEEDINGS PAPER","CONFERENCE PAPER",WebOfScienceReducedDatasetAUCor$DT)
-WebOfScienceReducedDatasetAUCor$DT <- gsub("PROCEEDINGS PAPER","CONFERENCE PAPER",WebOfScienceReducedDatasetAUCor$DT)
-WebOfScienceReducedDatasetAUCor$DT <- gsub("PROCEEDINGS","CONFERENCE PAPER",WebOfScienceReducedDatasetAUCor$DT)
-WebOfScienceReducedDatasetAUCor$DT <- gsub("EDITORIAL MATERIAL; BOOK CHAPTER","BOOK CHAPTER",WebOfScienceReducedDatasetAUCor$DT)
+# summarise the corrected information
+WebOfScienceReducedDatasetAUSODTcor <- WebOfScienceReducedDatasetAUSOCor %>%
+  select(PY,TI,AU,DEW,IDW,C1W,DI,SO,Coder,DTCorrected)
 
-
-#############################
-##### source correction ##### 
-#############################
+# rename DTCorrected column
+names(WebOfScienceReducedDatasetAUSODTcor)[names(WebOfScienceReducedDatasetAUSODTcor)=="DTCorrected"] <- "DT"
 
 
-# Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
-# The Source generated in Scopus is use to correct the one in WoS
-# The \& symbol present in the source from Web of science must be corrected as well
-CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", header = TRUE)
-CorrectionSource <- as.data.frame(CorrectionSource)
-
-WebOfScienceReducedDatasetAUCor$SOCorrected <- gsr(as.character(WebOfScienceReducedDatasetAUCor$SO), as.character(CorrectionSource$raw.x), as.character(CorrectionSource$raw.y))
-WebOfScienceReducedDatasetAUDTSOCor <- WebOfScienceReducedDatasetAUCor %>%
-  select(PY,AU,DEW,IDW,C1W,DI,SOCorrected,DT,TI,Coder)
-
-# rename SOCorrected column
-names(WebOfScienceReducedDatasetAUDTSOCor)[names(WebOfScienceReducedDatasetAUDTSOCor)=="SOCorrected"] <- "SO"
-
+rm(WebOfScienceReducedDatasetAUSOCor)
 rm(WebOfScienceReducedDatasetAUCor)
 rm(WebOfScienceReducedDatasetExtended)
 
 
+###############################
+#####       IFSMS         #####
+###############################
+# Rename some of the columns to remove special characters or encoding
+colnames(IFSMS)[colnames(IFSMS)=="Author.s..ID"] <- "AuthorID"
 
-########################################################
-#####        To combine both datasets into one    #####
-########################################################
+# select the column of interest
+IFSMS <- IFSMS %>%
+  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
 
-#####_________first Step_________##########
+# Duplicate in Interpol report : http://www.textileworld.com is listed twice in the IFSMS 2013 report
+IFSMS <- IFSMS[-268,] #to remove one of the duplicate
+
+####################################
+##### document type correction ##### 
+####################################
+
+# load correction list
+DocumentCorrectedIFSMS <- read.csv("CorrectionLists/DocumentCorrectionIFSMS.txt", sep = "\t", header = TRUE)
+DocumentCorrectedIFSMS <- as.data.frame(DocumentCorrectedIFSMS)
+IFSMS$DTCorrected <- gsr(as.character(IFSMS$Document.Type),as.character(DocumentCorrectedIFSMS$name),as.character(DocumentCorrectedIFSMS$Name.Corrected))
+
+# summarise the corrected information
+IFSMS <- IFSMS %>%
+  select(Authors, Title, Year, Source.title, DOI, DTCorrected, Link, Coder)
+
+# rename DTCorrected column
+names(IFSMS)[names(IFSMS)=="DTCorrected"] <- "Document.Type"
+
+#################################################################
+#####        To combine Scopus and WOS datasets into one    #####
+#################################################################
+
 # Combining the two dataset
-DatabaseOutputTemp <- bind_rows(ScopusReducedDatasetTIAUC1SIDScor, WebOfScienceReducedDatasetAUDTSOCor)
+DatabaseOutputTemp <- bind_rows(ScopusReducedDatasetTIAUC1SIDSSODTcor, WebOfScienceReducedDatasetAUSODTcor)
 DatabaseOutputTemp <- as.data.frame(DatabaseOutputTemp)
 
 
@@ -274,7 +344,24 @@ CombinedDataset <- DatabaseOutputTemp %>%
                                 SO = paste(unique(SO), collapse=";")
                                 ) %>% ungroup()
 
+####################################
+##### document type correction ##### 
+####################################
+# Some references duplicated in WOS and Scopus have different DT.
+# The choice made here is to keep the DT from scopus and remove the one from WOS
+# split column DT in to DTScopus and DTWoS based on ";"
+CombinedDatasetExtended <- CombinedDataset %>%
+  separate(DT, c("DTScopus", "DTWoS"), ";")
 
+# summarise the corrected information
+CombinedDataset <- CombinedDatasetExtended %>%
+  select(PY,TI,AU,DEW,IDW,DES,IDS,DTScopus,C1W,C1S,SO,Coder,DOI)
+
+# rename DTCorrected column
+names(CombinedDataset)[names(CombinedDataset)=="DTScopus"] <- "DT"
+
+
+rm(CombinedDatasetExtended)
 #######################################################################
 #####                       EXCLUSION LIST                        #####
 #######################################################################
@@ -523,47 +610,41 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
+write.table(WebOfScienceReducedDatasetAUSODTcor, file = paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep = "\t", row.names = F)
+write.table(ScopusReducedDatasetTIAUC1SIDSSODTcor, file = paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep = "\t", row.names = F)
 write.table(MergerOriginalData, file = paste0(Results.dir,"Result_Merger_Dataset.txt"), sep = "\t", row.names = F)
+write.table(CombinedDataset, file = paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep = "\t", row.names = F)
+write.table(IFSMS, file = paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep = "\t", row.names = F)
 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
+ 
 # #############################################################
 # #####                 General information               #####
 # #############################################################
 # # This section is to generate a table with general information about the dataset
 # 
-# #####______________Number of document______________##########
+ #####______________Number of document______________##########
 # # From Scopus
 # NDScop <- data.frame(nrow(Scopus))
 # names(NDScop) <- c("Number")
 # GF <- NDScop
 # rownames(GF)[rownames(GF)=="1"] <- "Number of document from Scopus"
-# 
+ 
 # #from WoS
 # NDWoS <- data.frame(nrow(WebofScience))
 # GF[2,1] <- NDWoS
 # rownames(GF)[rownames(GF)=="1"] <- "Number of document from Web of Science"
-# 
+ 
 # # From Merge before exclusion
 # ND <- data.frame(nrow(CombinedDataset))
 # GF[3,1] <- ND
 # rownames(GF)[rownames(GF)=="1"] <- "Total of document before exclusion"
-# 
+ 
 # # From Merge after exclusion
 # NDex <- data.frame(nrow(CombinedDataset3))
 # GF[4,1] <- NDex
-# 
-# rownames(GF)[rownames(GF)=="1"] <- "Total of document after exclusion"
-# 
+ 
+#rownames(GF)[rownames(GF)=="1"] <- "Total of document after exclusion"
+ 
 # #####______________Keywords and Journal______________##########
 # #after exclusion
 # #Number of different Journals (NDS) 
@@ -657,173 +738,3 @@ write.table(MergerOriginalData, file = paste0(Results.dir,"Result_Merger_Dataset
 # rownames(Table)[rownames(Table)=="3"] <- "Shared by both databases"
 # 
 # write.table(Table, file = "Result_Comparison Scop-WoS_2021.csv", quote = F, sep = ",", row.names = F)
-# 
-# 
-# ##################################################################################
-# #####                 Scopus/Web of Science/ IFSMS report                    #####
-# ##################################################################################
-# 
-# #####______________Document exclusive to IFSMS ______________##########
-# 
-# # read the export *.csv document from Interpol, separation ",", and place it in data.frame "InterpolFibre"
-# InterpolFibre2004 <- read.csv("IFSS2004-Fibres.csv", sep=",", header=TRUE)
-# InterpolFibre2007 <- read.csv("IFSS2007-Fibres.csv", sep=",", header=TRUE)
-# InterpolFibre2010 <- read.csv("IFSS2010-Fibres.csv", sep=",", header=TRUE)
-# InterpolFibre2013 <- read.csv("IFSS2013-Fibres.csv", sep=",", header=TRUE)
-# InterpolFibre2016 <- read.csv("IFSS2016-Fibres.csv", sep=",", header=TRUE)
-# InterpolFibre2019 <- read.csv("IFSS2019-Fibres.csv", sep=",", header=TRUE) 
-# # Rename some of the columns to remove special characters or encoding
-# colnames(InterpolFibre2004)[colnames(InterpolFibre2004)=="Author.s..ID"] <- "AuthorID"
-# colnames(InterpolFibre2007)[colnames(InterpolFibre2007)=="Author.s..ID"] <- "AuthorID"
-# colnames(InterpolFibre2010)[colnames(InterpolFibre2010)=="Author.s..ID"] <- "AuthorID"
-# colnames(InterpolFibre2013)[colnames(InterpolFibre2013)=="Author.s..ID"] <- "AuthorID"
-# colnames(InterpolFibre2016)[colnames(InterpolFibre2016)=="Author.s..ID"] <- "AuthorID"
-# colnames(InterpolFibre2019)[colnames(InterpolFibre2019)=="Author.s..ID"] <- "AuthorID"
-# 
-# #Assign a Coder to each report 
-# InterpolFibre2004$Coder <- "2004 report"
-# InterpolFibre2007$Coder <- "2007 report"
-# InterpolFibre2010$Coder <- "2010 report"
-# InterpolFibre2013$Coder <- "2013 report"
-# InterpolFibre2016$Coder <- "2016 report"
-# InterpolFibre2019$Coder <- "2019 report"
-# 
-# InterpolFibre2004 <- InterpolFibre2004 %>%
-#   select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
-# InterpolFibre2007 <- InterpolFibre2007 %>%
-#   select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
-# InterpolFibre2010 <- InterpolFibre2010 %>%
-#   select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
-# InterpolFibre2013 <- InterpolFibre2013 %>%
-#   select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
-# InterpolFibre2016 <- InterpolFibre2016 %>%
-#   select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
-# InterpolFibre2019 <- InterpolFibre2019 %>%
-#   select(Authors, Title, Year, Source.title, DOI, Document.Type, Link,Coder)
-# 
-# InterpolFibre <- rbind(InterpolFibre2004,InterpolFibre2007, InterpolFibre2010, InterpolFibre2013, InterpolFibre2016, InterpolFibre2019)
-# 
-# # Duplicate in Interpol report : http://www.textileworld.com is listed twice in the IFSMS 2013 report
-# InterpolFibre <- InterpolFibre[-268,] #to remove one of the duplicate
-# 
-# # Data from ScopWos and WoS : CombinedDataset3
-# MergeScopWos <- CombinedDataset3 %>%
-#   select(AU, TI, PY, SO, DT, C1, Coder)
-# 
-# # Label each row with the database it came from 
-# MergeScopWos$Coder2 <- "ScopWos"
-# MergeScopWos$Coder <- "ScopWos"
-# InterpolFibre$Coder2 <- "Interpol"
-# InterpolFibre$Title <- toupper(InterpolFibre$Title)
-# 
-# # 1) Creating a list or document present in Interpol but not in ScopWos
-# # Creating a list from ScopWos Title
-# ScopWosTitleList <- MergeScopWos %>%
-#   select(TI)
-# 
-# # List of records from Interpol that are in the ScopWos database (Title based)
-# InterpolNotExclusive <- subset(InterpolFibre,Title %in% ScopWosTitleList$TI)
-# 
-# # List of records from Interpol that are not in the ScopWos database (Title based)
-# InterpolExclusive <- setdiff(InterpolFibre,InterpolNotExclusive)
-# 
-# 
-# # 2) Calculating the % of record present in Interpol but not in ScopWos
-# # Total number of record in the excluded list
-# NumberofexcludedDocument <- as.numeric(count(InterpolExclusive)) # same thing as X above, just gave it another name
-# 
-# # Number Total of record on Interpol
-# TotalInterpol <- as.numeric(count(InterpolFibre)) # same thing as Z above, just gave it another name
-# 
-# # % of record from Interpol present in ScopWos
-# NumberofexcludedDocument/TotalInterpol*100 
-# 
-# # In InterpolNotExclusive, how many are exclusive to WoS ?
-# # Creating a list from IFSMS Title
-# IFSMSTitleList <- InterpolNotExclusive %>%
-#   select(Title)
-# # List of records from InterpolNotExclusive that are in the WoSexclusive (Title based)
-# TEST <- subset(WoSexclusive,TI %in% IFSMSTitleList$Title)
-# 
-# # List of records from InterpolNotExclusive that are in the Scopusexclusive (Title based)
-# TEST2 <- subset(Scopusexclusive,TI %in% IFSMSTitleList$Title)
-# 
-# # List of records from InterpolNotExclusive that are in the Scopusexclusive (Title based)
-# TEST3 <- subset(ScopWosnotexclusive,TI %in% IFSMSTitleList$Title)
-# 
-# #####______________Graph______________##########
-# # to not overwrite data
-# ScopusCorrected <- ScopusReducedDatasetCorrected
-# WoSCorrected <- WebOfScienceReducedDatasetCorrected
-# WoSCorrected <- subset(WoSCorrected, !PY ==2020)
-# IFSMS <- InterpolFibre %>%
-#   select(Year,Title,Document.Type, Coder2)
-# IFSMS <- subset(IFSMS, !Year ==2020)
-# colnames(IFSMS)[4] <- "Coder"
-# 
-# # create a new data.frame of the number of document published each year
-# documentScopus <- ScopusCorrected %>%
-#   select(PY,TI,DT, Coder)
-# documentWoS <- WoSCorrected %>%
-#   select(PY,TI,DT, Coder)
-# documentIFSMS <- IFSMS %>%
-#   select(Year,Title,Document.Type, Coder)
-# 
-# # Change the column name
-# names(documentIFSMS) <- c("PY", "TI", "DT")
-# 
-# #Count to number of time the same year is repeated in the "document$Year" and save in a data.frame "Year" 
-# yearScopus <- data.frame(table(documentScopus$PY));yearScopus
-# yearScopus$Var1 <- as.numeric(as.character(yearScopus$Var1))
-# names(yearScopus) <- c("Year","Total")
-# yearScopus$Coder <- "Scopus"
-# 
-# yearWoS <- data.frame(table(documentWoS$PY));yearWoS
-# yearWoS$Var1 <- as.numeric(as.character(yearWoS$Var1))
-# names(yearWoS) <- c("Year","Total")
-# yearWoS$Coder <- "WebOfScience"
-# 
-# 
-# yearIFSMS <- data.frame(table(documentIFSMS$PY));yearIFSMS
-# yearIFSMS$Var1 <- as.numeric(as.character(yearIFSMS$Var1))
-# names(yearIFSMS) <- c("Year","Total")
-# yearIFSMS$Coder <- "IFSMS"
-# 
-# yearScopus <- yearScopus %>%
-#   complete(Year = 1956:2019,
-#            fill = list(Total = 0, Coder = "Scopus")) %>%
-#   as.data.frame()
-# yearScopus
-# 
-# yearWoS <- yearWoS %>%
-#   complete(Year = 1956:2019,
-#            fill = list(Total = 0, Coder = "WebOfScience")) %>%
-#   as.data.frame()
-# yearWoS
-# 
-# yearIFSMS <- yearIFSMS %>%
-#   complete(Year = 1956:2019,
-#            fill = list(Total = 0,  Coder = "IFSMS")) %>%
-#   as.data.frame()
-# yearIFSMS
-# 
-# #to plot
-# toplot <- data.frame(rbind(yearScopus,yearWoS,yearIFSMS))
-# toplot1 <- filter(toplot, Year %in% c(1999:2019))
-# toplot2 <- filter(toplot, Year %in% c(1979:1999))
-# toplot3 <- filter(toplot, Year %in% c(1959:1979))
-# 
-# # GRAPH
-# plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
-#   geom_line(aes(linetype=Coder), size=0.8)+
-#   scale_linetype_manual(values=c("solid","solid", "dashed"))+
-#   scale_color_manual(values=c("black", "darkblue", "grey50"))+
-#   xlab('Year') +
-#   ylab('Documents') +
-#   scale_x_continuous(breaks=c(1955,1960,1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
-#   theme_classic(base_family = "Arial", base_size = 20)+
-#   theme(legend.title = element_blank(),
-#         legend.position = "bottom",
-#         legend.background = element_rect(fill="white",size=1, linetype="solid", colour="grey80"))
-# plot
-# ggsave("Result_ScopWoSIFSMS_DocTrend.png", plot, width = 11, height = 6, units = "in", dpi=500, path = "Results-2021")
