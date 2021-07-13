@@ -5,6 +5,15 @@
 # It can be choosen to work with the combined dataset before the exclusion process (CombinedDataset)
 # Or it can be choosen to work with the combined dataset after the exclusion process (MergerOriginalData)
 
+# read the export *.csv document from Merger_1_Exclusion, separation "\t", and place it in data.frame "MergerOriginalData"
+MergerOriginalData <- read.csv(paste0(Results.dir,"Result_Merger_Dataset.txt"), sep="\t", header=TRUE)
+CombinedDataset <- read.csv(paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep="\t", header=TRUE)
+IFSMS <- read.csv(paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep="\t", header=TRUE)
+ScopusReducedDatasetTIAUC1SIDSSODTcor <- read.csv(paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep="\t", header=TRUE)
+WebOfScienceReducedDatasetAUSODTcor <- read.csv(paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep="\t", header=TRUE)
+
+
+
 ##################################################################################
 #####              Comparison Scopus/Web Of Science all year                 #####
 ##################################################################################
@@ -20,7 +29,7 @@ WoSexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience", ]
 #forErrors <- rbind(ScopWosnotexclusive,Scopusexclusive,WoSexclusive)
 #errorpourcentage <- setdiff(CombinedDataset,forErrors)
  
- 
+
 #####______________Analysis______________##########
 # Count the number of references in each data.frame
 countWoSexclusive <- as.numeric(count(WoSexclusive));countWoSexclusive
