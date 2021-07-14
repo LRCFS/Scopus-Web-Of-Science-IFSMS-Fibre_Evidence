@@ -11,39 +11,33 @@
 
 # read the export *.csv document from Merger, separation "\t", and place it in data.frame "MergerOriginalData"
 MergerOriginalData <- read.csv(paste0(Results.dir,"Result_Merger_Dataset.txt"), sep="\t", header=TRUE)
+IFSMS <- read.csv(paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep="\t", header=TRUE)
 
 
-#######################################################################
-#####                             Authors                         #####
-#######################################################################
+#########################################################################
+#####                         Merger Dataset                        #####
+#########################################################################
+#############################################################
+#####                  Data cleansing                   #####
+#############################################################
 
-# This section is looks at Authors to generate a table:
-#                                   the total number of authors and publications per year,
-#                                   the number of publications per author,
-#                                   the first year an author published,
-#                                   the number of new author  
-
-# Replace every "," with ";" in MergerOriginalData
+# Replace each "," with ";" in MergerOriginalData
 AuthorList <- MergerOriginalData %>%
   select(PY,TI,AU,C1S)
 # Change the column name
 names(AuthorList) <- c("Year", "Title", "Authors", "Affiliation")
 
-# Apply some correction to both previous list
-AuthorList$Authors <- gsub(", JR"," JR",AuthorList$Authors)
-AuthorList$Authors <- gsub(", II","",AuthorList$Authors)
-AuthorList$Authors <- gsub(", III, ",", ",AuthorList$Authors)
-AuthorList$Authors <- gsub(",",";", AuthorList$Authors)
-
-#Split Column "Authors" in row by the separator ";", remove leading white space to generate list
+# Split Column "Authors" in row by the separator ";", remove leading white space to generate list
 AuthorListExtended <- AuthorList %>% 
   mutate(Authors = strsplit(as.character(Authors), ";"))%>% 
   unnest(Authors) %>%
   mutate_if(is.character, str_trim)%>%
   distinct()
 
-#####____________________________##########
-#Count to number of time the same year is repeated in the "AuthorListExtended$Year" and save in a data.frame "Year" 
+# Remove entry that have no authors name
+AuthorListExtended <- AuthorListExtended[-grep("NA NA", AuthorListExtended$Authors),]
+
+# Count to number of time the same year is repeated in the "AuthorListExtended$Year" and save in a data.frame "Year" 
 PublicationYear <- aggregate(AuthorList$Authors,list(AuthorList$Year), FUN=length)
 names(PublicationYear) <- c("Year","Publications")
 
@@ -54,6 +48,7 @@ DFfilledPublicationYear <- PublicationYear %>%
   as.data.frame()
 PublicationYear <- DFfilledPublicationYear
 
+# Count to number of time the same author is repeated in "AuthorListExtended$Authors" and save it in "AuthorCountPaper"
 AuthorCountPaper <- aggregate(AuthorListExtended$Authors, list(AuthorListExtended$Authors), FUN=length)
 names(AuthorCountPaper) <- c("Author","Frequency")
 
@@ -97,10 +92,12 @@ names(AuthorFirstAppearanceMultipleEntry) <- c("Author","Year")
 AuthorMultipleOutputLastYear<- aggregate(AuthorCountMultiplePaperReduced$Year, list(AuthorCountMultiplePaperReduced$Authors), max)
 names(AuthorMultipleOutputLastYear) <- c("Author","Year")
 
-#####__________________Gephi Plots - Authors_________________#####
+##########################################################
+#####               Gephi Plots - Authors            #####
+##########################################################
 
 #generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
-ListAuthor <- AuthorCountMultiplePaperReduced %>% group_by(Year,Title,Affiliation) %>%
+ListAuthor <- AuthorCountMultiplePaperReduced %>% group_by(Year,Title) %>%
   summarise(AuthorCorrected = paste(Authors, collapse = ";"))
 ListAuthor <- as.data.frame(ListAuthor)
 
@@ -109,73 +106,15 @@ GephiAuthor <- ListAuthor %>%
 names(GephiAuthor) <- c("Author")
 
 #Export to Gephi plot - Year;Title;Authors
-write.table(GephiAuthor, file = paste0(Results.dir,"GephiAuthor.csv"), sep = ";", row.names = F)
+#write.table(GephiAuthor, file = paste0(Results.dir,"GephiAuthor.csv"), sep = ",", row.names = F, quote = F)
 
 #Export to Gephi plot - Authors;Year
 names(AuthorMultipleOutputLastYear) <- c("Id","Year")
-write.table(AuthorMultipleOutputLastYear, file = paste0(Results.dir,"GephiAuthor_Last_Year.csv"), sep = ";", row.names = F)
+#write.table(AuthorMultipleOutputLastYear, file = paste0(Results.dir,"GephiAuthor_Last_Year.csv"), sep = ";", row.names = F)
 
-
-
-#####__________________Authors Table/New authors____________________#####
-
-# List of new "Authors" and their first "Year" of appearance
-AuthorFirstAppearance<- aggregate(AuthorListExtended$Year, list(AuthorListExtended$Authors), min)
-names(AuthorFirstAppearance) <- c("Author","Year")
-
-# New authors
-YearNewAuthor <- aggregate(AuthorFirstAppearance$Author,list(AuthorFirstAppearance$Year), FUN=length)
-# Add years in which no authors published
-DFfilledNewauthors <- YearNewAuthor %>%
-  complete(Group.1 = 1967:2019,
-           fill = list(Freq = 0)) %>%
-  as.data.frame()
-YearNewAuthor <- DFfilledNewauthors
-names(YearNewAuthor) <- c("Year","New Authors")
-
-YearOutput <- Reduce(merge, list(NumberAuthorYear,PublicationYear,YearNewAuthor))
-YearTableOutput <- merge(YearOutput, YearNewAuthorSinglePaper, by="Year", all = T)
-YearTableOutput$Ratio <- round(YearOutput$Author/YearOutput$Publications, 1)
-YearTableOutput$`New Author Percentage` <- round(YearOutput$`New Authors`/YearOutput$Author*100, 1)
-
-#Replace NA by 0
-YearTableOutput[is.na(YearTableOutput)] <- 0
-
-#Export to text file for Latex import
-#write.table(YearTableOutput, file = "Resutl_Authors_table.csv", sep = ",", row.names = F)
-
-# GRAPH
-YearNewAuthorplot <- ggplot(data=YearTableOutput, aes(x=Year, y=`New Authors`))+
-  geom_smooth(formula = y ~ x, method = 'lm', se=F, color="red", size=0.5)+
-  geom_line(data=YearTableOutput, aes(x=Year, y=`New Authors`))+ geom_point(data=YearTableOutput, aes(x=Year, y=`New Authors`))+
-  labs(x="Year", y="Number of new authors")+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
-  theme_classic(base_family = "Arial", base_size = 12)+
-  theme(legend.position = c(0.05, 0.8),
-        legend.background = element_rect(fill = "grey95"),
-        legend.title = element_blank(),)
-show(YearNewAuthorplot)
-ggplotly(YearNewAuthorplot)
-#ggsave("YearNewAuthorplot.png", YearNewAuthorplot_December, width = 7, height = 3, units = "in", dpi=200, path = "Results")
-
-# GRAPH
-Median2 <- median(YearTableOutput$`New Author Percentage`)
-YearNewAuthorplotpercent <- ggplot()+
-  geom_hline(yintercept=Median2, linetype="dashed", color = "red", size=0.5)+
-  geom_line(data=YearTableOutput, aes(x=Year, y=`New Author Percentage`))+ geom_point(data=YearTableOutput, aes(x=Year, y=`New Author Percentage`))+
-  labs(x="Year", y="Number of new authors (%)")+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
-  theme_classic(base_family = "Arial", base_size = 12)+
-  theme(legend.position = c(0.05, 0.8),
-        legend.background = element_rect(fill = "grey95"),
-        legend.title = element_blank(),)
-show(YearNewAuthorplotpercent)
-ggplotly(YearNewAuthorplotpercent)
-
-plot1 <- ggarrange(YearNewAuthorplot, YearNewAuthorplotpercent,labels = c("A", "B"),ncol = 1, nrow = 2,legend = "none")
-plot1
-#ggsave("NewAuthors_year.png", plot1, width = 7, height = 6, units = "in", dpi=200, path = "Results")
-
+############################################################
+#####               Data analysis - Authors            #####
+############################################################
 #####__________________Authors per year _________________#####
 
 # 1) Plot number of authors per year (Total, Single and multiple authors)
@@ -262,134 +201,9 @@ show(TotalAuthorsplot)
 ggplotly(TotalAuthorsplot)
 ggsave("Average_Author_Per_Year_ScopWoS.png", TotalAuthorsplot, width = 8, height = 3.5, units = "in", dpi=200, path = "Results")
 
-# Calculate the average number of authors (all type of authors)
-means <- aggregate(Freq ~ Coder, ForAuthorsplot, mean)
-means$Freq <- round(means$Freq,2)
-sd1 <- aggregate(Freq ~ Coder, ForAuthorsplot, sd)
-sd1$Freq <- round(sd1$Freq,1)
-
-# Basic statistic about the different dataset
-summary(Authors$Freq)
-summary(SingleAuthorsyear$Freq)
-summary(MultipleAuthorsyear$Freq)
-
-
-#####__________________Authors per document and per year _________________#####
-# Create a new dataframe with column Year, Title and Authors
-Authorperdocument <- AuthorListExtended %>% group_by(Year,Title) %>%
-  summarise(AuthorCorrected = paste(Authors, collapse = ";"))
-Authorperdocument <- as.data.frame(Authorperdocument)
-
-# Combine column Year, Affiliation and Title with the separator ";"
-Authorperdocument$Title <- paste(Authorperdocument$Year, Authorperdocument$Title, sep = ";")
-Authorperdocument <- as.data.frame(Authorperdocument) %>% 
-  select(Title, AuthorCorrected)
-
-#Split Column "Authors" in row by the separator ";", remove leading white space to generate list
-Authorperdocument <- Authorperdocument %>% 
-  mutate(AuthorCorrected = strsplit(as.character(AuthorCorrected), ";"))%>% 
-  unnest(AuthorCorrected) %>%
-  mutate_if(is.character, str_trim)
-names(Authorperdocument) <- c("Title","AuthorCorrected")
-
-# Number of Authors per Title
-Authorperdocument <- aggregate(Authorperdocument$AuthorCorrected,list(Authorperdocument$Title), FUN=length)
-names(Authorperdocument) <- c("Title","Frequency")
-
-# Separate Column Title in to "Year" and "Title" by the separator ";" 
-Authorperdocument <- separate(data = Authorperdocument, col = Title, into = c("Year", "Title"), sep = ";")
-
-# Calculate the average number of authors per document and per year
-means2 <- aggregate(Frequency ~  Year, Authorperdocument, mean)
-Median2 <- aggregate(Frequency ~  Year, Authorperdocument, median)
-
-#  GRAPH
-jitter <- position_jitter(width = 0.2, height =0)
-Authorperdocumentplot <-ggplot() +
-  geom_point(data =Authorperdocument, aes(x =Year, y = Frequency), color = "black", shape=1, size=1, position= jitter)+
-  geom_point(data =means2, aes(x =Year, y = Frequency), color = "darkred", shape=17, size=2)+  geom_line(data = means2, aes(x =Year, y = Frequency, group=1), color = "darkred")+
-  geom_point(data =Median2, aes(x =Year, y = Frequency), color = "blue", shape=18, size=2)+  geom_line(data = means2, aes(x =Year, y = Frequency, group=1), color = "darkred")+
-  labs(x="Year", y="Authors per documents")+
-  theme_bw(base_family = "Arial", base_size = 12)+
-  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
-show(Authorperdocumentplot)
-ggsave("Authorperdocumentplot.png", Authorperdocumentplot, width = 6, height = 4, units = "in", dpi=200, path = "Results-2021")
-
-Authorperdocumentboxplot <-ggplot() +
-  geom_boxplot(data =Authorperdocument, aes(x =Year, y = Frequency), outlier.colour= "red", outlier.shape = 8, color = "black", shape=1, size=0.5)+
-  labs(x="Year", y="Authors per documents")+
-  theme_bw(base_family = "Arial", base_size = 12)+
-  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
-show(Authorperdocumentboxplot)
-ggsave("Authorperdocumentboxplot_December.png", Authorperdocumentboxplot, width = 6, height = 4, units = "in", dpi=200, path = "Results-2021")
-
-p3 <- ggarrange(Authorperdocumentplot, Authorperdocumentboxplot,labels = c("A", "B"),ncol = 1, nrow = 2,legend = "none")
-show(p3)
-#ggsave("Authorperdocument combine_December.png", p3, width = 6, height = 6, units = "in", dpi=200, path = "Results")
-
-# OTHER GRAPH
-Authorperdocumentmix <-ggplot() +
-  geom_boxplot(data =Authorperdocument, aes(x =Year, y = Frequency), outlier.colour= "red", outlier.shape = 8, color = "black", shape=1, size=0.5)+
-  geom_point(data =Authorperdocument, aes(x =Year, y = Frequency), color = "black", shape=1, size=1, position= jitter)+
-  geom_point(data =means2, aes(x =Year, y = Frequency), color = "darkred", shape=17, size=1)+  geom_line(data = means2, aes(x =Year, y = Frequency, group=1), color = "darkred")+
-  geom_line(data = means2, aes(x =Year, y = Frequency, group=1), color = "darkred")+
-  labs(x="Year", y="Authors per documents")+
-  theme_bw(base_family = "Arial", base_size = 12)+
-  theme(axis.text.x= element_text(angle= 90, vjust= 0.5))
-show(Authorperdocumentmix)
-#ggsave("Authorperdocument mix_December.png",Authorperdocumentmix, width = 6, height = 4, units = "in", dpi=200, path = "Results")
-
-#####__________________Authors per document and per year split_________________##### STILL WORKinG ON IT
-
-Oneauthorperdocument <- filter(Authorperdocument, Frequency==1)
-Oneauthorperdocument <- aggregate(Oneauthorperdocument$Frequency,list(Oneauthorperdocument$Year), FUN=length)
-names(Oneauthorperdocument) <- c("Year", "Freq")
-functionx <- function(x){
-  group1 <- filter(x, Year <= 1970)
-  group2 <- filter(x, Year >= 1970 & Year <= 1979)
-  group3 <- filter(x, Year >= 1980 & Year <= 1989)
-  group4 <- filter(x, Year >= 1990 & Year <= 1999)
-  group5 <- filter(x, Year >= 2000 & Year <= 2009)
-  group6 <- filter(x, Year >= 2010 & Year <= 2019)
-  
-  sum1 <- sum(group1$Freq)
-  sum2 <- sum(group1$Freq)
-  sum3 <- sum(group1$Freq)
-  sum4 <- sum(group1$Freq)
-  sum5 <- sum(group1$Freq)
-  sum6 <- sum(group1$Freq)
-  
-  return(group1)
-}
-
-functionx(Oneauthorperdocument)
-
-Twoauthorperdocument <- filter(Authorperdocument, Frequency==2)
-Twoauthorperdocument <- aggregate(Twoauthorperdocument$Frequency,list(Twoauthorperdocument$Year), FUN=length)
-names(Twoauthorperdocument) <- c("Year", "Freq")
-
-Threeauthorperdocument <- filter(Authorperdocument, Frequency==3)
-Threeauthorperdocument <- aggregate(Threeauthorperdocument$Frequency,list(Threeauthorperdocument$Year), FUN=length)
-names(Threeauthorperdocument) <- c("Year", "Freq")
-
-Foureauthorperdocument <- filter(Authorperdocument, Frequency==4)
-Foureauthorperdocument <- aggregate(Foureauthorperdocument$Frequency,list(Foureauthorperdocument$Year), FUN=length)
-names(Foureauthorperdocument) <- c("Year", "Freq")
-
-Fiveeauthorperdocument <- filter(Authorperdocument, Frequency==5)
-Fiveeauthorperdocument <- aggregate(Fiveeauthorperdocument$Frequency,list(Fiveeauthorperdocument$Year), FUN=length)
-names(Fiveeauthorperdocument) <- c("Year", "Freq")
-
-Morethanfoureauthorperdocument <- filter(Authorperdocument, Frequency>5)
-Morethanfoureauthorperdocument <- aggregate(Morethanfoureauthorperdocument$Frequency,list(Morethanfoureauthorperdocument$Year), FUN=length)
-names(Morethanfoureauthorperdocument) <- c("Year", "Freq")
-
-#####________________Most prolific authors_______________#####
-# Create new dataframe with only the first top 15 articles
-YearMultipleAuthor <- aggregate(AuthorFirstAppearance$Author,list(AuthorFirstAppearance$Year), FUN=length)
-MostProlificAuthor <- top_n(AuthorCountMultiplePaper, 15,Frequency)
-MostProlificAuthor <- MostProlificAuthor[order(-MostProlificAuthor$Frequency),]
-names(MostProlificAuthor) <- c("Authors", "Publication")
-
-#Export to text file
-#write.table(MostProlificAuthor, file = "MostProlificAuthor_Table_December.csv", sep = ",", row.names = F)
+################################################################
+#####                         IFSMS                        #####
+################################################################
+#############################################################
+#####                  Data cleansing                   #####
+#############################################################
