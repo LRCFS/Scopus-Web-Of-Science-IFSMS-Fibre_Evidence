@@ -49,8 +49,11 @@ dir.create(file.path(Results.dir),recursive = TRUE) # will create folder if not 
 #####           Keyword Figures Range set               #####
 #############################################################
 # the number of keywords (top most frequent) appearing in the figure
-number <- 50   # target number of keywords appearing in the keyword figure
-maximum <- 58  # maximum number of keywords appearing in the keyword figure
+number <- 50   # target number of keywords appearing in the keyword figure for MergeDataset
+number2 <- 28   # target number of keywords appearing in the keyword figure for IFSMS
+
+maximum <- 57  # maximum number of keywords appearing in the keyword figure
+maximum2 <- 30  # maximum number of keywords appearing in the keyword figure
 
 #############################################################
 #####                       Codes                       #####
@@ -60,7 +63,8 @@ maximum <- 58  # maximum number of keywords appearing in the keyword figure
 
 # This R script is the first step to merge exported data from Scopus and Web of Sciences (BibTex format)
 # This Script allows to merge the file and exclude records that are not relevant to the field of research
-source("Code/Merger_1_Exclusion.R")
+#source("Code/Merger_1_Exclusion.R")
+#source("Code/Merger_5_Keywords Analysis.R")
 
 # source("code/Merger_2_KeywordsAnalysis.R")
 # The .txt/.csv export is used for the Bibliometric analysis in the following R scripts:
