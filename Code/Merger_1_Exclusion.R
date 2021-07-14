@@ -118,6 +118,11 @@ ScopusReducedDatasetTIAUcor <- ScopusReducedDatasetTIcorExtended %>%
   summarise(AU = paste(AuthorsCor, collapse = ";")) %>%
   ungroup()
 
+# Apply some correction to previous list
+ScopusReducedDatasetTIAUcor$AU <- gsub(", JR"," JR",ScopusReducedDatasetTIAUcor$AU)
+ScopusReducedDatasetTIAUcor$AU <- gsub(", II","",ScopusReducedDatasetTIAUcor$AU)
+ScopusReducedDatasetTIAUcor$AU <- gsub(", III, ",", ",ScopusReducedDatasetTIAUcor$AU)
+ScopusReducedDatasetTIAUcor$AU <- gsub(",",";", ScopusReducedDatasetTIAUcor$AU)
 
 ##################################
 ##### Affiliation correction ##### 
@@ -250,6 +255,12 @@ WebOfScienceReducedDatasetAUCor <- WebOfScienceReducedDatasetExtended %>%
 DupeWebOfScience <- WebOfScienceReducedDatasetAUCor %>%
   find_duplicates(PY,TI)
 
+# Apply some correction to previous list
+WebOfScienceReducedDatasetAUCor$AU <- gsub(", JR"," JR",WebOfScienceReducedDatasetAUCor$AU)
+WebOfScienceReducedDatasetAUCor$AU <- gsub(", II","",WebOfScienceReducedDatasetAUCor$AU)
+WebOfScienceReducedDatasetAUCor$AU <- gsub(", III, ",", ",WebOfScienceReducedDatasetAUCor$AU)
+WebOfScienceReducedDatasetAUCor$AU <- gsub(",",";", WebOfScienceReducedDatasetAUCor$AU)
+
 #############################
 ##### source correction ##### 
 #############################
@@ -295,7 +306,7 @@ colnames(IFSMS)[colnames(IFSMS)=="Author.s..ID"] <- "AuthorID"
 
 # select the column of interest
 IFSMS <- IFSMS %>%
-  select(Authors, Title, Year, Source.title, DOI, Document.Type, Link, Coder)
+  select(Authors, Title, Year, Author.Keywords, Source.title, DOI, Document.Type, Link, Coder)
 
 # Duplicate in Interpol report : http://www.textileworld.com is listed twice in the IFSMS 2013 report
 IFSMS <- IFSMS[-268,] #to remove one of the duplicate
@@ -311,7 +322,7 @@ IFSMS$DTCorrected <- gsr(as.character(IFSMS$Document.Type),as.character(Document
 
 # summarise the corrected information
 IFSMS <- IFSMS %>%
-  select(Authors, Title, Year, Source.title, DOI, DTCorrected, Link, Coder)
+  select(Authors, Title, Year, Author.Keywords, Source.title, DOI, DTCorrected, Link, Coder)
 
 # rename DTCorrected column
 names(IFSMS)[names(IFSMS)=="DTCorrected"] <- "Document.Type"
@@ -399,8 +410,8 @@ CombinedDatasetNarrow <- CombinedDatasetReduced %>%
 # remove extra dataframe
 rm(CombinedDatasetReduced)
 
-# rename keyword colum to "AIK" (From Sobreira's code)
-names(CombinedDatasetNarrow) <- sub("DE","AIK", names(CombinedDatasetNarrow))
+# rename keyword column to "AK" (From Sobreira's code)
+names(CombinedDatasetNarrow) <- sub("DE","AK", names(CombinedDatasetNarrow))
 
 CombinedDatasetNarrow <- as.data.frame(CombinedDatasetNarrow)
 
@@ -456,12 +467,12 @@ Keyword.list <- paste(c("FIBRE","FIBER",
                         "DYE", "COLOUR", "COLOR"), collapse = '|')
 
 # Creating a new list of document which don't have any of the keywords from Keyword.list
-FalsePositiveList <- InclusionDataSet[-grep(Keyword.list, InclusionDataSet$AIK), ]
+FalsePositiveList <- InclusionDataSet[-grep(Keyword.list, InclusionDataSet$AK), ]
 # False positive (FP) documents - documents in InclusionDataSet which can be not relevant (based on Keyword.list)
 FPdocument  <- as.numeric(count(FalsePositiveList))
 
 # True Positive (TP) documents - documents in InclusionDataSet which are relevant (based on Keyword.list)
-TruePositiveList <- InclusionDataSet[grep(Keyword.list, InclusionDataSet$AIK), ]
+TruePositiveList <- InclusionDataSet[grep(Keyword.list, InclusionDataSet$AK), ]
 TPdocument  <- as.numeric(count(TruePositiveList))
 
 # Total number of documents in the inclusion list
@@ -478,13 +489,13 @@ V1 <- as.data.frame(ifelse(Includeddocument == test1, "Correct", "Not correct"))
 
 # 2) Exclusion List
 # Creating a new list of document which have, at least, one of the keywords from Keyword.list
-FalseNegativeList <- ExclusionDataSet[grep(Keyword.list, ExclusionDataSet$AIK), ]
+FalseNegativeList <- ExclusionDataSet[grep(Keyword.list, ExclusionDataSet$AK), ]
 
 # False negative (FN) documents - documents in ExclusionDataSet which can be relevant (based on Keyword.list)
 FNdocument  <- as.numeric(count(FalseNegativeList))
 
 # True Negative documents - documents in ExclusionDataSet which are not relevant (based on Keyword.list)
-TrueNegativeList <- ExclusionDataSet[-grep(Keyword.list, ExclusionDataSet$AIK), ]
+TrueNegativeList <- ExclusionDataSet[-grep(Keyword.list, ExclusionDataSet$AK), ]
 TNdocument  <- as.numeric(count(TrueNegativeList))
 
 # Total number of documnet in the excluded list
@@ -503,7 +514,7 @@ V2 <- as.data.frame(ifelse(Excludeddocument == test2, "Correct", "Not correct"))
 CombinedDataset2 <- rbind(TruePositiveList, FalseNegativeList)
 
 #######################################################################
-#####     Second cleaning of the dataset based on AIKeywords      #####
+#####     Second cleaning of the dataset based on AKeywords      #####
 #######################################################################
 
 # 1) Cleaning the inclusion List
@@ -520,19 +531,19 @@ removeKeywordslist <- as.data.frame(removeKeywords.list)
 
 # Creating a new list of document which don't have any of the keywords from removeKeywords.list
 InclusionDataSetBis <- CombinedDataset2 %>%
-  filter(!grepl(removeKeywords.list, CombinedDataset2$AIK))
+  filter(!grepl(removeKeywords.list, CombinedDataset2$AK))
 
 # Eclusion List bis
 ExclusionDataSetBis <- setdiff(CombinedDataset2,InclusionDataSetBis)
 
 # testing the new inclusion list with the previous"Keyword.list"
-FalsePositiveListBis <- InclusionDataSetBis[-grep(Keyword.list, InclusionDataSetBis$AIK), ]
+FalsePositiveListBis <- InclusionDataSetBis[-grep(Keyword.list, InclusionDataSetBis$AK), ]
 
 # New calcul of False positive (FP) (based on the previous Ketword.list)
 FPdocumentBis  <- as.numeric(count(FalsePositiveListBis))
 
 # New calcul of True positive (TP) (based on the previous Ketword.list)
-TruePositiveListBis <- InclusionDataSetBis[grep(Keyword.list, InclusionDataSetBis$AIK), ]
+TruePositiveListBis <- InclusionDataSetBis[grep(Keyword.list, InclusionDataSetBis$AK), ]
 TPdocumentBis  <- as.numeric(count(TruePositiveListBis))
 
 # Total number of document in the inclusion list
@@ -654,9 +665,9 @@ write.table(IFSMS, file = paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep = 
 # 
 # # Number of Authors Keywords before correction
 # X <- CombinedDataset3 %>% 
-#   select(AIK) %>% 
-#   mutate(AIK = strsplit(as.character(AIK), ";")) %>% 
-#   unnest(AIK) %>%
+#   select(AK) %>% 
+#   mutate(AK = strsplit(as.character(AK), ";")) %>% 
+#   unnest(AK) %>%
 #   mutate_if(is.character, str_trim) #calculating the total number of keywords
 # GF[6,1] <-nrow(X)
 # rownames(GF)[rownames(GF)=="6"] <- "Total number of Authors Keywords"
