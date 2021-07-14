@@ -81,18 +81,19 @@ TopJournalsScop$Coder <- "Scopus"
 TopJournalsWoS$Coder <- "WebOfScience"
 TopJournalScopWoS <- rbind(TopJournalsScop, TopJournalsWoS)
 
-TopJournalScopWoS$Frequency <- with(TopJournalScopWoS, ifelse(Coder == "Scopus", -Frequency, Frequency))
+TopJournalScopWoS$Frequency <- with(TopJournalScopWoS, ifelse(Coder == "Scopus", Frequency, Frequency))
 
-Plot <- ggplot(data = TopJournalScopWoS,  aes(x = Title, y = Frequency, fill = Coder)) +
+Plot <- ggplot(data = TopJournalScopWoS,  aes(x = reorder(Title, Frequency), y = Frequency, fill = Coder)) +
   geom_col() +
-  coord_flip() +
-  scale_y_continuous(labels = abs)+
+  #scale_y_continuous(labels = abs)+
   scale_fill_brewer(palette = "Pastel1") +
   labs(x="", y="Number of references")+
-  theme_bw()
+  theme_bw()+
+  coord_flip()
 Plot
 #ggplotly(Plot)
 ggsave("Journals.png", Plot, width = 12, height = 10, units = "in", dpi=300, path = "Results")
+
 
 ######################################################
 ##### Document type in Scopus and Web Of Science ##### 
