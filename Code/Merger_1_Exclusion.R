@@ -21,12 +21,14 @@ ifsms.path = 'InputData/IFSMS/' #IFSMS folder
 #############################################################
 
 # set extension and folder
-extension <- ".bib"
-Wos <- Sys.glob(paste(Wos.path, "*", extension, sep = ""))
-Sco <- Sys.glob(paste(Sco.path, "*", extension, sep = ""))
+
+Wos <- Sys.glob(paste(Wos.path, "*", extensionBIB, sep = ""))
+Sco <- Sys.glob(paste(Sco.path, "*", extensionBIB, sep = ""))
 
 # specify the type of file we want to import (.csv) for IFSMS
-files <- list.files(path = ifsms.path,pattern="*.csv") ; files
+#files <- list.files(path = ifsms.path,pattern="*.csv") ; files
+
+IFSMSfiles <- list.files(ifsms.path, pattern=extensionCSV, full.names=TRUE)
 
 #############################################################
 #####                    Data loading                   #####
@@ -38,8 +40,12 @@ files <- list.files(path = ifsms.path,pattern="*.csv") ; files
 
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
-IFSMS <- do.call("rbind", lapply(paste0(ifsms.path,
-                                            files), read.csv, header = TRUE, stringsAsFactors = FALSE))
+
+IFSMS <- ldply(IFSMSfiles, read_csv)
+
+names(IFSMS)[5] <- c("Source.title")
+names(IFSMS)[17] <- c("Author.Keywords")
+names(IFSMS)[20] <- c("Document.Type")
 
 # Removing every year after 2019
 Scopus <- filter(Scopus, PY<2020)
@@ -114,9 +120,10 @@ ScopusReducedDatasetTIcorExtended$AuthorsCor <- gsr(ScopusReducedDatasetTIcorExt
 # The corrected list should be the same length as the original version. Duplicates will be removed and they will need to be checked individually.
 ScopusReducedDatasetTIAUcor <- ScopusReducedDatasetTIcorExtended %>%
   select(PY,TI,AuthorsCor,DES,IDS,C1S,DI,SO,DT,Coder) %>%
-  group_by(PY,TI,DES,IDS,C1S,DI,SO,DT,Coder) %>%
-  summarise(AU = paste(AuthorsCor, collapse = ";")) %>%
+  dplyr::group_by(PY,TI,DES,IDS,C1S,DI,SO,DT,Coder) %>%
+  dplyr::summarise(AU = paste(AuthorsCor, collapse = ";")) %>%
   ungroup()
+
 
 # Apply some correction to previous list
 ScopusReducedDatasetTIAUcor$AU <- gsub(", JR"," JR",ScopusReducedDatasetTIAUcor$AU)
@@ -130,7 +137,7 @@ ScopusReducedDatasetTIAUcor$AU <- gsub(",",";", ScopusReducedDatasetTIAUcor$AU)
 
 # Split Column "C1S" with the separator ";" and place it in ScopusReducedDatasetTIAUcorExtended
 ScopusReducedDatasetTIAUcorExtended <- ScopusReducedDatasetTIAUcor %>% 
-  mutate(Affiliation = strsplit(as.character(C1S), ";"))%>% 
+  mutate(Affiliation = strsplit(as.character(ScopusReducedDatasetTIAUcor$C1S), ";"))%>% 
   unnest(Affiliation) %>%
   mutate_if(is.character, str_trim)
 
@@ -142,8 +149,8 @@ ScopusReducedDatasetTIAUcorExtended$AffiliationCorrected <- gsr(ScopusReducedDat
 # list may not be the same length as the original one 
 ScopusReducedDatasetTIAUC1Scor <- ScopusReducedDatasetTIAUcorExtended %>%
   select(PY,TI,AU,DES,IDS,DI,SO,DT,Coder,AffiliationCorrected) %>%
-  group_by(PY,TI,AU,DES,IDS,DI,SO,DT,Coder) %>%
-  summarise(C1S = paste(AffiliationCorrected[!is.na(AffiliationCorrected)], collapse = ";"))
+  dplyr::group_by(PY,TI,AU,DES,IDS,DI,SO,DT,Coder) %>%
+  dplyr::summarise(C1S = paste(AffiliationCorrected[!is.na(AffiliationCorrected)], collapse = ";"))
 
 ScopusReducedDatasetTIAUC1Scor$C1S[ScopusReducedDatasetTIAUC1Scor$C1S==""] <- NA
 
@@ -159,8 +166,8 @@ ScopusReducedDatasetTIAUC1SIDScor <- ScopusReducedDatasetTIAUC1Scor %>%
   unnest(IDS)%>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(PY,TI,AU,DES,DI,SO,DT,C1S,Coder)%>%
-  summarise(IDS = paste(IDS[!is.na(IDS)], collapse= ";"))%>%
+  dplyr::group_by(PY,TI,AU,DES,DI,SO,DT,C1S,Coder)%>%
+  dplyr::summarise(IDS = paste(IDS[!is.na(IDS)], collapse= ";"))%>%
   ungroup()
 
 ScopusReducedDatasetTIAUC1SIDScor$IDS[ScopusReducedDatasetTIAUC1SIDScor$IDS==""] <- NA
@@ -249,8 +256,8 @@ WebOfScienceReducedDatasetExtended$AuthorsCor <- gsr(WebOfScienceReducedDatasetE
 # generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
 WebOfScienceReducedDatasetAUCor <- WebOfScienceReducedDatasetExtended %>%
   select(PY,TI,AuthorsCor,DEW,IDW,C1W,DI,SO,DT,Coder) %>%
-  group_by(PY,TI,DEW,IDW,C1W,DI,SO,DT,Coder) %>%
-  summarise(AU = paste(AuthorsCor, collapse = ";")) %>%
+  dplyr::group_by(PY,TI,DEW,IDW,C1W,DI,SO,DT,Coder) %>%
+  dplyr::summarise(AU = paste(AuthorsCor, collapse = ";")) %>%
   ungroup()
 
 DupeWebOfScience <- WebOfScienceReducedDatasetAUCor %>%
@@ -309,8 +316,9 @@ colnames(IFSMS)[colnames(IFSMS)=="Author.s..ID"] <- "AuthorID"
 IFSMS <- IFSMS %>%
   select(Authors, Title, Year, Author.Keywords, Source.title, DOI, Document.Type, Link, Coder)
 
-# Duplicate in Interpol report : http://www.textileworld.com is listed twice in the IFSMS 2013 report
-IFSMS <- IFSMS[-268,] #to remove one of the duplicate
+# remove duplicate within each individual IFSMS reports
+IFSMS <- IFSMS %>%
+  distinct()
 
 ####################################
 ##### document type correction ##### 
@@ -405,8 +413,8 @@ CombinedDatasetNarrow <- CombinedDatasetReduced %>%
   unnest(DE) %>%
   mutate_if(is.character, str_trim) %>%
   distinct() %>%
-  group_by(TI,PY,AU,DOI,IDW,IDS,C1W,C1S,Coder,DT,SO) %>%
-  summarise(DE = sort(paste(DE[!is.na(DE)], collapse= ";")))
+  dplyr::group_by(TI,PY,AU,DOI,IDW,IDS,C1W,C1S,Coder,DT,SO) %>%
+  dplyr::summarise(DE = sort(paste(DE[!is.na(DE)], collapse= ";")))
 
 # remove extra dataframe
 rm(CombinedDatasetReduced)
@@ -470,14 +478,14 @@ Keyword.list <- paste(c("FIBRE","FIBER",
 # Creating a new list of document which don't have any of the keywords from Keyword.list
 FalsePositiveList <- InclusionDataSet[-grep(Keyword.list, InclusionDataSet$AK), ]
 # False positive (FP) documents - documents in InclusionDataSet which can be not relevant (based on Keyword.list)
-FPdocument  <- as.numeric(count(FalsePositiveList))
+FPdocument  <- as.numeric(nrow(FalsePositiveList))
 
 # True Positive (TP) documents - documents in InclusionDataSet which are relevant (based on Keyword.list)
 TruePositiveList <- InclusionDataSet[grep(Keyword.list, InclusionDataSet$AK), ]
-TPdocument  <- as.numeric(count(TruePositiveList))
+TPdocument  <- as.numeric(nrow(TruePositiveList))
 
 # Total number of documents in the inclusion list
-Includeddocument <- as.numeric(count(InclusionDataSet))
+Includeddocument <- as.numeric(nrow(InclusionDataSet))
 
 # % of FP in the exlusion list
 FPdocument/Includeddocument*100
@@ -493,14 +501,14 @@ V1 <- as.data.frame(ifelse(Includeddocument == test1, "Correct", "Not correct"))
 FalseNegativeList <- ExclusionDataSet[grep(Keyword.list, ExclusionDataSet$AK), ]
 
 # False negative (FN) documents - documents in ExclusionDataSet which can be relevant (based on Keyword.list)
-FNdocument  <- as.numeric(count(FalseNegativeList))
+FNdocument  <- as.numeric(nrow(FalseNegativeList))
 
 # True Negative documents - documents in ExclusionDataSet which are not relevant (based on Keyword.list)
 TrueNegativeList <- ExclusionDataSet[-grep(Keyword.list, ExclusionDataSet$AK), ]
-TNdocument  <- as.numeric(count(TrueNegativeList))
+TNdocument  <- as.numeric(nrow(TrueNegativeList))
 
 # Total number of documnet in the excluded list
-Excludeddocument <- as.numeric(count(ExclusionDataSet))
+Excludeddocument <- as.numeric(nrow(ExclusionDataSet))
 
 # Number of FN in the exlusion list
 FNdocument/Excludeddocument*100
@@ -541,14 +549,14 @@ ExclusionDataSetBis <- setdiff(CombinedDataset2,InclusionDataSetBis)
 FalsePositiveListBis <- InclusionDataSetBis[-grep(Keyword.list, InclusionDataSetBis$AK), ]
 
 # New calcul of False positive (FP) (based on the previous Ketword.list)
-FPdocumentBis  <- as.numeric(count(FalsePositiveListBis))
+FPdocumentBis  <- as.numeric(nrow(FalsePositiveListBis))
 
 # New calcul of True positive (TP) (based on the previous Ketword.list)
 TruePositiveListBis <- InclusionDataSetBis[grep(Keyword.list, InclusionDataSetBis$AK), ]
-TPdocumentBis  <- as.numeric(count(TruePositiveListBis))
+TPdocumentBis  <- as.numeric(nrow(TruePositiveListBis))
 
 # Total number of document in the inclusion list
-IncludeddocumentBis <- as.numeric(count(InclusionDataSetBis))
+IncludeddocumentBis <- as.numeric(nrow(InclusionDataSetBis))
 
 # % of FP in the exlusion list
 FPdocumentBis/IncludeddocumentBis*100
@@ -570,14 +578,14 @@ V3 <- as.data.frame(ifelse(IncludeddocumentBis == test3, "Correct", "Not correct
 FalseNegativeListBis <- ExclusionDataSet[grep(Keyword.list, ExclusionDataSet$TI), ]
 
 # False negative (FNBis) documents - documents in ExclusionDataSet which can be relevant (based on Keyword.list)
-FNdocumentBis  <- as.numeric(count(FalseNegativeListBis))
+FNdocumentBis  <- as.numeric(nrow(FalseNegativeListBis))
 
 # True Negative documents - documents in ExclusionDataSet which are not relevant (based on Keyword.list)
 TrueNegativeListBis <- ExclusionDataSet[-grep(Keyword.list, ExclusionDataSet$TI), ]
-TNdocumentBis  <- as.numeric(count(TrueNegativeListBis))
+TNdocumentBis  <- as.numeric(nrow(TrueNegativeListBis))
 
 # Total number of document in the excluded list
-Excludeddocumentbis <- as.numeric(count(ExclusionDataSet))
+Excludeddocumentbis <- as.numeric(nrow(ExclusionDataSet))
 
 # Number of FN in the exlusion list
 FNdocumentBis/Excludeddocumentbis*100

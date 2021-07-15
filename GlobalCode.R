@@ -8,7 +8,7 @@ rm(list=ls())
 # The files to be imported are generated from Scopus and Web Of Science databases
 # The columns will need to contain:
 # Year; Title; Source.title; Authors; AuthorID; DE; DES; EID; SO; DT
-
+library(plyr)
 library(dplyr)
 library(stringr)
 library(tidyr)
@@ -22,6 +22,7 @@ library(tidyverse)
 library(plotly)
 library(gridExtra)
 library(extrafont)
+
 
 #############################################################
 #####                      Function                     #####
@@ -38,8 +39,10 @@ source("Functions/RemoveDuplicate.R")
 #############################################################
 
 # set extension and Citation
-extension <- ".TXT"
-cit.path.XPS <- "XPS/"
+extensionTXT <- ".TXT"
+extensionBIB <- ".bib"
+extensionCSV <- ".csv"
+
 
 # where the generated figures are saved, create folder if not existing
 Results.dir <- "Results/"
