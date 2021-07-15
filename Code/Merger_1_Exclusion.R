@@ -176,6 +176,7 @@ CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", 
 CorrectionSource <- as.data.frame(CorrectionSource)
 
 ScopusReducedDatasetTIAUC1SIDScor$SOCorrected <- gsr(as.character(ScopusReducedDatasetTIAUC1SIDScor$SO), as.character(CorrectionSource$raw.x), as.character(CorrectionSource$raw.y))
+ScopusReducedDatasetTIAUC1SIDScor$SOCorrected  <- as.character(gsub(": ","-",ScopusReducedDatasetTIAUC1SIDScor$SOCorrected))
 ScopusReducedDatasetTIAUC1SIDSSOCor <- ScopusReducedDatasetTIAUC1SIDScor %>%
   select(PY,TI,AU,DES,IDS,C1S,DI,SOCorrected,DT,Coder)
 

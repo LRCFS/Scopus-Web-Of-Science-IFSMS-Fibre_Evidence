@@ -64,9 +64,9 @@ maximum2 <- 30  # maximum number of keywords appearing in the keyword figure
 # This R script is the first step to merge exported data from Scopus and Web of Sciences (BibTex format)
 # This Script allows to merge the file and exclude records that are not relevant to the field of research
 #source("Code/Merger_1_Exclusion.R")
+#source("code/Merger_2_Comparison of dataset.R")
 #source("Code/Merger_5_Keywords Analysis.R")
 
-# source("code/Merger_2_KeywordsAnalysis.R")
 # The .txt/.csv export is used for the Bibliometric analysis in the following R scripts:
 
 # This R script is the create the keyword figure based on the combined Scopus and Web of Sciences datasets

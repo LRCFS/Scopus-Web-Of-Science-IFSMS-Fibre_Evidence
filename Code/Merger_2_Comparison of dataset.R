@@ -53,15 +53,30 @@ JournalsScop <- data.frame(table(ScopusReducedDatasetTIAUC1SIDSSODTcor$SO, exclu
 JournalsScop <- data.frame(table(ScopusReducedDatasetTIAUC1SIDSSODTcor$SO, exclude = NA));JournalsScop
 names(JournalsScop) <- c("Journals", "Count")
 
+# Count the number of time each Journals appear in Scopus, after corrections
+JournalsCombinedDataset <- data.frame(table(CombinedDataset$SO, exclude = ""))
+JournalsCombinedDataset <- data.frame(table(CombinedDataset$SO, exclude = NA));JournalsCombinedDataset
+names(JournalsCombinedDataset) <- c("Journals", "Count")
+
 # Count the number of time each Journals appear in Web Of Science, after corrections
 JournalWoS <- data.frame(table(WebOfScienceReducedDatasetAUSODTcor$SO, exclude = ""))
 JournalWoS <- data.frame(table(WebOfScienceReducedDatasetAUSODTcor$SO, exclude = NA));JournalWoS
 names(JournalWoS) <- c("Journals", "Count")
 
-# Count the number of time each Journals appear in Web Of Science, after corrections
+# Count the number of time each Journals appear in ScopWosnotexclusive, after corrections
 JournalDup <- data.frame(table(ScopWosnotexclusive$SO, exclude = ""))
 JournalDup <- data.frame(table(ScopWosnotexclusive$SO, exclude = NA));JournalDup
 names(JournalDup) <- c("Journals", "Count")
+
+# Count the number of time each Journals appear in Scopusexclusive, after corrections
+JournalScopexclusive <- data.frame(table(Scopusexclusive$SO, exclude = ""))
+JournalScopexclusive <- data.frame(table(Scopusexclusive$SO, exclude = NA));JournalScopexclusive
+names(JournalScopexclusive) <- c("Journals", "Count")
+
+# Count the number of time each Journals appear in WoSexclusive, after corrections
+JournalWoSexclusive <- data.frame(table(WoSexclusive$SO, exclude = ""))
+JournalWoSexclusive <- data.frame(table(WoSexclusive$SO, exclude = NA));JournalWoSexclusive
+names(JournalWoSexclusive) <- c("Journals", "Count")
 
 # Select the top 20 in each Dataset
 TopJournalsScop <- top_n(JournalsScop, 15, Count)
@@ -76,14 +91,22 @@ TopJournalsDup <- top_n(JournalDup, 15, Count)
 TopJournalsDup <- TopJournalsDup[order(-TopJournalsDup$Count),]
 names(TopJournalsDup) <- c("Title","Frequency")
 
+TopJournalsScopexclusive <- top_n(JournalScopexclusive, 15, Count)
+TopJournalsScopexclusive <- TopJournalsScopexclusive[order(-TopJournalsScopexclusive$Count),]
+names(TopJournalsScopexclusive) <- c("Title","Frequency")
+
+TopJournalsWoSpexclusive <- top_n(JournalWoSexclusive, 15, Count)
+TopJournalsWoSpexclusive <- TopJournalsWoSpexclusive[order(-TopJournalsWoSpexclusive$Count),]
+names(TopJournalsWoSpexclusive) <- c("Title","Frequency")
+
 # create a dataframe with data from Scopus and Web Of Science
 TopJournalsScop$Coder <- "Scopus"
 TopJournalsWoS$Coder <- "WebOfScience"
 TopJournalScopWoS <- rbind(TopJournalsScop, TopJournalsWoS)
 
-TopJournalScopWoS$Frequency <- with(TopJournalScopWoS, ifelse(Coder == "Scopus", Frequency, Frequency))
+TopJournalScopWoS$Frequency <- with(TopJournalScopWoS, ifelse(Coder == "Scopus", Frequency, -Frequency))
 
-Plot <- ggplot(data = TopJournalScopWoS,  aes(x = reorder(Title, Frequency), y = Frequency, fill = Coder)) +
+Plot <- ggplot(data = TopJournalScopWoS,  aes(x = reorder(Title, -Frequency), y = Frequency, fill = Coder)) +
   geom_col() +
   #scale_y_continuous(labels = abs)+
   scale_fill_brewer(palette = "Pastel1") +
@@ -94,6 +117,40 @@ Plot
 #ggplotly(Plot)
 ggsave("Journals.png", Plot, width = 12, height = 10, units = "in", dpi=300, path = "Results")
 
+# create a dataframe with data from Scopus, Web Of Science and ScopWos
+TopJournalsScopexclusive <- TopJournalsScopexclusive %>% select(Title,Frequency)
+TopJournalsWoSpexclusive <- TopJournalsWoSpexclusive %>% select(Title,Frequency)
+forOverlapPlotTemp1 <- merge(TopJournalsScopexclusive, TopJournalsDup, by="Title", all = T)
+forOverlapPlotTemp2 <- merge(forOverlapPlotTemp1, TopJournalsWoSpexclusive, by="Title", all = T)
+forOverlapPlotTemp2[is.na(forOverlapPlotTemp2)] <- 0
+names(forOverlapPlotTemp2) <- c("Journal", "ScopusExclusive", "ScopWos", "WebofScienceExclusive")
+
+forOverlapPlotTemp2$Journal <- factor(forOverlapPlotTemp2$Journal)
+
+# take difference of reference counts
+# and make long
+
+forOverlapPlotTemp3 <- gather(forOverlapPlotTemp2, Database, Count, ScopusExclusive:WebofScienceExclusive, factor_key=TRUE)
+
+forOverlapPlotTemp3$Count <- with(forOverlapPlotTemp3, ifelse(Database == "Scopus", -Count, Count))
+
+# plot as stacked barplot
+plotoverlap = ggplot(forOverlapPlotTemp3, aes(x = reorder(Journal,-Count), y = Count, fill = Database)) + 
+  geom_col() + 
+  coord_flip() + 
+  scale_fill_manual(labels = c('Scopus only', 'Scopus & WOS', 'WOS only'), values = brewer.pal(4, 'Blues')[1:3]) + 
+  #  ggtitle('Title') + 
+  theme_bw() +
+  theme(panel.grid.major.y = element_blank(),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.text=element_text(size=16),
+        legend.title=element_text(size=16),
+  )
+show(plotoverlap)
+ggplotly(plotoverlap)
 
 ######################################################
 ##### Document type in Scopus and Web Of Science ##### 
