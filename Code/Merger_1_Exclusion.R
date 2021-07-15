@@ -40,6 +40,7 @@ IFSMSfiles <- list.files(ifsms.path, pattern=extensionCSV, full.names=TRUE)
 
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
+
 IFSMS <- ldply(IFSMSfiles, read_csv)
 
 names(IFSMS)[5] <- c("Source.title")
