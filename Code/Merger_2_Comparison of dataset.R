@@ -99,53 +99,40 @@ TopJournalsWoSpexclusive <- top_n(JournalWoSexclusive, 15, Count)
 TopJournalsWoSpexclusive <- TopJournalsWoSpexclusive[order(-TopJournalsWoSpexclusive$Count),]
 names(TopJournalsWoSpexclusive) <- c("Title","Frequency")
 
-# create a dataframe with data from Scopus and Web Of Science
-TopJournalsScop$Coder <- "Scopus"
-TopJournalsWoS$Coder <- "WebOfScience"
-TopJournalScopWoS <- rbind(TopJournalsScop, TopJournalsWoS)
-
-TopJournalScopWoS$Frequency <- with(TopJournalScopWoS, ifelse(Coder == "Scopus", Frequency, -Frequency))
-
-Plot <- ggplot(data = TopJournalScopWoS,  aes(x = reorder(Title, -Frequency), y = Frequency, fill = Coder)) +
-  geom_col() +
-  #scale_y_continuous(labels = abs)+
-  scale_fill_brewer(palette = "Pastel1") +
-  labs(x=" ", y="Number of references")+
-  theme_bw()+
-  coord_flip()
-Plot
-
-
-#ggplotly(Plot)
-ggsave("Journals.png", Plot, width = 12, height = 10, units = "in", dpi=300, path = "Results")
-
 # create a dataframe with data from Scopus, Web Of Science and ScopWos
-TopJournalsScopexclusive <- TopJournalsScopexclusive %>% select(Title,Frequency)
-TopJournalsWoSpexclusive <- TopJournalsWoSpexclusive %>% select(Title,Frequency)
 forOverlapPlotTemp1 <- merge(TopJournalsScopexclusive, TopJournalsDup, by="Title", all = T)
 forOverlapPlotTemp2 <- merge(forOverlapPlotTemp1, TopJournalsWoSpexclusive, by="Title", all = T)
 forOverlapPlotTemp2[is.na(forOverlapPlotTemp2)] <- 0
 names(forOverlapPlotTemp2) <- c("Journal", "ScopusExclusive", "ScopWos", "WebofScienceExclusive")
 
-forOverlapPlotTemp2$Journal <- factor(forOverlapPlotTemp2$Journal)
+# Make some modification on the name of Journals that are too long (if needed)
+forOverlapPlotTemp2$Journal <- gsub("PROCEEDINGS OF SPIE - THE INTERNATIONAL SOCIETY FOR OPTICAL ENGINEERING","PROC. SPIE - INT. SOC. OPT. ENG.", forOverlapPlotTemp2$Journal)
+forOverlapPlotTemp2$Journal <- gsub("ITCANDDC: 5TH INTERNATIONAL TEXTILE, CLOTHING AND DESIGN CONFERENCE 2010, BOOK OF PROCEEDINGS: MAGIC WORLD OF TEXTILES",
+                                    "5TH ITCANDDC 2010", forOverlapPlotTemp2$Journal)
+forOverlapPlotTemp2$Journal <- gsub("JOURNAL OF CHROMATOGRAPHY B-ANALYTICAL TECHNOLOGIES IN THE BIOMEDICAL AND LIFE SCIENCES","JOURNAL OF CHROMATOGRAPHY B", forOverlapPlotTemp2$Journal)
 
 # take difference of reference counts
 # and make long
-
 forOverlapPlotTemp3 <- gather(forOverlapPlotTemp2, Database, Count, ScopusExclusive:WebofScienceExclusive, factor_key=TRUE)
-
-forOverlapPlotTemp3$Count <- with(forOverlapPlotTemp3, ifelse(Database == "Scopus", -Count, Count))
 
 # plot as stacked barplot
 plotoverlap = ggplot(forOverlapPlotTemp3, aes(x = reorder(Journal,-Count), y = Count, fill = Database)) + 
   geom_col() + 
   coord_flip() + 
+  labs(y= "Number of document", x="Journals")+
   scale_fill_manual(labels = c('Scopus only', 'Scopus & WOS', 'WOS only'), values = brewer.pal(4, 'Blues')[1:3]) + 
   #  ggtitle('Title') + 
-  theme_bw()
+  theme_bw()+
+  theme(panel.grid.major.y = element_blank(),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16),
+        legend.text=element_text(size=16),
+        legend.title=element_blank(),
+  )
 show(plotoverlap)
-ggplotly(plotoverlap)
-ggarrange(Plot,plotoverlap)
+ggsave("Journals.png", plotoverlap, width = unit(16.5, 'in'), height = unit(15, 'in'), dpi=300, path = "Results")
 
 ######################################################
 ##### Document type in Scopus and Web Of Science ##### 

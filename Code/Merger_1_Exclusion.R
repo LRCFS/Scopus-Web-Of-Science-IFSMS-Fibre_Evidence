@@ -124,7 +124,6 @@ ScopusReducedDatasetTIAUcor <- ScopusReducedDatasetTIcorExtended %>%
   dplyr::summarise(AU = paste(AuthorsCor, collapse = ";")) %>%
   ungroup()
 
-
 # Apply some correction to previous list
 ScopusReducedDatasetTIAUcor$AU <- gsub(", JR"," JR",ScopusReducedDatasetTIAUcor$AU)
 ScopusReducedDatasetTIAUcor$AU <- gsub(", II","",ScopusReducedDatasetTIAUcor$AU)
