@@ -110,10 +110,12 @@ Plot <- ggplot(data = TopJournalScopWoS,  aes(x = reorder(Title, -Frequency), y 
   geom_col() +
   #scale_y_continuous(labels = abs)+
   scale_fill_brewer(palette = "Pastel1") +
-  labs(x="", y="Number of references")+
+  labs(x=" ", y="Number of references")+
   theme_bw()+
   coord_flip()
 Plot
+
+
 #ggplotly(Plot)
 ggsave("Journals.png", Plot, width = 12, height = 10, units = "in", dpi=300, path = "Results")
 
@@ -140,17 +142,10 @@ plotoverlap = ggplot(forOverlapPlotTemp3, aes(x = reorder(Journal,-Count), y = C
   coord_flip() + 
   scale_fill_manual(labels = c('Scopus only', 'Scopus & WOS', 'WOS only'), values = brewer.pal(4, 'Blues')[1:3]) + 
   #  ggtitle('Title') + 
-  theme_bw() +
-  theme(panel.grid.major.y = element_blank(),
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        axis.title.x = element_text(size = 12),
-        axis.title.y = element_text(size = 12),
-        legend.text=element_text(size=16),
-        legend.title=element_text(size=16),
-  )
+  theme_bw()
 show(plotoverlap)
 ggplotly(plotoverlap)
+ggarrange(Plot,plotoverlap)
 
 ######################################################
 ##### Document type in Scopus and Web Of Science ##### 
