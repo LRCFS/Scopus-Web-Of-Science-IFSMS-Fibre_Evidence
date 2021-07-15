@@ -38,7 +38,7 @@ files <- list.files(path = ifsms.path,pattern="*.csv") ; files
 
 Scopus <- convert2df(Sco,dbsource = "scopus",format = "bibtex")
 WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
-IFSMS <- do.call("rbind", lapply(paste0("C:/Users/2395804/PhD R code/Scopus-Web-Of-Science-Merger_Thesis_VG/InputData/IFSMS/",
+IFSMS <- do.call("rbind", lapply(paste0(ifsms.path,
                                             files), read.csv, header = TRUE, stringsAsFactors = FALSE))
 
 # Removing every year after 2019
