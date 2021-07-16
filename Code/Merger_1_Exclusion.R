@@ -275,8 +275,8 @@ WebOfScienceReducedDatasetAUCor$AU <- gsub(",",";", WebOfScienceReducedDatasetAU
 # Correction to the Journal can be applied at this stage. This can be done in Notepad++, Excel etc.
 # The Source generated in Scopus is use to correct the one in WoS
 # The \& symbol present in the source from Web of science must be corrected as well
-#CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", header = TRUE)
-#CorrectionSource <- as.data.frame(CorrectionSource)
+CorrectionSource <- read.csv("CorrectionLists/SourceCorrected.txt", sep = "\t", header = TRUE)
+CorrectionSource <- as.data.frame(CorrectionSource)
 
 WebOfScienceReducedDatasetAUCor$SOCorrected <- gsr(as.character(WebOfScienceReducedDatasetAUCor$SO), as.character(CorrectionSource$raw.x), as.character(CorrectionSource$raw.y))
 WebOfScienceReducedDatasetAUSOCor <- WebOfScienceReducedDatasetAUCor %>%

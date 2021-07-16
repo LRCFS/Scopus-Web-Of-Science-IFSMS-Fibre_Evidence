@@ -58,6 +58,14 @@ number2 <- 28   # target number of keywords appearing in the keyword figure for 
 maximum <- 57  # maximum number of keywords appearing in the keyword figure
 maximum2 <- 30  # maximum number of keywords appearing in the keyword figure
 
+
+#############################################################
+#####           Source Title Figures Range set          #####
+#############################################################
+# the number of keywords (top most frequent) appearing in the figure
+numberTitle <- 15   # target number of keywords appearing in the keyword figure for MergeDataset
+numberTitleMax <- 18   # target number of keywords appearing in the keyword figure for IFSMS
+
 #############################################################
 #####                       Codes                       #####
 #############################################################
