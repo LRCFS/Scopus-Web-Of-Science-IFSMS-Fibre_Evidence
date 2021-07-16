@@ -15,7 +15,7 @@ IFSMS <- read.csv(paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep="\t", head
 
 # replace all empty in DE with NA 
 MergerOriginalData$AK[MergerOriginalData$AK==""]<-NA
-IFSMS$Author.Keywords[IFSMS$Author.Keywords==""]<-NA
+IFSMS$AKeywords[IFSMS$AKeywords==""]<-NA
 
 ### information about reference without author'd keywords, before removing them
 # Number of references with no keywords provided by the authors (AK)
@@ -25,10 +25,10 @@ NoAK <- MergerOriginalData[is.na(MergerOriginalData$AK),]
 # Type of document in NoAK
 CountDT <- data.frame(table(NoAK$DT, exclude = ""));CountDT
 
-# Number of references with no keywords provided by the authors (Author.Keywords)
-sum(is.na(IFSMS$Author.Keywords))
-# dataframe with references with no Author.Keywords
-IFSMSNoAK <- IFSMS[is.na(IFSMS$Author.Keywords),]
+# Number of references with no keywords provided by the authors (AKeywords)
+sum(is.na(IFSMS$AKeywords))
+# dataframe with references with no AKeywords
+IFSMSNoAK <- IFSMS[is.na(IFSMS$AKeywords),]
 # Type of document in IFSMSNoAK
 IFSMSCountDT <- data.frame(table(IFSMSNoAK$Document.Type, exclude = ""));IFSMSCountDT
 
@@ -37,9 +37,9 @@ rm(CountDT)
 rm(IFSMSNoAK)
 rm(IFSMSCountDT)
 
-# remove entry with Na in column AK and Author.Keywords
+# remove entry with Na in column AK and AKeywords
 MergerOriginalData <- MergerOriginalData %>% drop_na(AK)
-IFSMS <- IFSMS %>% drop_na(Author.Keywords)
+IFSMS <- IFSMS %>% drop_na(AKeywords)
 
 #############################################################
 #####                  Data cleansing                   #####
@@ -83,9 +83,9 @@ MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$
 #####             IFSMS           #####
 #######################################
 
-#Split Column "Author.Keywords" in row by the separator ";", remove leading white space to generate list
+#Split Column "AKeywords" in row by the separator ";", remove leading white space to generate list
 IFSMSKeywordList <- IFSMS %>% 
-  mutate(AK = strsplit(as.character(Author.Keywords), ";")) %>% 
+  mutate(AK = strsplit(as.character(AKeywords), ";")) %>% 
   unnest(AK) %>%
   mutate_if(is.character, str_trim)
 

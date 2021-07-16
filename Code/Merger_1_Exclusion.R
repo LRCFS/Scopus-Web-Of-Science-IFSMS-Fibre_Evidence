@@ -44,7 +44,7 @@ WebofScience <- convert2df(Wos,dbsource = "isi",format = "bibtex")
 IFSMS <- ldply(IFSMSfiles, read_csv)
 
 names(IFSMS)[5] <- c("Source.title")
-names(IFSMS)[17] <- c("Author.Keywords")
+names(IFSMS)[17] <- c("AKeywords")
 names(IFSMS)[20] <- c("Document.Type")
 
 # Removing every year after 2019
@@ -235,11 +235,11 @@ names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="ID"] <- "I
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="DE"] <- "DEW"
 names(WebOfScienceReducedDataset)[names(WebOfScienceReducedDataset)=="C1"] <- "C1W"
 
-#############################
-##### Author correction ##### 
-#############################
+##############################
+##### Authors correction ##### 
+##############################
 
-# # Split Column "AU" with the separator ";" and place it in WebOfScienceReducedDatasetExtended
+# Split Column "AU" with the separator ";" and place it in WebOfScienceReducedDatasetExtended
 WebOfScienceReducedDatasetExtended <- WebOfScienceReducedDataset %>% 
   mutate(Authors = strsplit(as.character(AU), ";"))%>% 
   unnest(Authors) %>%
@@ -308,12 +308,10 @@ rm(WebOfScienceReducedDatasetExtended)
 ###############################
 #####       IFSMS         #####
 ###############################
-# Rename some of the columns to remove special characters or encoding
-colnames(IFSMS)[colnames(IFSMS)=="Author.s..ID"] <- "AuthorID"
 
 # select the column of interest
 IFSMS <- IFSMS %>%
-  select(Authors, Title, Year, Author.Keywords, Source.title, DOI, Document.Type, Link, Coder)
+  select(Authors, Title, Year, AKeywords, Source.title, DOI, Document.Type, Link, Coder)
 
 # remove duplicate within each individual IFSMS reports
 IFSMS <- IFSMS %>%
@@ -330,10 +328,44 @@ IFSMS$DTCorrected <- gsr(as.character(IFSMS$Document.Type),as.character(Document
 
 # summarise the corrected information
 IFSMS <- IFSMS %>%
-  select(Authors, Title, Year, Author.Keywords, Source.title, DOI, DTCorrected, Link, Coder)
+  select(Authors, Title, Year, AKeywords, Source.title, DOI, DTCorrected, Link, Coder)
 
 # rename DTCorrected column
 names(IFSMS)[names(IFSMS)=="DTCorrected"] <- "Document.Type"
+
+############################
+##### Authors correction ### 
+############################
+
+# Upper case "Authors" in "IFSMS"
+IFSMS$Authors <- toupper(IFSMS$Authors)
+
+# in column Authors, replace "," by ";" and remove all the "."
+IFSMS$Authors <- gsub(",",";",IFSMS$Authors)
+IFSMS$Authors <- gsub("\\.","", IFSMS$Authors)
+
+# Split Column "Authors" with the separator ";" and place it in IFSMSDatasetExtended
+IFSMSDatasetExtended <- IFSMS %>% 
+  mutate(Authors = strsplit(as.character(Authors), ";"))%>% 
+  unnest(Authors) %>%
+  mutate_if(is.character, str_trim)
+
+# read the corrected list of "Authors" and combine it to the original list
+# Correction apply to Scopus and Web of Science was combined
+IFSMSDatasetExtended$AuthorsCor <- gsr(IFSMSDatasetExtended$Authors,CorrectionAuthor$name, as.character(CorrectionAuthor$Name.corrected))
+
+# generate collapse corrected list of "Authors" by year and title from Authors with multiple papers list
+IFSMSDatasetExtendedAUCor <- IFSMSDatasetExtended %>%
+  select(Year,Title, AuthorsCor,AKeywords,Source.title,DOI,Document.Type,Link,Coder) %>%
+  dplyr::group_by(Year,Title,AKeywords,Source.title,DOI,Document.Type,Link,Coder) %>%
+  dplyr::summarise(Authors = paste(AuthorsCor, collapse = ";")) %>%
+  ungroup()
+
+# Apply some correction to previous list
+IFSMSDatasetExtendedAUCor$Authors <- gsub(", JR"," JR",IFSMSDatasetExtendedAUCor$Authors)
+IFSMSDatasetExtendedAUCor$Authors <- gsub(", II","",IFSMSDatasetExtendedAUCor$Authors)
+IFSMSDatasetExtendedAUCor$Authors <- gsub(", III, ",", ",IFSMSDatasetExtendedAUCor$Authors)
+IFSMSDatasetExtendedAUCor$Authors <- gsub(",",";", IFSMSDatasetExtendedAUCor$Authors)
 
 #################################################################
 #####        To combine Scopus and WOS datasets into one    #####
