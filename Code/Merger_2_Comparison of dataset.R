@@ -87,7 +87,7 @@ while (a>numberTitleMax) {
   a <- as.numeric(nrow(TopJournalsWoS))
 }
 
- # in both Scopus and WoS
+# in both Scopus and WoS
 TopJournalsScopusWoS <- top_n(JournalTotal, numberTitle, Count)
 a <- as.numeric(nrow(TopJournalsScopusWoS))
 b <- numberTitle
@@ -98,10 +98,9 @@ while (a>numberTitleMax) {
   a <- as.numeric(nrow(TopJournalsScopusWoS))
 }
 
-
 # combine all the results
 # Scopus and Wos only
-TopJounalScopusOrWosOnly <-rbind(TopJournalsScop,TopJournalsWoS)
+TopJounalScopusOrWosOnly <- rbind(TopJournalsScop,TopJournalsWoS)
 # including Scopus Wos common
 TopJounal <-rbind(TopJounalScopusOrWosOnly,TopJournalsScopusWoS)
 
@@ -152,10 +151,7 @@ TopJounal$Total <- rowSums(TopJounal[ , c(2:4)], na.rm=TRUE)
 # forOverlapPlotTemp1 <- merge(TopJournalsScopexclusive, TopJournalsDup, by="Title", all = T)
 # forOverlapPlotTemp2 <- merge(forOverlapPlotTemp1, TopJournalsWoSpexclusive, by="Title", all = T)
 # forOverlapPlotTemp2[is.na(forOverlapPlotTemp2)] <- 0
- names(TopJounal) <- c("Journals", "ScopWos","WebofScienceExclusive", "ScopusExclusive", "Total")
-
-
-
+names(TopJounal) <- c("Journals", "ScopWos","WebofScienceExclusive", "ScopusExclusive", "Total")
 
 
 # Make some modification on the name of Journals that are too long (if needed)
@@ -177,7 +173,7 @@ plotoverlap = ggplot(forOverlapPlotTemp3, aes(x = reorder(Journals,-Total), y = 
   geom_col() + 
   coord_flip() + 
   labs(y= "Number of document", x="Journals")+
-  scale_fill_manual(labels = c('Scopus only', 'Scopus & WOS', 'WOS only'), values = brewer.pal(4, 'Blues')[1:3]) + 
+  scale_fill_manual(labels = c('Scopus only', 'Scopus & WOS', 'WOS only'), values = brewer.pal(3, 'Blues')[1:3]) + 
   #  ggtitle('Title') + 
   theme_bw()+
   theme(panel.grid.major.y = element_blank(),
