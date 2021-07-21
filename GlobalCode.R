@@ -52,11 +52,11 @@ dir.create(file.path(Results.dir),recursive = TRUE) # will create folder if not 
 #####           Keyword Figures Range set               #####
 #############################################################
 # the number of keywords (top most frequent) appearing in the figure
-number <- 50   # target number of keywords appearing in the keyword figure for MergeDataset
-number2 <- 28   # target number of keywords appearing in the keyword figure for IFSMS
+numberKeywordDataset <- 69   # target number of keywords appearing in the keyword figure for combined dataset
+numberKeywordIfsms <- 28   # target number of keywords appearing in the keyword figure for IFSMS
 
-maximum <- 57  # maximum number of keywords appearing in the keyword figure
-maximum2 <- 30  # maximum number of keywords appearing in the keyword figure
+numberMaxKeywordDataset <- 70  # maximum number of keywords appearing in the keyword figure
+numberMaxKeywordIfsms <- 30  # maximum number of keywords appearing in the keyword figure
 
 
 #############################################################
