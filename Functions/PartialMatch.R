@@ -22,9 +22,9 @@ signature=function(x){
   return(sig)
 }
 
-number = 4.0
+FunctionPartialMatchNumber = 4.0
 
-partialMatch=function(x,y,levDist = number){
+partialMatch=function(x,y,levDist = FunctionPartialMatchNumber){
   xx=data.frame(sig=sapply(x, signature),row.names=NULL)
   yy=data.frame(sig=sapply(y, signature),row.names=NULL)
   xx$raw=x

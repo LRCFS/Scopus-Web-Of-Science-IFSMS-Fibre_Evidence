@@ -131,7 +131,7 @@ MergeDataKeywordYearCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Y
 MergeDataKeywordTotalCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Rtitle=MergeDataKeywordListTemp2$KeywordsCorrected), FUN=length)
 # MergeDataKeywordListTemp5 <- aggregate(MergeDataKeywordListTemp2, by=list(MergeDataKeywordListTemp2$Year), FUN=length)
 
-Count <- number
+Count <- numberKeywordDataset
 
 # narrowing range for plot
 DatasetKeywordNarrowRangeGraph <- top_n(MergeDataKeywordTotalCount, Count)
@@ -139,7 +139,7 @@ DatasetKeywordNarrowRangeGraph <- top_n(MergeDataKeywordTotalCount, Count)
 # count the number of rows, hence the number of keywords in figure
 a <- nrow(DatasetKeywordNarrowRangeGraph)
 
-while (a>maximum) {
+while (a>numberMaxKeywordDataset) {
   Count <- Count-1
   DatasetKeywordNarrowRangeGraph <- top_n(MergeDataKeywordTotalCount, Count)
   a <- nrow(DatasetKeywordNarrowRangeGraph)
@@ -149,7 +149,7 @@ SubsetKeywordNarrowRangeGraph <-subset(MergeDataKeywordYearCount,Rtitle %in% Dat
 #Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
 SubsetKeywordNarrowRangeGraph$x <- as.numeric(SubsetKeywordNarrowRangeGraph$x)
 
-#####______________Graph for keywords with a frequency >=5 ______________##########
+#####______________Graph for the top keywords ______________##########
 # Create a new variable from incidence
 SubsetKeywordNarrowRangeGraph$Incidenceweight <- cut(SubsetKeywordNarrowRangeGraph$x,
                                                      breaks = c(-1,0,1,2,5,10,max(SubsetKeywordNarrowRangeGraph$x,na.rm=T)),
@@ -225,7 +225,7 @@ IFSMSKeywordYearCount <- aggregate(IFSMSKeywordListTemp2$Year, by=list(Year=IFSM
 IFSMSKeywordTotalCount <- aggregate(IFSMSKeywordListTemp2$Year, by=list(Rtitle=IFSMSKeywordListTemp2$KeywordsCorrected), FUN=length)
 # IFSMSKeywordListTemp5 <- aggregate(IFSMSKeywordListTemp2, by=list(IFSMSKeywordListTemp2$Year), FUN=length)
 
-Count <- number2
+Count <- numberKeywordIfsms
 
 # narrowing range for plot
 IFSMSDatasetKeywordNarrowRangeGraph <- top_n(IFSMSKeywordTotalCount, Count)
@@ -233,7 +233,7 @@ IFSMSDatasetKeywordNarrowRangeGraph <- top_n(IFSMSKeywordTotalCount, Count)
 # count the number of rows, hence the number of keywords in figure
 b <- nrow(IFSMSDatasetKeywordNarrowRangeGraph)
 
-while (b>maximum2) {
+while (b>numberMaxKeywordIfsms ) {
   Count <- Count-1
   IFSMSDatasetKeywordNarrowRangeGraph <- top_n(IFSMSKeywordTotalCount, Count)
   b <- nrow(IFSMSDatasetKeywordNarrowRangeGraph)
