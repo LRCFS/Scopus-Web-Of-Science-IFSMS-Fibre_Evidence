@@ -125,15 +125,16 @@ names(AuthorFirstAppearance) <- c("Author","Year")
 # New authors
 YearNewAuthor <- aggregate(AuthorFirstAppearance$Author,list(AuthorFirstAppearance$Year), FUN=length)
 # Add years in which no authors published
-DFfilledNewauthors <- YearNewAuthor %>%
-  complete(Group.1 = 1967:2019,
-           fill = list(Freq = 0)) %>%
-  as.data.frame()
-YearNewAuthor <- DFfilledNewauthors
+#DFfilledNewauthors <- YearNewAuthor %>%
+  #complete(Group.1 = 1967:2019,
+           #fill = list(Freq = 0)) %>%
+  #as.data.frame()
+#YearNewAuthor <- DFfilledNewauthors
 names(YearNewAuthor) <- c("Year","New Authors")
 
 YearOutput <- Reduce(merge, list(NumberAuthorYear,PublicationYear,YearNewAuthor))
 YearTableOutput <- merge(YearOutput, YearNewAuthorSinglePaper, by="Year", all = T)
+YearTableOutput <- na.omit(YearTableOutput) # Remove Row with NA (years with no authors publications)
 YearTableOutput$Ratio <- round(YearOutput$Author/YearOutput$Publications, 1)
 YearTableOutput$`New Author Percentage` <- round(YearOutput$`New Authors`/YearOutput$Author*100, 1)
 
@@ -144,8 +145,6 @@ YearTableOutput[is.na(YearTableOutput)] <- 0
 #write.table(YearTableOutput, file = "Authors_table.csv", sep = ",", row.names = F)
 
 # GRAPH
-Meanauthors <- mean(YearTableOutput$Ratio)
-
 TotalAuthorsplot <- ggplot(YearTableOutput, aes(x=Year, y=Ratio))+
   geom_line()+ 
   geom_point()+
@@ -156,9 +155,9 @@ TotalAuthorsplot <- ggplot(YearTableOutput, aes(x=Year, y=Ratio))+
   theme_classic(base_family = "Arial", base_size = 12)+
   theme(legend.title = element_blank(),
         legend.position = "bottom",
-        legend.background = element_rect(fill="grey95",size=1, linetype="solid", colour="grey80"))+
-  geom_hline(yintercept=Meanauthors, linetype="dashed", color = "blue", size=0.5)
+        legend.background = element_rect(fill="grey95",size=1, linetype="solid", colour="grey80"))
 show(TotalAuthorsplot)
+
 #ggplotly(TotalAuthorsplot)
 ggsave("Average_Author_Per_Year_ScopWoS.png", TotalAuthorsplot, width = 8, height = 3.5, units = "in", dpi=200, path = "Results")
 
