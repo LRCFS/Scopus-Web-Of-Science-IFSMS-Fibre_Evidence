@@ -413,6 +413,8 @@ names(CombinedDataset)[names(CombinedDataset)=="DTScopus"] <- "DT"
 
 
 rm(CombinedDatasetExtended)
+
+
 #######################################################################
 #####                       EXCLUSION LIST                        #####
 #######################################################################
@@ -661,11 +663,11 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-write.table(WebOfScienceReducedDatasetAUSODTcor, file = paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep = "\t", row.names = F)
-write.table(ScopusReducedDatasetTIAUC1SIDSSODTcor, file = paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep = "\t", row.names = F)
-write.table(MergerOriginalData, file = paste0(Results.dir,"Result_Merger_Dataset.txt"), sep = "\t", row.names = F)
-write.table(CombinedDataset, file = paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep = "\t", row.names = F)
-write.table(IFSMS, file = paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep = "\t", row.names = F)
+#write.table(WebOfScienceReducedDatasetAUSODTcor, file = paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep = "\t", row.names = F)
+#write.table(ScopusReducedDatasetTIAUC1SIDSSODTcor, file = paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep = "\t", row.names = F)
+#write.table(MergerOriginalData, file = paste0(Results.dir,"Result_Merger_Dataset.txt"), sep = "\t", row.names = F)
+#write.table(CombinedDataset, file = paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep = "\t", row.names = F)
+#write.table(IFSMS, file = paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep = "\t", row.names = F)
 
  
 # #############################################################
@@ -789,3 +791,4 @@ write.table(IFSMS, file = paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep = 
 # rownames(Table)[rownames(Table)=="3"] <- "Shared by both databases"
 # 
 # write.table(Table, file = "Result_Comparison Scop-WoS_2021.csv", quote = F, sep = ",", row.names = F)
+

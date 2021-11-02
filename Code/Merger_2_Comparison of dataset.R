@@ -9,8 +9,8 @@
 MergerOriginalData <- read.csv(paste0(Results.dir,"Result_Merger_Dataset.txt"), sep="\t", header=TRUE)
 CombinedDataset <- read.csv(paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep="\t", header=TRUE)
 IFSMS <- read.csv(paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep="\t", header=TRUE)
-#ScopusReducedDatasetTIAUC1SIDSSODTcor <- read.csv(paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep="\t", header=TRUE)
-#WebOfScienceReducedDatasetAUSODTcor <- read.csv(paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep="\t", header=TRUE)
+ScopusReducedDatasetTIAUC1SIDSSODTcor <- read.csv(paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep="\t", header=TRUE)
+WebOfScienceReducedDatasetAUSODTcor <- read.csv(paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep="\t", header=TRUE)
 
 
 
@@ -64,7 +64,6 @@ JournalWoSAll <- left_join(JournalsCombinedDataset,JournalWoS)
 JournalTotal <- left_join(JournalWoSAll,JournalsScop)
 
 # select the most counted journals in either Scopus, WoS or in both datasets (using numberTitle in Global)
-
 # for Scopus
 TopJournalsScop <- top_n(JournalTotal, numberTitle, CountScopus) 
 a <- as.numeric(nrow(TopJournalsScop))
@@ -100,15 +99,15 @@ while (a>numberTitleMax) {
 
 # combine all the results
 # Scopus and Wos only
-TopJounalScopusOrWosOnly <- rbind(TopJournalsScop,TopJournalsWoS)
+TopJournalScopusOrWosOnly <- rbind(TopJournalsScop,TopJournalsWoS)
 # including Scopus Wos common
-TopJounal <-rbind(TopJounalScopusOrWosOnly,TopJournalsScopusWoS)
+TopJournal <-rbind(TopJournalScopusOrWosOnly,TopJournalsScopusWoS)
 
-TopJounal <- TopJounal %>%
+TopJournal <- TopJournal %>%
   distinct()
 
 # add a column total count per journal
-TopJounal$Total <- rowSums(TopJounal[ , c(2:4)], na.rm=TRUE)
+TopJournal$Total <- rowSums(TopJournal[ , c(2:4)], na.rm=TRUE)
 
 
 # # Count the number of time each Journals appear in ScopWosnotexclusive, after corrections
@@ -151,38 +150,35 @@ TopJounal$Total <- rowSums(TopJounal[ , c(2:4)], na.rm=TRUE)
 # forOverlapPlotTemp1 <- merge(TopJournalsScopexclusive, TopJournalsDup, by="Title", all = T)
 # forOverlapPlotTemp2 <- merge(forOverlapPlotTemp1, TopJournalsWoSpexclusive, by="Title", all = T)
 # forOverlapPlotTemp2[is.na(forOverlapPlotTemp2)] <- 0
-names(TopJounal) <- c("Journals", "ScopWos","WebofScienceExclusive", "ScopusExclusive", "Total")
+names(TopJournal) <- c("Journals", "ScopWos","WebofScienceExclusive", "ScopusExclusive", "Total")
 
+# Select top 12 journal in TOPJournal$Total
+TopJournal <- top_n(TopJournal, 12, Total)
 
 # Make some modification on the name of Journals that are too long (if needed)
-TopJounal$Journals <- gsub("PROCEEDINGS OF SPIE - THE INTERNATIONAL SOCIETY FOR OPTICAL ENGINEERING","PROC. SPIE - INT. SOC. OPT. ENG.", TopJounal$Journals)
-TopJounal$Journals <- gsub("ITCANDDC: 5TH INTERNATIONAL TEXTILE, CLOTHING AND DESIGN CONFERENCE 2010, BOOK OF PROCEEDINGS: MAGIC WORLD OF TEXTILES",
-                                    "5TH ITCANDDC 2010", TopJounal$Journals)
-TopJounal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY B-ANALYTICAL TECHNOLOGIES IN THE BIOMEDICAL AND LIFE SCIENCES","JOURNAL OF CHROMATOGRAPHY B", TopJounal$Journals)
-
-
-
+TopJournal$Journals <- gsub("PROCEEDINGS OF SPIE - THE INTERNATIONAL SOCIETY FOR OPTICAL ENGINEERING","PROC. SPIE - INT. SOC. OPT. ENG.", TopJournal$Journals)
+TopJournal$Journals <- gsub("ITCANDDC: 5TH INTERNATIONAL TEXTILE, CLOTHING AND DESIGN CONFERENCE 2010, BOOK OF PROCEEDINGS: MAGIC WORLD OF TEXTILES",
+                                    "5TH ITCANDDC 2010", TopJournal$Journals)
+TopJournal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY B-ANALYTICAL TECHNOLOGIES IN THE BIOMEDICAL AND LIFE SCIENCES","JOURNAL OF CHROMATOGRAPHY B", TopJournal$Journals)
 
 
 # take difference of reference counts
 # and make long
-forOverlapPlotTemp3 <- gather(TopJounal, Database, Frequency, ScopWos:ScopusExclusive, factor_key=TRUE)
+forOverlapPlotTemp3 <- gather(TopJournal, Database, Frequency, ScopWos:ScopusExclusive, factor_key=TRUE)
 
 # plot as stacked barplot
 plotoverlap = ggplot(forOverlapPlotTemp3, aes(x = reorder(Journals,-Total), y = Frequency, fill = Database)) + 
-  geom_col() + 
+  geom_bar(stat = "identity", position = position_dodge(), show.legend = FALSE) + 
   coord_flip() + 
   labs(y= "Number of document", x="Journals")+
   scale_fill_manual(labels = c('Scopus only', 'Scopus & WOS', 'WOS only'), values = brewer.pal(3, 'Blues')[1:3]) + 
-  #  ggtitle('Title') + 
-  theme_bw()+
+  #geom_text(aes(label=Frequency), position=position_dodge(width=0.8),vjust=0.5)+
+  theme_bw()+ 
   theme(panel.grid.major.y = element_blank(),
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 16),
         axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16),
-        legend.text=element_text(size=16),
-        legend.title=element_blank(),
+        axis.title.y = element_text(size = 16)
   )
 show(plotoverlap)
 ggsave("Journals.png", plotoverlap, width = unit(16.5, 'in'), height = unit(15, 'in'), dpi=300, path = "Results")
@@ -314,8 +310,8 @@ toplot <- data.frame(rbind(yearScopus,yearWoS,yearIFSMS))
 # GRAPH
 plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
   geom_line(aes(linetype=Coder), size=0.8)+
-  scale_linetype_manual(values=c("solid","solid", "dashed"))+
-  scale_color_manual(values=c("black", "darkblue", "grey50"))+
+  scale_linetype_manual(values=c("solid","solid", "solid"))+
+  scale_color_manual(values=c("gray65", "black", "dodgerblue3"))+
   xlab('Year') +
   ylab('Documents') +
   scale_x_continuous(breaks=c(1955,1960,1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+

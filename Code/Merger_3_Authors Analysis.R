@@ -158,7 +158,7 @@ TotalAuthorsplot <- ggplot(YearTableOutput, aes(x=Year, y=Ratio))+
         legend.background = element_rect(fill="grey95",size=1, linetype="solid", colour="grey80"))
 show(TotalAuthorsplot)
 
-#ggplotly(TotalAuthorsplot)
+ggplotly(TotalAuthorsplot)
 ggsave("Average_Author_Per_Year_ScopWoS.png", TotalAuthorsplot, width = 8, height = 3.5, units = "in", dpi=200, path = "Results")
 
 
