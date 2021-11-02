@@ -167,18 +167,18 @@ TopJournal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY B-ANALYTICAL TECHNOLOGIES
 forOverlapPlotTemp3 <- gather(TopJournal, Database, Frequency, ScopWos:ScopusExclusive, factor_key=TRUE)
 
 # plot as stacked barplot
-plotoverlap = ggplot(forOverlapPlotTemp3, aes(x = reorder(Journals,-Total), y = Frequency, fill = Database)) + 
-  geom_bar(stat = "identity", position = position_dodge(), show.legend = FALSE) + 
-  coord_flip() + 
-  labs(y= "Number of document", x="Journals")+
-  scale_fill_manual(labels = c('Scopus only', 'Scopus & WOS', 'WOS only'), values = brewer.pal(3, 'Blues')[1:3]) + 
-  #geom_text(aes(label=Frequency), position=position_dodge(width=0.8),vjust=0.5)+
-  theme_bw()+ 
+plotoverlap <- ggplot(forOverlapPlotTemp3, aes(x = reorder(Journals,-Total), y = Frequency, fill = Database)) + 
+  geom_bar(position = "dodge",
+           stat = "identity",
+           width =1) + 
+  coord_flip() +
+  geom_text(aes(label = Frequency,y = 0),position = position_dodge(1),hjust = 0, colour="white") +
+  labs(y= "Number of documents", x="Journals")+
+  scale_fill_manual(labels = c('Scopus only', 'Scopus and WOS', 'WOS only'), values = brewer.pal(3, 'Paired')[1:3]) + 
+  theme_bw( base_size = 16)+ 
   theme(panel.grid.major.y = element_blank(),
-        axis.text.x = element_text(size = 18),
-        axis.text.y = element_text(size = 16),
-        axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16)
+        legend.position="bottom",
+        legend.title = element_blank()
   )
 show(plotoverlap)
 ggsave("Journals.png", plotoverlap, width = unit(16.5, 'in'), height = unit(15, 'in'), dpi=300, path = "Results")
