@@ -168,18 +168,20 @@ forOverlapPlotTemp3 <- gather(TopJournal, Database, Frequency, ScopWos:ScopusExc
 
 # plot as stacked barplot
 plotoverlap <- ggplot(forOverlapPlotTemp3, aes(x = reorder(Journals,-Total), y = Frequency, fill = Database)) + 
-  geom_bar(position = "dodge",
+  geom_bar(position = position_dodge(0.8),
            stat = "identity",
-           width =1) + 
+           width =0.8) + 
   coord_flip() +
-  geom_text(aes(label = Frequency,y = 0),position = position_dodge(1),hjust = 0, colour="white") +
-  labs(y= "Number of documents", x="Journals")+
+  geom_text(aes(label = Frequency,y = Frequency+0.5), position = position_dodge(0.8), hjust = 0, colour="black", size=6) +
+  labs(y= "Number of documents", x="")+
   scale_fill_manual(labels = c('Scopus only', 'Scopus and WOS', 'WOS only'), values = brewer.pal(3, 'Paired')[1:3]) + 
-  theme_bw( base_size = 16)+ 
+  theme_bw(base_size = 20)+
   theme(panel.grid.major.y = element_blank(),
         legend.position="bottom",
-        legend.title = element_blank()
+        legend.title = element_blank(),
+        legend.text = element_text(size=20)
   )
+
 show(plotoverlap)
 ggsave("Journals.png", plotoverlap, width = unit(16.5, 'in'), height = unit(15, 'in'), dpi=300, path = "Results")
 
