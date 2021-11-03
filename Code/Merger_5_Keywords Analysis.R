@@ -95,7 +95,7 @@ for (i in 1:nrow(KeywordsCorrected)) { # for-loop over rows
 # for full keywords
 # MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$AKeywords),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$KeywordsCorrected))
 # or for use of acronyms or long keywords
-MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$AKeywords),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$Acronyms))
+MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$AKeywords),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$Simplified))
 
 #######################################
 #####             IFSMS           #####
@@ -118,7 +118,7 @@ IFSMSKeywordAK <- IFSMSKeywordListAK %>%
 # for full keywords
 # IFSMSKeywordList$KeywordsCorrected <- gsr(as.character(IFSMSKeywordList$AK),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$KeywordsCorrected))
 # or for use of acronyms or long keywords
-IFSMSKeywordList$KeywordsCorrected <- gsr(as.character(IFSMSKeywordList$AK),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$Acronyms))
+IFSMSKeywordList$KeywordsCorrected <- gsr(as.character(IFSMSKeywordList$AK),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$Simplified))
 
 #############################################################
 #####               Data analysis - Keywords            #####
@@ -151,6 +151,7 @@ sum(is.na(MergeDataKeywordListTemp2$KeywordsCorrected))
 
 MergeDataKeywordYearCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Year=MergeDataKeywordListTemp2$Year, Rtitle=MergeDataKeywordListTemp2$KeywordsCorrected), FUN=length)
 MergeDataKeywordTotalCount <- aggregate(MergeDataKeywordListTemp2$Year, by=list(Rtitle=MergeDataKeywordListTemp2$KeywordsCorrected), FUN=length)
+
 # MergeDataKeywordListTemp5 <- aggregate(MergeDataKeywordListTemp2, by=list(MergeDataKeywordListTemp2$Year), FUN=length)
 
 Count <- numberKeywordDataset
@@ -220,7 +221,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
 show(p)
 
 #ggplotly(p)
-ggsave("KeywordTrend_ScopWoS.png", p, width = 13, height = 20, units = "in", dpi=500, path = "Results")
+ggsave("KeywordTrend_ScopWoS.png", p, width = 14, height = 19, units = "in", dpi=600, path = "Results")
 
 #######################################
 #####             IFSMS           #####
