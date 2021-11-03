@@ -73,6 +73,24 @@ names(MergeKeywordListCount) <- c("Keywords","Count")
 KeywordsCorrected <- read.csv("CorrectionLists/KeywordsCorrection.txt", sep="\t", header=TRUE)
 KeywordsCorrected <- as.data.frame(KeywordsCorrected)
 
+KeywordsCorrected$Simplified <- gsub("\\s*\\([^\\)]+\\)\\s*$","",as.character(KeywordsCorrected$Acronyms))
+
+# replace blanck with "NA"
+KeywordsCorrected$Simplified[KeywordsCorrected$Simplified==""]<-0
+
+
+for (i in 1:nrow(KeywordsCorrected)) { # for-loop over rows
+  if (is.na(KeywordsCorrected[i,4])) {
+    i <- i+1
+  }
+  else {
+  m <- KeywordsCorrected[i,4]
+    if (m == "0") {
+      KeywordsCorrected[i,4] <- KeywordsCorrected[i,3]
+    }
+  }
+}
+
 
 # for full keywords
 # MergeDataKeywordList$KeywordsCorrected <- gsr(as.character(MergeDataKeywordList$AKeywords),as.character(KeywordsCorrected$Keywords),as.character(KeywordsCorrected$KeywordsCorrected))
