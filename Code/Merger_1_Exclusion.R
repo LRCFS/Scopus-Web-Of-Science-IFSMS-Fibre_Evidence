@@ -12,8 +12,8 @@
 #####                  Global variable                  #####
 #############################################################
 
-Wos.path = 'InputData/Wos/Jul2021/'    #Web of Science folder
-Sco.path = 'InputData/Scopus/Jul2021/' #Scopus folder
+Wos.path = 'InputData/Wos/Nov2021/'    #Web of Science folder
+Sco.path = 'InputData/Scopus/Nov2021/' #Scopus folder
 ifsms.path = 'InputData/IFSMS/' #IFSMS folder
 
 #############################################################
@@ -47,9 +47,9 @@ names(IFSMS)[5] <- c("Source.title")
 names(IFSMS)[17] <- c("AKeywords")
 names(IFSMS)[20] <- c("Document.Type")
 
-# Removing every year after 2019
-Scopus <- filter(Scopus, PY<2020)
-WebofScience <- filter(WebofScience, PY<2020)
+# Removing every year after 2020
+Scopus <- filter(Scopus, PY<2021)
+WebofScience <- filter(WebofScience, PY<2021)
 
 ##############################################
 #####     Merging of the two datasets    #####
@@ -663,11 +663,11 @@ show(Verifications)
 #####                     EXPORT FINAL DATA                       #####
 #######################################################################
 
-#write.table(WebOfScienceReducedDatasetAUSODTcor, file = paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep = "\t", row.names = F)
-#write.table(ScopusReducedDatasetTIAUC1SIDSSODTcor, file = paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep = "\t", row.names = F)
-#write.table(MergerOriginalData, file = paste0(Results.dir,"Result_Merger_Dataset.txt"), sep = "\t", row.names = F)
-#write.table(CombinedDataset, file = paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep = "\t", row.names = F)
-#write.table(IFSMS, file = paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep = "\t", row.names = F)
+write.table(WebOfScienceReducedDatasetAUSODTcor, file = paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep = "\t", row.names = F)
+write.table(ScopusReducedDatasetTIAUC1SIDSSODTcor, file = paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep = "\t", row.names = F)
+write.table(MergerOriginalData, file = paste0(Results.dir,"Result_Merger_Dataset.txt"), sep = "\t", row.names = F)
+write.table(CombinedDataset, file = paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep = "\t", row.names = F)
+write.table(IFSMS, file = paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep = "\t", row.names = F)
 
  
 # #############################################################

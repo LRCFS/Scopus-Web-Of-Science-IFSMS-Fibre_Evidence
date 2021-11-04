@@ -17,7 +17,7 @@ IFSMS <- read.csv(paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep="\t", head
 MergerOriginalData$AK[MergerOriginalData$AK==""]<-NA
 IFSMS$AKeywords[IFSMS$AKeywords==""]<-NA
 
-### information about reference without author'd keywords, before removing them
+### information about reference without author's keywords, before removing them
 # Number of references with no keywords provided by the authors (AK)
 sum(is.na(MergerOriginalData$AK))
 # dataframe with references with no AK
@@ -72,6 +72,9 @@ names(MergeKeywordListCount) <- c("Keywords","Count")
 # The list of corrected Keywords from Sobreira et al. was added to correction of the top 100 keywords from MergeKeywordListCount
 KeywordsCorrected <- read.csv("CorrectionLists/KeywordsCorrection.txt", sep="\t", header=TRUE)
 KeywordsCorrected <- as.data.frame(KeywordsCorrected)
+KeywordsCorrected$Keywords <- as.character(KeywordsCorrected$Keywords)
+KeywordsCorrected$KeywordsCorrected <- as.character(KeywordsCorrected$KeywordsCorrected)
+KeywordsCorrected$Acronyms <- as.character(KeywordsCorrected$Acronyms)
 
 KeywordsCorrected$Simplified <- gsub("\\s*\\([^\\)]+\\)\\s*$","",as.character(KeywordsCorrected$Acronyms))
 
@@ -139,8 +142,8 @@ MergeDataKeywordListTemp1 <- MergeDataKeywordList  %>%
 names(MergeDataKeywordListTemp1) <- c("Year","Title","KeywordsCorrected")
 
 # Removing every year after 2019
-MergeDataKeywordListTemp1$Year <- as.numeric(as.character(MergeDataKeywordListTemp1$Year))
-MergeDataKeywordListTemp1 <- filter(MergeDataKeywordListTemp1, Year<2019)
+#MergeDataKeywordListTemp1$Year <- as.numeric(as.character(MergeDataKeywordListTemp1$Year))
+#MergeDataKeywordListTemp1 <- filter(MergeDataKeywordListTemp1, Year<2019)
 
 MergeDataKeywordListTemp2 <- MergeDataKeywordListTemp1[complete.cases(MergeDataKeywordListTemp1), ]
 sum(is.na(MergeDataKeywordListTemp2$KeywordsCorrected))
@@ -201,7 +204,7 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
   #  labs(x="",y="",title="Keywords found in fibre publication")+
   labs(x="Year",y="",title="")+
   scale_y_discrete(expand=c(0,0))+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
   scale_fill_manual(values=c("#08519C","#3182BD","#6BAED6","#9ECAE1","#C6DBEF","#EFF3FF"),na.value = "grey90")+
   #coord_fixed()+
   theme_grey(base_size=20)+

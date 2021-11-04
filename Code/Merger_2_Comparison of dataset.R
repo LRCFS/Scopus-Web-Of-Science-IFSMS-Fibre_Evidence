@@ -22,9 +22,9 @@ WebOfScienceReducedDatasetAUSODTcor <- read.csv(paste0(Results.dir,"Result_WebOf
 # In the previous dataset, the column Coder can be used to calculate the percentage of articles both present in Scopus and in WoS
 # A selection between CombinedDataset or MergerOriginalData must be done here and will be applied for the rest of the code
 # Scopus not exclusive = Web of science not exclusive
-ScopWosnotexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus,WebOfScience"|CombinedDataset$Coder == "WebOfScience,Scopus"|CombinedDataset$Coder == "Scopus,Scopus,WebOfScience"|CombinedDataset$Coder == "Scopus,WebOfScience,WebOfScience", ]
-Scopusexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus"|CombinedDataset$Coder == "Scopus,Scopus", ]
-WoSexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience", ]
+ScopWosnotexclusive <- MergerOriginalData[MergerOriginalData$Coder == "Scopus,WebOfScience"|MergerOriginalData$Coder == "WebOfScience,Scopus"|MergerOriginalData$Coder == "Scopus,Scopus,WebOfScience"|MergerOriginalData$Coder == "Scopus,WebOfScience,WebOfScience", ]
+Scopusexclusive <- MergerOriginalData[MergerOriginalData$Coder == "Scopus"|MergerOriginalData$Coder == "Scopus,Scopus", ]
+WoSexclusive <- MergerOriginalData[MergerOriginalData$Coder == "WebOfScience", ]
 
 #####______________Analysis______________##########
 # Count the number of references in each data.frame
@@ -44,10 +44,20 @@ Z <- ((countScopWosnotexclusive/Total) * 100); Z
 ##### Journals in Scopus and Web Of Science ##### 
 #################################################
 
+# Count the number of time each Journals appear in  Scopus
+JournalsScopus <- data.frame(table(ScopusReducedDatasetTIAUC1SIDSSODTcor$SO, exclude = ""))
+JournalsScopus <- data.frame(table(ScopusReducedDatasetTIAUC1SIDSSODTcor$SO, exclude = NA));JournalsScopus
+names(JournalsScopus) <- c("Journals", "CountScopus")
+
 # Count the number of time each Journals appear only in the Scopus output and not shared with WoS
 JournalsScop <- data.frame(table(Scopusexclusive$SO, exclude = ""))
 JournalsScop <- data.frame(table(Scopusexclusive$SO, exclude = NA));JournalsScop
 names(JournalsScop) <- c("Journals", "CountScopus")
+
+# Count the number of time each Journals appear in Web Of Science 
+JournalWoScience <- data.frame(table(WebOfScienceReducedDatasetAUSODTcor$SO, exclude = ""))
+JournalWoScience <- data.frame(table(WebOfScienceReducedDatasetAUSODTcor$SO, exclude = NA));JournalWoScience
+names(JournalWoScience) <- c("Journals", "CountWoS")
 
 # Count the number of time each Journals appear only in Web Of Science and not shared in Scopus
 JournalWoS <- data.frame(table(WoSexclusive$SO, exclude = ""))
@@ -55,8 +65,8 @@ JournalWoS <- data.frame(table(WoSexclusive$SO, exclude = NA));JournalWoS
 names(JournalWoS) <- c("Journals", "CountWoS")
 
 # Count the number of time each Journals appear with shared references between Scopus and WoS
-JournalsCombinedDataset <- data.frame(table(ScopWosnotexclusive$SO, exclude = ""))
-JournalsCombinedDataset <- data.frame(table(ScopWosnotexclusive$SO, exclude = NA));JournalsCombinedDataset
+JournalsCombinedDataset <- data.frame(table(MergerOriginalData$SO, exclude = ""))
+JournalsCombinedDataset <- data.frame(table(MergerOriginalData$SO, exclude = NA));JournalsCombinedDataset
 names(JournalsCombinedDataset) <- c("Journals", "Count")
 
 # this table combined the results
@@ -171,8 +181,8 @@ plotoverlap <- ggplot(forOverlapPlotTemp3, aes(x = reorder(Journals,-Total), y =
   geom_bar(position = position_dodge(0.8),
            stat = "identity",
            width =0.8) + 
-  coord_flip() +
-  geom_text(aes(label = Frequency,y = Frequency+0.5), position = position_dodge(0.8), hjust = 0, colour="black", size=6) +
+  coord_flip() + 
+  geom_text(aes(label = ifelse( Frequency>0, Frequency , ""), y = Frequency + 0.05), position = position_dodge(0.8), hjust = 0, colour="black", size=6) +
   labs(y= "Number of documents", x="")+
   scale_fill_manual(labels = c('Scopus only', 'Scopus and WOS', 'WOS only'), values = brewer.pal(3, 'Paired')[1:3]) + 
   theme_bw(base_size = 20)+
@@ -204,9 +214,9 @@ DocumentTypeCombined <- data.frame(table(CombinedDataset$DT, exclude = ""))
 DocumentTypeCombined <- data.frame(table(CombinedDataset$DT, exclude = NA));DocumentTypeCombined
 names(DocumentTypeCombined) <- c("DocumentType", "Count")
 
-# Count the number of time each document type appear in CombinedDataset
-DocumentTypeMerger <- data.frame(table(CombinedDataset$DT, exclude = ""))
-DocumentTypeMerger <- data.frame(table(CombinedDataset$DT, exclude = NA));DocumentTypeMerger
+# Count the number of time each document type appear in MergerOriginalData
+DocumentTypeMerger <- data.frame(table(MergerOriginalData$DT, exclude = ""))
+DocumentTypeMerger <- data.frame(table(MergerOriginalData$DT, exclude = NA));DocumentTypeMerger
 names(DocumentTypeMerger) <- c("DocumentType", "Count")
 
 # Count the number of time each document type appear in ScopWosnotexclusive
@@ -227,7 +237,7 @@ DocumentTypeCombined[nrow(DocumentTypeCombined)+1,] <- NA
 DocumentTypeMerger[nrow(DocumentTypeMerger)+1,] <- NA
 DocumentTypedup[nrow(DocumentTypedup)+1,] <- NA
 DocumentTypeScopWoS <- bind_rows(DocumentTypeScop, DocumentTypeWoS, DocumentTypeCombined, DocumentTypeMerger,DocumentTypedup, DocumentTypeIFSMS)
-#write.table(DocumentTypeScopWoS, file = paste0(Results.dir,"Result_Document type_ScopWoS.txt"), sep = "\t", row.names = F)
+write.table(DocumentTypeScopWoS, file = paste0(Results.dir,"Result_Document type_ScopWoS.txt"), sep = "\t", row.names = F)
 
 #####################################################################
 #####              Scopus/Web of Science/ IFSMS                 #####

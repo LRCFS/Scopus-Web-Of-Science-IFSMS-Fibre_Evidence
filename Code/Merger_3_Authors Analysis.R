@@ -43,7 +43,7 @@ names(PublicationYear) <- c("Year","Publications")
 
 # add missing year to PublicationYear
 DFfilledPublicationYear <- PublicationYear %>%
-  complete(Year = 1967:2019,
+  complete(Year = 1967:2020,
            fill = list(Freq = 0)) %>%
   as.data.frame()
 PublicationYear <- DFfilledPublicationYear
@@ -58,7 +58,7 @@ names(NumberAuthorYear) <- c("Year","Author")
 
 # add missing year to NumberAuthorYear
 DFfilledNumberAuthorYear <- NumberAuthorYear %>%
-  complete(Year = 1967:2019,
+  complete(Year = 1967:2020,
            fill = list(Freq = 0)) %>%
   as.data.frame()
 NumberAuthorYear <- DFfilledNumberAuthorYear
@@ -74,7 +74,7 @@ names(YearNewAuthorSinglePaper) <- c("Year","Single Author")
 
 # add missing year to NumberAuthorYear
 DFfilledYearNewAuthorSinglePaper <- YearNewAuthorSinglePaper %>%
-  complete(Year = 1967:2019,
+  complete(Year = 1967:2020,
            fill = list(Freq = 0)) %>%
   as.data.frame()
 YearNewAuthorSinglePaper <- DFfilledYearNewAuthorSinglePaper
@@ -106,11 +106,11 @@ GephiAuthor <- ListAuthor %>%
 names(GephiAuthor) <- c("Author")
 
 #Export to Gephi plot - Year;Title;Authors
-#write.table(GephiAuthor, file = paste0(Results.dir,"GephiAuthor.csv"), sep = ",", row.names = F, quote = F)
+write.table(GephiAuthor, file = paste0(Results.dir,"GephiAuthor.csv"), sep = ",", row.names = F, quote = F)
 
 #Export to Gephi plot - Authors;Year
 names(AuthorMultipleOutputLastYear) <- c("Id","Year")
-#write.table(AuthorMultipleOutputLastYear, file = paste0(Results.dir,"GephiAuthor_Last_Year.csv"), sep = ";", row.names = F)
+write.table(AuthorMultipleOutputLastYear, file = paste0(Results.dir,"GephiAuthor_Last_Year.csv"), sep = ";", row.names = F)
 
 ############################################################
 #####               Data analysis - Authors            #####
@@ -126,7 +126,7 @@ names(AuthorFirstAppearance) <- c("Author","Year")
 YearNewAuthor <- aggregate(AuthorFirstAppearance$Author,list(AuthorFirstAppearance$Year), FUN=length)
 # Add years in which no authors published
 #DFfilledNewauthors <- YearNewAuthor %>%
-  #complete(Group.1 = 1967:2019,
+  #complete(Group.1 = 1967:2020,
            #fill = list(Freq = 0)) %>%
   #as.data.frame()
 #YearNewAuthor <- DFfilledNewauthors
@@ -148,7 +148,7 @@ YearTableOutput[is.na(YearTableOutput)] <- 0
 TotalAuthorsplot <- ggplot(YearTableOutput, aes(x=Year, y=Ratio))+
   geom_line()+ 
   geom_point()+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
   scale_linetype_manual(values=c("solid"))+
   scale_color_manual(values=c("black"))+
   labs(x="Year", y="Average number of authors \n per document")+
@@ -299,7 +299,7 @@ Meanauthors <- mean(YearTableOutput$Ratio)
 TotalAuthorsplot <- ggplot(YearTableOutput, aes(x=Year, y=Ratio))+
   geom_line()+ 
   geom_point()+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2019))+
+  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,2000,2005,2010,2015,2020))+
   scale_linetype_manual(values=c("solid"))+
   scale_color_manual(values=c("black"))+
   labs(x="Year", y="Average number of authors \n per document")+
