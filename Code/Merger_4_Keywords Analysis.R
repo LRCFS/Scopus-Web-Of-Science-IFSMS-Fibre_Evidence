@@ -175,7 +175,7 @@ SubsetKeywordNarrowRangeGraph <-subset(MergeDataKeywordYearCount,Rtitle %in% Dat
 #Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
 SubsetKeywordNarrowRangeGraph$x <- as.numeric(SubsetKeywordNarrowRangeGraph$x)
 
-#####______________Graph for the top keywords ______________##########
+#####______________Graph for the top keywords - Figure 2 ______________##########
 # Create a new variable from incidence
 SubsetKeywordNarrowRangeGraph$Incidenceweight <- cut(SubsetKeywordNarrowRangeGraph$x,
                                                      breaks = c(-1,0,1,2,5,max(SubsetKeywordNarrowRangeGraph$x,na.rm=T)),
@@ -269,7 +269,7 @@ IFSMSDatasetKeywordNarrowRangeGraph <-subset(IFSMSKeywordYearCount,Rtitle %in% I
 #Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
 IFSMSDatasetKeywordNarrowRangeGraph$x <- as.numeric(IFSMSDatasetKeywordNarrowRangeGraph$x)
 
-#####______________Graph for keywords with a frequency >=5 ______________##########
+#####______________Graph for keywords - Figure 6 ______________##########
 # Create a new variable from incidence
 IFSMSDatasetKeywordNarrowRangeGraph$Incidenceweight <- cut(IFSMSDatasetKeywordNarrowRangeGraph$x,
                                                      breaks = c(-1,0,1,2,3,max(IFSMSDatasetKeywordNarrowRangeGraph$x,na.rm=T)),
@@ -318,102 +318,3 @@ p2 <- ggplot(IFSMSGraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),
 show(p2)
 #ggplotly(p)
 ggsave("KeywordTrend_IFSMS.png", p2, width = 14, height = 10, units = "in", dpi=500, path = "Results")
-
-
-#####______________Graph for Techniques analysis only______________##########
-
-#Create a new variable of MergeKeywordNarrowRangeGraph to not overwrite data
-MergeDataKeywordNarrowRangeGraph2 <-subset(MergeDataKeywordYearCount,Rtitle %in% DatasetKeywordNarrowRangeGraph$Rtitle)
-
-#Reduced <- subset(Condensed, SummaryKeywords$weight>0.007)
-MergeDataKeywordNarrowRangeGraph2$x <- as.numeric(MergeDataKeywordNarrowRangeGraph2$x)
-
-# Create a list of techniques to include
-techniques.list <- paste(c("MICROSPECTROPHOTOMETRY (MSP)",
-                           "INFRARED SPECTROSCOPY (IR)",
-                           "FOURIER-TRANSFORM INFRARED SPECTROSCOPY (FT-IR)",
-                           "SPECTROPHOTOMETRY",
-                           "MICROSCOPY",
-                           "MASS SPECTROMETRY (MS)",
-                           "SCANNING ELECTRON MICROSCOPY (SEM)",
-                           "PRINCIPAL COMPONENT ANALYSIS (PCA)",
-                           "THIN-LAYER CHROMATOGRAPHY (TLC)",
-                           "RAMAN",
-                           "CAPILLARY ELECTROPHORESIS (CE)",
-                           "GAS CHROMATOGRAPHY–MASS SPECTROMETRY (GC–MS)",
-                           "HOLLOW-FIBRE LIQUID-PHASE MICROEXTRACTION (HF-LPME)",
-                           "POLARIZED LIGHT MICROSCOPY",
-                           "SPECTROSCOPY",
-                           "HIGH-PERFORMANCE LIQUID CHROMATOGRAPHY (HPLC)"), collapse = ';')
-TechniquesList <- as.data.frame(techniques.list)
-
-# #Split Column "techniques.list" in row by the separator ";", remove leading white space to generate list
-# TechniquesList <- TechniquesList %>% 
-#   mutate(techniques.list = strsplit(as.character(techniques.list), ";")) %>% 
-#   unnest(techniques.list) %>%
-#   mutate_if(is.character, str_trim)
-# 
-# #total count of the keywords
-# TechniqueListCount <- aggregate(TechniquesList$x, list(TechniquesList$Rtitle), sum)
-
-# Select from "MergeDataKeywordNarrowRangeGraph2" every keywords from "techniques.list" and place it in a new list "TechniqueList"
-TechniqueList <-subset(MergeDataKeywordNarrowRangeGraph2,Rtitle %in% TechniquesList$techniques.list)
-
-# Rename some of the techniques that are too long
-# read the list of techniques'abreviations and combine it to TechniqueList
-TechniqueCorrected <- read.csv("Techniques's abreviations_ScopWoS.txt", sep="\t", header=TRUE)
-TechniqueList$Rtitle2 <- gsr(TechniqueList$Rtitle,TechniqueCorrected$name, as.character(TechniqueCorrected$Name.Corrected))
-TechniqueList <- TechniqueList %>% select("Year", "Rtitle2", "x")
-names(TechniqueList) <- c("Year", "Rtitle", "x")
-
-
-#### plot second graph
-# Create a new variable from incidence
-TechniqueList$Incidenceweight <- cut(TechniqueList$x,
-                                     breaks = c(-1,0,1,2,3,4,max(TechniqueList$x,na.rm=T)),
-                                     labels=c("0","1","2","3","4","5"))
-
-GraphTemp1Bis <- TechniqueList %>%
-  # convert state to factor and reverse order of levels
-  mutate(KeywordsCorrected=factor(Rtitle,levels=rev(sort(unique(Rtitle))))) %>%
-  # create a new variable from count
-  mutate(countfactor=cut(x,breaks=c(-1,0,1,2,3,4,max(x,na.rm=T)),
-                         labels=c("0","1","2","3","4","5")))  %>%
-  # change level order
-  mutate(countfactor=factor(as.character(countfactor),levels=rev(levels(countfactor))))
-# InterpolKeywordList$WYear <- gsr(InterpolKeywordList$Year,year$Var1,1/year$Freq)
-GraphTemp2 <- aggregate(GraphTemp1Bis[, 1], list(GraphTemp1Bis$KeywordsCorrected), min)
-
-GraphTemp1Bis$graphorder <- as.numeric(gsr(GraphTemp1Bis$KeywordsCorrected,GraphTemp2$Group.1,GraphTemp2$x))
-GraphTemp1Bis
-# assign text colour
-textcol <- "black"
-
-
-# further modified ggplot
-p1 <- ggplot(GraphTemp1Bis,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=countfactor))+
-  geom_tile(colour="white",size=0.2)+
-  guides(fill=guide_legend(title="Count"))+
-  #  labs(x="",y="",title="Keywords found in gunshot residue publication")+
-  labs(x="Year",y="",title="")+
-  scale_y_discrete(expand=c(0,0),labels = function(x) str_wrap(x, width = 30))+
-  scale_x_continuous(breaks=c(1965,1970,1975,1980,1985,1990,1995,200,2005,2010,2015,2019))+
-  scale_fill_manual(values=c("#BD0026", "#F03B20", "#FD8D3C", "#FECC5C","lightgoldenrod1"),na.value = "grey90")+
-  coord_fixed()+
-  theme_bw(base_size=8)+
-  theme(legend.position="right",legend.direction="vertical",
-        legend.title=element_text(colour=textcol),
-        legend.margin=margin(grid::unit(0,"cm")),
-        legend.text=element_text(colour=textcol,size=7),
-        legend.key.height=grid::unit(0.8,"cm"),
-        legend.key.width=grid::unit(0.2,"cm"),
-        axis.text.x=element_text(size=8,colour=textcol),
-        axis.text.y=element_text(vjust=0.2,colour=textcol),
-        axis.ticks=element_line(size=0.4),
-        plot.background=element_blank(),  # element_rect(fill, colour, size, linetype, color))
-        panel.border=element_blank(),
-        plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
-        plot.title=element_text(colour=textcol,hjust=0,size=12))
-show(p1)
-#ggplotly(p1)
-ggsave("Techniques Keyword Trend_ScopWoS.png", p1,  width = 6, height = 6, units = "in", dpi=150, path = "Results-2021")
