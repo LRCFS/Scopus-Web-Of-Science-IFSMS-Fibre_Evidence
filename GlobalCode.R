@@ -1,3 +1,29 @@
+###########################################################################
+#
+# Research trends in forensic science: Fibre and Databases
+#
+# Leverhulme Research Centre for Forensic Science
+
+# Virginie Galais, Holly Fleming, Hervé Ménard and Niamh Nic Daéid
+
+# Website: https://github.com/LRCFS/
+# Contact: lrc@dundee.ac.uk
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+###########################################################################
 
 # To clean the Global environment
 rm(list=ls()) 
@@ -58,7 +84,6 @@ numberKeywordIfsms <- 24   # target number of keywords appearing in the keyword 
 numberMaxKeywordDataset <- 75  # maximum number of keywords appearing in the keyword figure
 numberMaxKeywordIfsms <- 25  # maximum number of keywords appearing in the keyword figure
 
-
 #############################################################
 #####           Source Title Figures Range set          #####
 #############################################################
@@ -70,17 +95,13 @@ numberTitleMax <- 18   # target number of keywords appearing in the keyword figu
 #####                       Codes                       #####
 #############################################################
 
-# This codes can be run subsequently or independently as each create necessary outputs for the next codes.  
+# These codes can be run subsequently or independently as each create necessary outputs for the next codes.
 
-# This R script is the first step to merge exported data from Scopus and Web of Sciences (BibTex format)
-# This Script allows to merge the file and exclude records that are not relevant to the field of research
-#source("Code/Merger_1_Exclusion.R")
-#source("code/Merger_2_Comparison of dataset.R")
-#source("Code/Merger_5_Keywords Analysis.R")
-
-# The .txt/.csv export is used for the Bibliometric analysis in the following R scripts:
-
-# This R script is the create the keyword figure based on the combined Scopus and Web of Sciences datasets
-# This code can be run independe
-
-
+# This R script is the first step to merge exported data from Scopus and Web of Sciences (BibTex format) and allows to merge the file and exclude records that are not relevant to the field of research
+source("Code/Merger_1_Exclusion.R")
+# This Script allows to compare references from Scopus, Web of Science and the IFSMS reports
+source("code/Merger_2_Comparison of dataset.R")
+# This Script allows to compare authors from Scopus, Web of Science and the IFSMS reports
+source("Code/Merger_3_Authors Analysis.R")
+# This R script is the create the keyword figure based on the combined Scopus and Web of Sciences datasets, and the IFSMS reports
+source("Code/Merger_4_Keywords Analysis.R")
