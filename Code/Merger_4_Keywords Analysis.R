@@ -1,9 +1,9 @@
 #############################################################
 #####                     To read                       #####
 #############################################################
-# This R script is the second step after the merge Scopus and Web of Sciences (BibTex format)
+# This R script is the second step after the merge of exported data from Scopus and Web of Sciences, and the importation of IFSMS data
 # This script allows a bibliometric analysis on the Keywords 
-# The choice of the keywords to analyse (Authors Keywords, Index Keywords, Both) is done in the previous script
+# The choice of the keywords to analyse (Authors Keywords, Index Keywords, Both) is done in the first script (Merger_1_Exclusion.R)
 
 #############################################################
 #####                  Data loading                   #####
