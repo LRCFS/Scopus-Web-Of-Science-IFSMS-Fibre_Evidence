@@ -2,11 +2,12 @@
 #####                     To read                       #####
 #############################################################
 # This R script is the first step to merge exported data from Scopus and Web of Sciences (BibTex format)
-# This Script allows to merge the file and exclude records that are not relevant to the field of research
+# This script allows to merge the file and exclude records that are not relevant to the field of research
+# This script also allows to import data from the IFSMS reports and make some corrections to the dataset
 # The .txt/.csv exported at the end is the one which will be use for the Bibliometric analysis in the following R script:
-# Merger_2_Keywords Analysis.R
+# Merger_2_Comparison of dataset.R
 # Merger_3_Authors Analysis.R
-# Merger_4_Document and Country.R
+# Merger_4_Keywords Analysis.R
 
 #############################################################
 #####                  Global variable                  #####
@@ -303,7 +304,6 @@ names(WebOfScienceReducedDatasetAUSODTcor)[names(WebOfScienceReducedDatasetAUSOD
 rm(WebOfScienceReducedDatasetAUSOCor)
 rm(WebOfScienceReducedDatasetAUCor)
 rm(WebOfScienceReducedDatasetExtended)
-
 
 ###############################
 #####       IFSMS         #####
@@ -668,127 +668,3 @@ write.table(ScopusReducedDatasetTIAUC1SIDSSODTcor, file = paste0(Results.dir,"Re
 write.table(MergerOriginalData, file = paste0(Results.dir,"Result_Merger_Dataset.txt"), sep = "\t", row.names = F)
 write.table(CombinedDataset, file = paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep = "\t", row.names = F)
 write.table(IFSMS, file = paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep = "\t", row.names = F)
-
- 
-# #############################################################
-# #####                 General information               #####
-# #############################################################
-# # This section is to generate a table with general information about the dataset
-# 
- #####______________Number of document______________##########
-# # From Scopus
-# NDScop <- data.frame(nrow(Scopus))
-# names(NDScop) <- c("Number")
-# GF <- NDScop
-# rownames(GF)[rownames(GF)=="1"] <- "Number of document from Scopus"
- 
-# #from WoS
-# NDWoS <- data.frame(nrow(WebofScience))
-# GF[2,1] <- NDWoS
-# rownames(GF)[rownames(GF)=="1"] <- "Number of document from Web of Science"
- 
-# # From Merge before exclusion
-# ND <- data.frame(nrow(CombinedDataset))
-# GF[3,1] <- ND
-# rownames(GF)[rownames(GF)=="1"] <- "Total of document before exclusion"
- 
-# # From Merge after exclusion
-# NDex <- data.frame(nrow(CombinedDataset3))
-# GF[4,1] <- NDex
- 
-#rownames(GF)[rownames(GF)=="1"] <- "Total of document after exclusion"
- 
-# #####______________Keywords and Journal______________##########
-# #after exclusion
-# #Number of different Journals (NDS) 
-# NDS <- data.frame(table(CombinedDataset3$SO, exclude = ""));NDS
-# GF[5,1] <- nrow(NDS)
-# rownames(GF)[rownames(GF)=="5"] <- "Number of different journals"
-# 
-# # Number of Authors Keywords before correction
-# X <- CombinedDataset3 %>% 
-#   select(AK) %>% 
-#   mutate(AK = strsplit(as.character(AK), ";")) %>% 
-#   unnest(AK) %>%
-#   mutate_if(is.character, str_trim) #calculating the total number of keywords
-# GF[6,1] <-nrow(X)
-# rownames(GF)[rownames(GF)=="6"] <- "Total number of Authors Keywords"
-# NK <- data.frame(table(X, exclude = ""));NK
-# GF[7,1] <-nrow(NK)
-# rownames(GF)[rownames(GF)=="7"] <- "Distinct Authors Keywords"
-# 
-# #####______________Document type______________##########
-# # For Scopus
-# # Change the name of the type of document
-# # read the corrected list of "document" and combine it to the original list
-# DocumentCorrected <- read.csv("Document Type Name Corrected_ScopWoS.txt", sep="\t", header=TRUE)
-# Scopus$Document.TypeC <- gsr(Scopus$DT, DocumentCorrected$name, as.character(DocumentCorrected$Name.Corrected))
-# 
-# # Count the number of time each document type appear
-# DTScop <- data.frame(table(Scopus$Document.TypeC, exclude = ""))
-# DTScop <- data.frame(table(Scopus$Document.TypeC, exclude = NA));DTScop
-# names(DTScop) <- c("Document Type", "Count")
-# 
-# # For WoS
-# # Change the name of the type of document
-# WebofScience$Document.TypeC <- gsr(WebofScience$DT, DocumentCorrected$name, as.character(DocumentCorrected$Name.Corrected))
-# 
-# # Count the number of time each document type appear
-# DTWoS <- data.frame(table(WebofScience$Document.TypeC, exclude = ""))
-# DTWoS <- data.frame(table(WebofScience$Document.TypeC, exclude = NA));DTWoS
-# names(DTWoS) <- c("Document Type", "Count")
-# 
-# #####______________Exportation______________##########
-# # To export the first table (General Information)
-# write.table(GF, file = "Result_General Information_ScopWoS.csv", quote = F, sep = ",", row.names = T)
-# 
-# #To export the second table (Document Type)
-# DocumentTypeScopWoS <- bind_rows(DTScop, DTWoS)
-# write.table(DocumentTypeScopWoS, file = "Result_Document type_ScopWoS.csv", quote = F, sep = ",", row.names = F)
-# 
-# 
-# ##################################################################################
-# #####              Comparison Scopus/Web Of Science all year                 #####
-# ##################################################################################
-# 
-# #####______________creation of dataset______________##########
-# # In the previous dataset, the column Coder can be used to calculate the pourcentage of articles both present in Scopus and in WoS
-# #before of after the exclusion process (CombinedDataset or CombinedDataset3)
-# #Scopus not exclusive = Web of science not exclusive
-# ScopWosnotexclusive <- CombinedDataset3[CombinedDataset3$Coder == "Scopus,WebOfScience"|CombinedDataset3$Coder == "WebOfScience,Scopus", ]
-# Scopusexclusive <- CombinedDataset3[CombinedDataset3$Coder == "Scopus", ]
-# WoSexclusive <- CombinedDataset3[CombinedDataset3$Coder == "WebOfScience", ]
-# # To calculate the pourcentage of possibles errors
-# #forErrors <- rbind(ScopWosnotexclusive,Scopusexclusive,WoSexclusive)
-# #errorpourcentage <- setdiff(CombinedDataset3,forErrors)
-# 
-# 
-# #####______________Analysis______________##########
-# # Count the number of references in each data.frame
-# countWoSexclusive <- as.numeric(count(WoSexclusive));countWoSexclusive
-# countScopusexclusive <- as.numeric(count(Scopusexclusive));countScopusexclusive
-# countScopWosnotexclusive <- as.numeric(count(ScopWosnotexclusive));countScopWosnotexclusive
-# 
-# Total <- (countWoSexclusive+countScopusexclusive+countScopWosnotexclusive);Total
-# #pourcentage of article in WoS only
-# X <- ((countWoSexclusive/Total) * 100); X
-# #pourcentage of article in Scop only
-# Y <- ((countScopusexclusive/Total) * 100); Y
-# # pourcentage of articles shared with both databases
-# Z <- ((countScopWosnotexclusive/Total) * 100); Z
-# 
-# 
-# #####______________Table______________##########
-# X <- data.frame(X)
-# names(X) <- c("Percentage")
-# Table <- X
-# rownames(Table)[rownames(Table)=="1"] <- "Exclusive to Web Of Science"
-# 
-# Table[2,1] <- Y
-# rownames(Table)[rownames(Table)=="2"] <- "Exclusive to Scopus"
-# 
-# Table[3,1] <- Z
-# rownames(Table)[rownames(Table)=="3"] <- "Shared by both databases"
-# 
-# write.table(Table, file = "Result_Comparison Scop-WoS_2021.csv", quote = F, sep = ",", row.names = F)
-
