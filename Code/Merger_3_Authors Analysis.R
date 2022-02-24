@@ -1,13 +1,13 @@
 #############################################################
 #####                     To read                       #####
 #############################################################
-# This R script is the third step after merging Scopus and Web of Sciences (BibTex format)
+# This R script is the second step after the merge of exported data from Scopus and Web of Sciences, and the importation of IFSMS data
 # This script allows a bibliometric analysis on the authors
 
 
-#######################################################################
-#####                         Data loading                        #####
-#######################################################################
+#############################################################
+#####                    Data loading                   #####
+#############################################################
 
 # read the export *.csv document from Merger, separation "\t", and place it in data.frame "MergerOriginalData"
 MergerOriginalData <- read.csv(paste0(Results.dir,"Result_Merger_Dataset.txt"), sep="\t", header=TRUE)
@@ -144,7 +144,7 @@ YearTableOutput[is.na(YearTableOutput)] <- 0
 #Export to text file for Latex import
 #write.table(YearTableOutput, file = "Authors_table.csv", sep = ",", row.names = F)
 
-# GRAPH
+# GRAPH - Figure 3
 TotalAuthorsplot <- ggplot(YearTableOutput, aes(x=Year, y=Ratio))+
   geom_line()+ 
   geom_point()+
@@ -157,8 +157,7 @@ TotalAuthorsplot <- ggplot(YearTableOutput, aes(x=Year, y=Ratio))+
         legend.position = "bottom",
         legend.background = element_rect(fill="grey95",size=1, linetype="solid", colour="grey80"))
 show(TotalAuthorsplot)
-
-ggplotly(TotalAuthorsplot)
+#ggplotly(TotalAuthorsplot)
 ggsave("Average_Author_Per_Year_ScopWoS.png", TotalAuthorsplot, width = 8, height = 3.5, units = "in", dpi=200, path = "Results")
 
 
