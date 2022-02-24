@@ -1,17 +1,20 @@
 #############################################################
 #####                     To read                       #####
 #############################################################
-# This R script is for blablablabla
+# This R script is the second step after the merge of exported data from Scopus and Web of Sciences, and the importation of IFSMS data
+# This script allows to compare Scopus, Web of Science and the IFSMS reports (Journals and document type)
 # It can be choosen to work with the combined dataset before the exclusion process (CombinedDataset)
 # Or it can be choosen to work with the combined dataset after the exclusion process (MergerOriginalData)
 
+#############################################################
+#####                    Data loading                   #####
+#############################################################
 # read the export *.csv document from Merger_1_Exclusion, separation "\t", and place it in data.frame "MergerOriginalData"
 MergerOriginalData <- read.csv(paste0(Results.dir,"Result_Merger_Dataset.txt"), sep="\t", header=TRUE)
 CombinedDataset <- read.csv(paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep="\t", header=TRUE)
 IFSMS <- read.csv(paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep="\t", header=TRUE)
 ScopusReducedDatasetTIAUC1SIDSSODTcor <- read.csv(paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep="\t", header=TRUE)
 WebOfScienceReducedDatasetAUSODTcor <- read.csv(paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep="\t", header=TRUE)
-
 
 
 ##################################################################################
@@ -22,9 +25,9 @@ WebOfScienceReducedDatasetAUSODTcor <- read.csv(paste0(Results.dir,"Result_WebOf
 # In the previous dataset, the column Coder can be used to calculate the percentage of articles both present in Scopus and in WoS
 # A selection between CombinedDataset or MergerOriginalData must be done here and will be applied for the rest of the code
 # Scopus not exclusive = Web of science not exclusive
-ScopWosnotexclusive <- MergerOriginalData[MergerOriginalData$Coder == "Scopus,WebOfScience"|MergerOriginalData$Coder == "WebOfScience,Scopus"|MergerOriginalData$Coder == "Scopus,Scopus,WebOfScience"|MergerOriginalData$Coder == "Scopus,WebOfScience,WebOfScience", ]
-Scopusexclusive <- MergerOriginalData[MergerOriginalData$Coder == "Scopus"|MergerOriginalData$Coder == "Scopus,Scopus", ]
-WoSexclusive <- MergerOriginalData[MergerOriginalData$Coder == "WebOfScience", ]
+ScopWosnotexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus,WebOfScience"|CombinedDataset$Coder == "WebOfScience,Scopus"|CombinedDataset$Coder == "Scopus,Scopus,WebOfScience"|CombinedDataset$Coder == "Scopus,WebOfScience,WebOfScience", ]
+Scopusexclusive <- CombinedDataset[CombinedDataset$Coder == "Scopus"|CombinedDataset$Coder == "Scopus,Scopus", ]
+WoSexclusive <- CombinedDataset[CombinedDataset$Coder == "WebOfScience", ]
 
 #####______________Analysis______________##########
 # Count the number of references in each data.frame
@@ -112,54 +115,11 @@ while (a>numberTitleMax) {
 TopJournalScopusOrWosOnly <- rbind(TopJournalsScop,TopJournalsWoS)
 # including Scopus Wos common
 TopJournal <-rbind(TopJournalScopusOrWosOnly,TopJournalsScopusWoS)
-
 TopJournal <- TopJournal %>%
   distinct()
 
 # add a column total count per journal
 TopJournal$Total <- rowSums(TopJournal[ , c(2:4)], na.rm=TRUE)
-
-
-# # Count the number of time each Journals appear in ScopWosnotexclusive, after corrections
-# JournalDup <- data.frame(table(ScopWosnotexclusive$SO, exclude = ""))
-# JournalDup <- data.frame(table(ScopWosnotexclusive$SO, exclude = NA));JournalDup
-# names(JournalDup) <- c("Journals", "Count")
-# 
-# # Count the number of time each Journals appear in Scopusexclusive, after corrections
-# JournalScopexclusive <- data.frame(table(Scopusexclusive$SO, exclude = ""))
-# JournalScopexclusive <- data.frame(table(Scopusexclusive$SO, exclude = NA));JournalScopexclusive
-# names(JournalScopexclusive) <- c("Journals", "Count")
-# 
-# # Count the number of time each Journals appear in WoSexclusive, after corrections
-# JournalWoSexclusive <- data.frame(table(WoSexclusive$SO, exclude = ""))
-# JournalWoSexclusive <- data.frame(table(WoSexclusive$SO, exclude = NA));JournalWoSexclusive
-# names(JournalWoSexclusive) <- c("Journals", "Count")
-# 
-# # Select the top 20 in each Dataset
-# TopJournalsScop <- top_n(JournalsScop, 15, Count)
-# TopJournalsScop <- TopJournalsScop[order(-TopJournalsScop$Count),]
-# names(TopJournalsScop) <- c("Title","Frequency")
-# 
-# TopJournalsWoS <- top_n(JournalWoS, 15, Count)
-# TopJournalsWoS <- TopJournalsWoS[order(-TopJournalsWoS$Count),]
-# names(TopJournalsWoS) <- c("Title","Frequency")
-# 
-# TopJournalsDup <- top_n(JournalDup, 15, Count)
-# TopJournalsDup <- TopJournalsDup[order(-TopJournalsDup$Count),]
-# names(TopJournalsDup) <- c("Title","Frequency")
-# 
-# TopJournalsScopexclusive <- top_n(JournalScopexclusive, 15, Count)
-# TopJournalsScopexclusive <- TopJournalsScopexclusive[order(-TopJournalsScopexclusive$Count),]
-# names(TopJournalsScopexclusive) <- c("Title","Frequency")
-# 
-# TopJournalsWoSpexclusive <- top_n(JournalWoSexclusive, 15, Count)
-# TopJournalsWoSpexclusive <- TopJournalsWoSpexclusive[order(-TopJournalsWoSpexclusive$Count),]
-# names(TopJournalsWoSpexclusive) <- c("Title","Frequency")
-
-# # create a dataframe with data from Scopus, Web Of Science and ScopWos
-# forOverlapPlotTemp1 <- merge(TopJournalsScopexclusive, TopJournalsDup, by="Title", all = T)
-# forOverlapPlotTemp2 <- merge(forOverlapPlotTemp1, TopJournalsWoSpexclusive, by="Title", all = T)
-# forOverlapPlotTemp2[is.na(forOverlapPlotTemp2)] <- 0
 names(TopJournal) <- c("Journals", "ScopWos","WebofScienceExclusive", "ScopusExclusive", "Total")
 
 # Select top 12 journal in TOPJournal$Total
@@ -171,12 +131,11 @@ TopJournal$Journals <- gsub("ITCANDDC: 5TH INTERNATIONAL TEXTILE, CLOTHING AND D
                                     "5TH ITCANDDC 2010", TopJournal$Journals)
 TopJournal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY B-ANALYTICAL TECHNOLOGIES IN THE BIOMEDICAL AND LIFE SCIENCES","JOURNAL OF CHROMATOGRAPHY B", TopJournal$Journals)
 
-
 # take difference of reference counts
 # and make long
 forOverlapPlotTemp3 <- gather(TopJournal, Database, Frequency, ScopWos:ScopusExclusive, factor_key=TRUE)
 
-# plot as stacked barplot
+# GRAPH - Figure 1
 plotoverlap <- ggplot(forOverlapPlotTemp3, aes(x = reorder(Journals,-Total), y = Frequency, fill = Database)) + 
   geom_bar(position = position_dodge(0.8),
            stat = "identity",
@@ -184,7 +143,7 @@ plotoverlap <- ggplot(forOverlapPlotTemp3, aes(x = reorder(Journals,-Total), y =
   coord_flip() + 
   geom_text(aes(label = ifelse( Frequency>0, Frequency , ""), y = Frequency + 0.05), position = position_dodge(0.8), hjust = 0, colour="black", size=6) +
   labs(y= "Number of documents", x="")+
-  scale_fill_manual(labels = c('Scopus only', 'Scopus and WOS', 'WOS only'), values = brewer.pal(3, 'Paired')[1:3]) + 
+  scale_fill_manual(labels = c('Scopus and WOS', 'WOS only', 'Scopus only'), values = brewer.pal(3, 'Paired')[1:3]) + 
   theme_bw(base_size = 20)+
   theme(panel.grid.major.y = element_blank(),
         legend.position="bottom",
@@ -229,7 +188,7 @@ DocumentTypeIFSMS <- data.frame(table(IFSMS$Document.Type, exclude = ""))
 DocumentTypeIFSMS <- data.frame(table(IFSMS$Document.Type, exclude = NA));DocumentTypeIFSMS
 names(DocumentTypeIFSMS) <- c("DocumentType", "Count")
 
-# Exportation
+# Exportation - data for Table 1
 # Create a blank row between Scopus and Web of Science results, after corrections
 DocumentTypeScop[nrow(DocumentTypeScop)+1,] <- NA
 DocumentTypeWoS[nrow(DocumentTypeWoS)+1,] <- NA
@@ -237,7 +196,7 @@ DocumentTypeCombined[nrow(DocumentTypeCombined)+1,] <- NA
 DocumentTypeMerger[nrow(DocumentTypeMerger)+1,] <- NA
 DocumentTypedup[nrow(DocumentTypedup)+1,] <- NA
 DocumentTypeScopWoS <- bind_rows(DocumentTypeScop, DocumentTypeWoS, DocumentTypeCombined, DocumentTypeMerger,DocumentTypedup, DocumentTypeIFSMS)
-write.table(DocumentTypeScopWoS, file = paste0(Results.dir,"Result_Document type_ScopWoS.txt"), sep = "\t", row.names = F)
+write.table(DocumentTypeScopWoS, file = paste0(Results.dir,"Result_Document type_ScopWoS_Table 1.txt"), sep = "\t", row.names = F)
 
 #####################################################################
 #####              Scopus/Web of Science/ IFSMS                 #####
@@ -319,7 +278,7 @@ yearIFSMS$Coder <- "IFSMS"
 toplot <- data.frame(rbind(yearScopus,yearWoS,yearIFSMS))
 
 
-# GRAPH
+# Graph - Figure 5
 plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
   geom_line(aes(linetype=Coder), size=0.8)+
   scale_linetype_manual(values=c("solid","solid", "solid"))+
@@ -331,5 +290,5 @@ plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom",
         legend.background = element_rect(fill="white",size=1, linetype="solid", colour="grey80"))
-plot
+show(plot)
 ggsave("Result_ScopWoSIFSMS_DocTrend.png", plot, width = 11, height = 8, units = "in", dpi=500, path = "Results")
