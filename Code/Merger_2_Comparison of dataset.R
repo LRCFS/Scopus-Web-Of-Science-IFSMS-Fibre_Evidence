@@ -205,15 +205,20 @@ write.table(DocumentTypeScopWoS, file = paste0(Results.dir,"Result_Document type
 # Data from ScopWos and WoS after exclusion : MergerOriginalData
 MergerOriginalDataTemp <- MergerOriginalData %>%
   select(AU, TI, PY, SO, DT, Coder)
+CombinedDatasetDataTemp <- CombinedDataset %>%
+  select(AU, TI, PY, SO, DT, Coder)
 
 # Label each row with the database it come from 
-MergerOriginalDataTemp$Coder2 <- "ScopWos"
+MergerOriginalDataTemp$Coder2 <- "ScopWosexclusion"
+CombinedDatasetDataTemp$Coder2 <- "ScopWos"
 IFSMS$Coder2 <- "Interpol"
 IFSMS$Title <- toupper(IFSMS$Title)
 
 ####______Creating a list of document present in Interpol but not in ScopWos______####
 # Creating a list from ScopWos Title
 ScopWosTitleList <- MergerOriginalDataTemp %>%
+  select(TI)
+ScopWosTitleList2 <- CombinedDatasetDataTemp %>%
   select(TI)
 
 # List of records from Interpol that are in the MergerOriginalData (Title based)
@@ -222,10 +227,16 @@ IFSMSNotexclusive <- subset(IFSMS,Title %in% ScopWosTitleList$TI)
 # List of records from Interpol that are not in the MergerOriginalData (Title based)
 IFSMSexclusive <- setdiff(IFSMS,IFSMSNotexclusive)
 
+# List of records from Interpol that are in the CombinedDataset (Title based)
+IFSMSNotexclusive2 <- subset(IFSMS,Title %in% ScopWosTitleList2$TI)
+
+# List of records from Interpol that are not in the CombinedDataset (Title based)
+IFSMSexclusive2 <- setdiff(IFSMS,IFSMSNotexclusive2)
 
 ####______Calculating the % of record present in Interpol but not in ScopWos______####
 # Total number of record in the excluded list
 CountIFSMSexclusive <- as.numeric(count(IFSMSexclusive));CountIFSMSexclusive
+CountIFSMSexclusive2 <- as.numeric(count(IFSMSexclusive2));CountIFSMSexclusive2
 
 # Number Total of record on Interpol
 TotalIFSMS <- as.numeric(count(IFSMS))
