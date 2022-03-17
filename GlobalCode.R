@@ -100,7 +100,7 @@ numberTitleMax <- 18   # target number of keywords appearing in the keyword figu
 # This R script is the first step to merge exported data from Scopus and Web of Sciences (BibTex format) and allows to merge the file and exclude records that are not relevant to the field of research
 source("Code/Merger_1_Exclusion.R")
 # This Script allows to compare references from Scopus, Web of Science and the IFSMS reports
-source("code/Merger_2_Comparison of dataset.R")
+source("Code/Merger_2_Comparison of dataset.R")
 # This Script allows to compare authors from Scopus, Web of Science and the IFSMS reports
 source("Code/Merger_3_Authors Analysis.R")
 # This R script is the create the keyword figure based on the combined Scopus and Web of Sciences datasets, and the IFSMS reports

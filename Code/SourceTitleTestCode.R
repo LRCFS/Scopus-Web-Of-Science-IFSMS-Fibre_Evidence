@@ -4,7 +4,7 @@
 #
 # Leverhulme Research Centre for Forensic Science
 
-# Virginie Galais, Hervé Ménard and Niamh Nic Daéid
+# Virginie Galais,Holly Fleming, Hervé Ménard and Niamh Nic Daéid
 
 # Website: https://github.com/LRCFS/
 # Contact: lrc@dundee.ac.uk
