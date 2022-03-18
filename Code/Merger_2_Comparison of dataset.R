@@ -68,8 +68,8 @@ JournalWoS <- data.frame(table(WoSexclusive$SO, exclude = NA));JournalWoS
 names(JournalWoS) <- c("Journals", "CountWoS")
 
 # Count the number of time each Journals appear with shared references between Scopus and WoS
-JournalsCombinedDataset <- data.frame(table(MergerOriginalData$SO, exclude = ""))
-JournalsCombinedDataset <- data.frame(table(MergerOriginalData$SO, exclude = NA));JournalsCombinedDataset
+JournalsCombinedDataset <- data.frame(table(ScopWosnotexclusive$SO, exclude = ""))
+JournalsCombinedDataset <- data.frame(table(ScopWosnotexclusive$SO, exclude = NA));JournalsCombinedDataset
 names(JournalsCombinedDataset) <- c("Journals", "Count")
 
 # this table combined the results
