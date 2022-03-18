@@ -231,7 +231,7 @@ IFSMSexclusive <- setdiff(IFSMS,IFSMSNotexclusive)
 IFSMSNotexclusive2 <- subset(IFSMS,Title %in% ScopWosTitleList2$TI)
 
 # List of records from Interpol that are not in the CombinedDataset (Title based)
-IFSMSexclusive2 <- setdiff(IFSMS,IFSMSexclusive2)
+IFSMSexclusive2 <- setdiff(IFSMS,IFSMSNotexclusive2)
 
 ####______Calculating the % of record present in Interpol but not in ScopWos______####
 # Total number of record in the excluded list
