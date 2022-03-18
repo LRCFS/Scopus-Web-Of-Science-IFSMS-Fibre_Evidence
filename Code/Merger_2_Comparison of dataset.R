@@ -73,8 +73,8 @@ JournalsCombinedDataset <- data.frame(table(ScopWosnotexclusive$SO, exclude = NA
 names(JournalsCombinedDataset) <- c("Journals", "Count")
 
 # this table combined the results
-JournalWoSAll <- left_join(JournalsCombinedDataset,JournalWoS)
-JournalTotal <- left_join(JournalWoSAll,JournalsScop)
+JournalWoSAll <- full_join(JournalsCombinedDataset,JournalWoS)
+JournalTotal <- full_join(JournalWoSAll,JournalsScop)
 
 # select the most counted journals in either Scopus, WoS or in both datasets (using numberTitle in Global)
 # for Scopus
@@ -231,7 +231,7 @@ IFSMSexclusive <- setdiff(IFSMS,IFSMSNotexclusive)
 IFSMSNotexclusive2 <- subset(IFSMS,Title %in% ScopWosTitleList2$TI)
 
 # List of records from Interpol that are not in the CombinedDataset (Title based)
-IFSMSexclusive2 <- setdiff(IFSMS,IFSMSexclusive2)
+IFSMSexclusive2 <- setdiff(IFSMS,IFSMSNotexclusive2)
 
 ####______Calculating the % of record present in Interpol but not in ScopWos______####
 # Total number of record in the excluded list

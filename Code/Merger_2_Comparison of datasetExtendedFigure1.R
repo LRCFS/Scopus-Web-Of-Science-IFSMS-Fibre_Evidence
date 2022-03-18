@@ -77,8 +77,8 @@ JournalsCombinedDataset <- data.frame(table(ScopWosnotexclusive$SO, exclude = NA
 names(JournalsCombinedDataset) <- c("Journals", "Count")
 
 # this table combined the results
-JournalWoSAll <- left_join(JournalsCombinedDataset,JournalWoS)
-JournalTotal <- left_join(JournalWoSAll,JournalsScop)
+JournalWoSAll <- full_join(JournalsCombinedDataset,JournalWoS)
+JournalTotal <- full_join(JournalWoSAll,JournalsScop)
 
 # select the most counted journals in either Scopus, WoS or in both datasets (using numberTitle in Global)
 # for Scopus
@@ -134,6 +134,7 @@ TopJournal$Journals <- gsub("PROCEEDINGS OF SPIE - THE INTERNATIONAL SOCIETY FOR
 TopJournal$Journals <- gsub("AMERICAN JOURNAL OF FORENSIC MEDICINE AND PATHOLOGY","AMERICAN JOURNAL\nOF FORENSIC MEDICINE\nAND PATHOLOGY", TopJournal$Journals)
 TopJournal$Journals <- gsub("FORENSIC SCIENCE INTERNATIONAL","FORENSIC SCIENCE\nINTERNATIONAL", TopJournal$Journals)
 TopJournal$Journals <- gsub("APPLIED SPECTROSCOPY","APPLIED\nSPECTROSCOPY", TopJournal$Journals)
+TopJournal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY A","JOURNAL OF\nCHROMATOGRAPHY A", TopJournal$Journals)
 TopJournal$Journals <- gsub("ARCHIV FUR KRIMINOLOGIE","ARCHIV FUR\nKRIMINOLOGIE", TopJournal$Journals)
 TopJournal$Journals <- gsub("Z ZAGADNIEN NAUK SADOWYCH","Z ZAGADNIEN\nNAUK SADOWYCH", TopJournal$Journals)
 TopJournal$Journals <- gsub("ZEITSCHRIFT FR RECHTSMEDIZIN","ZEITSCHRIFT\nFR RECHTSMEDIZIN", TopJournal$Journals)
@@ -227,8 +228,9 @@ JournalsCombinedDataset <- data.frame(table(ScopWosnotexclusive$SO, exclude = NA
 names(JournalsCombinedDataset) <- c("Journals", "Count")
 
 # this table combined the results
-JournalWoSAll <- left_join(JournalsCombinedDataset,JournalWoS)
-JournalTotal <- left_join(JournalWoSAll,JournalsScop)
+JournalWoSAll <- full_join(JournalsCombinedDataset,JournalWoS)
+JournalTotal <- full_join(JournalWoSAll,JournalsScop)
+
 
 # select the most counted journals in either Scopus, WoS or in both datasets (using numberTitle in Global)
 # for Scopus
@@ -284,6 +286,7 @@ TopJournal$Journals <- gsub("PROCEEDINGS OF SPIE - THE INTERNATIONAL SOCIETY FOR
 TopJournal$Journals <- gsub("AMERICAN JOURNAL OF FORENSIC MEDICINE AND PATHOLOGY","AMERICAN JOURNAL\nOF FORENSIC MEDICINE\nAND PATHOLOGY", TopJournal$Journals)
 TopJournal$Journals <- gsub("FORENSIC SCIENCE INTERNATIONAL","FORENSIC SCIENCE\nINTERNATIONAL", TopJournal$Journals)
 TopJournal$Journals <- gsub("APPLIED SPECTROSCOPY","APPLIED\nSPECTROSCOPY", TopJournal$Journals)
+TopJournal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY A","JOURNAL OF\nCHROMATOGRAPHY A", TopJournal$Journals)
 TopJournal$Journals <- gsub("ARCHIV FUR KRIMINOLOGIE","ARCHIV FUR\nKRIMINOLOGIE", TopJournal$Journals)
 TopJournal$Journals <- gsub("Z ZAGADNIEN NAUK SADOWYCH","Z ZAGADNIEN\nNAUK SADOWYCH", TopJournal$Journals)
 TopJournal$Journals <- gsub("ZEITSCHRIFT FR RECHTSMEDIZIN","ZEITSCHRIFT\nFR RECHTSMEDIZIN", TopJournal$Journals)
