@@ -11,9 +11,13 @@
 #############################################################
 # read the export *.csv document from Merger_1_Exclusion, separation "\t", and place it in data.frame "MergerOriginalData"
 MergerOriginalData <- read.csv(paste0(Results.dir,"Result_Merger_Dataset.txt"), sep="\t", header=TRUE)
+
 CombinedDataset <- read.csv(paste0(Results.dir,"Result_MergerExclusion_Dataset.txt"), sep="\t", header=TRUE)
+
 IFSMS <- read.csv(paste0(Results.dir,"Result_IFSMS_Dataset.txt"), sep="\t", header=TRUE)
+
 ScopusReducedDatasetTIAUC1SIDSSODTcor <- read.csv(paste0(Results.dir,"Result_Scopus_CorrectedDataset.txt"), sep="\t", header=TRUE)
+
 WebOfScienceReducedDatasetAUSODTcor <- read.csv(paste0(Results.dir,"Result_WebOfScience_CorrectedDataset.txt"), sep="\t", header=TRUE)
 
 ##################################################################################
@@ -135,9 +139,9 @@ TopJournal$Journals <- gsub("AMERICAN JOURNAL OF FORENSIC MEDICINE AND PATHOLOGY
 TopJournal$Journals <- gsub("FORENSIC SCIENCE INTERNATIONAL","FORENSIC SCIENCE\nINTERNATIONAL", TopJournal$Journals)
 TopJournal$Journals <- gsub("APPLIED SPECTROSCOPY","APPLIED\nSPECTROSCOPY", TopJournal$Journals)
 TopJournal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY A","JOURNAL OF\nCHROMATOGRAPHY A", TopJournal$Journals)
-TopJournal$Journals <- gsub("ARCHIV FUR KRIMINOLOGIE","ARCHIV FUR\nKRIMINOLOGIE", TopJournal$Journals)
+TopJournal$Journals <- gsub("ARCHIV FR KRIMINOLOGIE","ARCHIV FÜR\nKRIMINOLOGIE", TopJournal$Journals)
 TopJournal$Journals <- gsub("Z ZAGADNIEN NAUK SADOWYCH","Z ZAGADNIEN\nNAUK SADOWYCH", TopJournal$Journals)
-TopJournal$Journals <- gsub("ZEITSCHRIFT FR RECHTSMEDIZIN","ZEITSCHRIFT\nFR RECHTSMEDIZIN", TopJournal$Journals)
+TopJournal$Journals <- gsub("ZEITSCHRIFT FR RECHTSMEDIZIN","ZEITSCHRIFT\nFÜR RECHTSMEDIZIN", TopJournal$Journals)
 TopJournal$Journals <- gsub("SCIENCE AND JUSTICE","SCIENCE\nAND JUSTICE", TopJournal$Journals)
 TopJournal$Journals <- gsub("JOURNAL OF FORENSIC SCIENCES","JOURNAL OF\nFORENSIC SCIENCES", TopJournal$Journals)
 TopJournal$Journals <- gsub("INTERNATIONAL JOURNAL OF LEGAL MEDICINE","INTERNATIONAL\nJOURNAL\nOF LEGAL MEDICINE", TopJournal$Journals)
@@ -153,7 +157,7 @@ TopJournal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY B-ANALYTICAL TECHNOLOGIES
 forOverlapPlotTempFullList <- gather(TopJournal, Database, Frequency, ScopWos:ScopusExclusive, factor_key=TRUE)
 
 # add a list for facet_wrap when combining the two figures
-forOverlapPlotTempFullList$list <- c("Complete Citation databases")
+forOverlapPlotTempFullList$list <- c("Complete citation databases")
 
 # GRAPH - Figure 1
 plotoverlap <- ggplot(forOverlapPlotTempFullList , aes(x = reorder(Journals,-Total), y = Frequency, fill = Database)) + 
@@ -287,9 +291,9 @@ TopJournal$Journals <- gsub("AMERICAN JOURNAL OF FORENSIC MEDICINE AND PATHOLOGY
 TopJournal$Journals <- gsub("FORENSIC SCIENCE INTERNATIONAL","FORENSIC SCIENCE\nINTERNATIONAL", TopJournal$Journals)
 TopJournal$Journals <- gsub("APPLIED SPECTROSCOPY","APPLIED\nSPECTROSCOPY", TopJournal$Journals)
 TopJournal$Journals <- gsub("JOURNAL OF CHROMATOGRAPHY A","JOURNAL OF\nCHROMATOGRAPHY A", TopJournal$Journals)
-TopJournal$Journals <- gsub("ARCHIV FUR KRIMINOLOGIE","ARCHIV FUR\nKRIMINOLOGIE", TopJournal$Journals)
+TopJournal$Journals <- gsub("ARCHIV FR KRIMINOLOGIE","ARCHIV FÜR\nKRIMINOLOGIE", TopJournal$Journals)
 TopJournal$Journals <- gsub("Z ZAGADNIEN NAUK SADOWYCH","Z ZAGADNIEN\nNAUK SADOWYCH", TopJournal$Journals)
-TopJournal$Journals <- gsub("ZEITSCHRIFT FR RECHTSMEDIZIN","ZEITSCHRIFT\nFR RECHTSMEDIZIN", TopJournal$Journals)
+TopJournal$Journals <- gsub("ZEITSCHRIFT FR RECHTSMEDIZIN","ZEITSCHRIFT\nFÜR RECHTSMEDIZIN", TopJournal$Journals)
 TopJournal$Journals <- gsub("SCIENCE AND JUSTICE","SCIENCE\nAND JUSTICE", TopJournal$Journals)
 TopJournal$Journals <- gsub("JOURNAL OF FORENSIC SCIENCES","JOURNAL OF\nFORENSIC SCIENCES", TopJournal$Journals)
 TopJournal$Journals <- gsub("INTERNATIONAL JOURNAL OF LEGAL MEDICINE","INTERNATIONAL\nJOURNAL\nOF LEGAL MEDICINE", TopJournal$Journals)
@@ -327,7 +331,7 @@ plotoverlap <- ggplot(OrderTitleTemp , aes(x = reorder(Journals,-Total), y = Fre
            width =0.8) + 
   facet_wrap( ~list)+
   coord_flip() + 
-  geom_text(aes(label = ifelse( Frequency>0, Frequency , ""), y = Frequency + 0.05), position = position_dodge(0.8), hjust = 0, colour="black", size=6) +
+  geom_text(aes(label = ifelse( Frequency>0, Frequency , ""), y = Frequency + 0.02), position = position_dodge(0.8), hjust = 0, colour="black", size=6) +
   labs(y= "Number of documents", x="")+
   scale_fill_manual(labels = c('Scopus and WOS', 'WOS only', 'Scopus only'), values = brewer.pal(3, 'Paired')[1:3]) + 
   theme_bw(base_size = 20)+
@@ -335,7 +339,7 @@ plotoverlap <- ggplot(OrderTitleTemp , aes(x = reorder(Journals,-Total), y = Fre
         legend.position="bottom",
         legend.title = element_blank(),
         legend.text = element_text(size=20)
-  )
+  ) + ylim(0, 120)
 
 show(plotoverlap)
 ggsave("Journals_Full_Reduced.png", plotoverlap, width = unit(16.5, 'in'), height = unit(15, 'in'), dpi=300, path = "Results")

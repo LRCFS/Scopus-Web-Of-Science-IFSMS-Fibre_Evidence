@@ -220,7 +220,8 @@ p <- ggplot(GraphTemp1,aes(x=Year,y=reorder(KeywordsCorrected,graphorder),fill=c
         plot.background=element_blank(),  # element_rect(fill, colour, size, linetype, color))
         panel.border=element_blank(),
         plot.margin=margin(0.7,0.4,0.1,0.2,"cm"),
-        plot.title=element_text(colour=textcol,hjust=0,size=12))
+        plot.title=element_text(colour=textcol,hjust=0,size=12)) + 
+  labs(caption = "Principal component analysis (PCA), Hollow fiber-based liquid-phase microextraction (HF-LPME)\nGas chromatography–mass spectrometry (GC-MS), Fourier-transform infrared spectroscopy (FT-IR)\nHigh-performance liquid chromatography (HPLC),Scanning electron microscope (SEM)")
 show(p)
 
 #ggplotly(p)

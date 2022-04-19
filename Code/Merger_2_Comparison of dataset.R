@@ -292,6 +292,7 @@ toplot <- data.frame(rbind(yearScopus,yearWoS,yearIFSMS))
 # Graph - Figure 5
 plot <- ggplot(data=toplot, aes(x=Year, y=Total, color=Coder)) +
   geom_line(aes(linetype=Coder), size=0.8)+
+  geom_point(aes(shape=Coder, color=Coder), size=3)+
   scale_linetype_manual(values=c("solid","solid", "solid"))+
   scale_color_manual(values=c("gray65", "black", "dodgerblue3"))+
   xlab('Year') +
