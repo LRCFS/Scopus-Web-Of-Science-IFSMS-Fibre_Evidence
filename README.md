@@ -5,5 +5,5 @@ Science is intended to be a cumulative endeavour which is why surveying the lite
 
 Reference lists from citation databases (Scopus and Web of Science) and references available in the INTERPOL reports for the Fibre (from textile) as evidence type in forensic science are processed and compared.
 
-The source code and the references lists for individual analysis; to recreate  the figures shown in the paper is avalaiable in this folder.
+The source code and the reference lists for individual analysis; to recreate the figures shown in the paper are available in this folder.
 
